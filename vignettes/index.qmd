@@ -1,0 +1,65 @@
+---
+title: "EdgeBasedModels.jl Vignettes"
+subtitle: "Edge-based compartmental models for infectious disease on networks"
+---
+
+## Overview
+
+[EdgeBasedModels.jl](https://github.com/epirecipes/EdgeBasedModels.jl) is a Julia package that uses [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl) and [ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl) to programmatically generate ODE systems for **edge-based compartmental models (EBCMs)** of infectious disease on networks.
+
+The key idea (from [Miller 2011](https://doi.org/10.1007/s11538-011-9655-3) and [Miller & Volz 2013](https://doi.org/10.1016/j.mbs.2023.109060)) is that epidemic dynamics on networks can be tracked through the probability that a random edge has *not* transmitted infection, combined with a probability generating function (PGF) that encodes the network's degree distribution. This avoids expensive stochastic simulations while capturing network heterogeneity exactly.
+
+## Vignettes
+
+These vignettes progress from basic to advanced usage:
+
+| # | Vignette | Description |
+|---|----------|-------------|
+| 01 | [SIR Basics](01_sir_basics/index.qmd) | Introduction to edge-based models with SIR on a Poisson network |
+| 02 | [Network Structure](02_network_structure/index.qmd) | How degree distributions affect epidemic dynamics |
+| 03 | [Complex Diseases](03_complex_diseases/index.qmd) | SEIR, SIS, and multi-stage infection models |
+| 04 | [Catalyst Integration](04_catalyst_integration/index.qmd) | Defining disease progressions via Catalyst.jl reaction networks |
+| 05 | [Multi-type Populations](05_multitype_populations/index.qmd) | Heterogeneous populations with cross-group transmission |
+| 06 | [Dynamic Networks](06_dynamic_networks/index.qmd) | Edge swapping, dormant contacts, and serosorting |
+| 07 | [Symbolic Analysis](07_symbolic_analysis/index.qmd) | R₀ computation and symbolic inspection of model equations |
+| 08 | [Clustering](08_clustering/index.qmd) | Triangle-aware EBCMs on clustered networks |
+| 09 | [Degree Correlation](09_degree_correlation/index.qmd) | Assortative and disassortative mixing via correlated PGFs |
+| 10 | [Method of Stages](10_method_of_stages/index.qmd) | Erlang-distributed waiting times via stage chaining |
+| 11 | [Multiplex Networks](11_multiplex_networks/index.qmd) | Multi-layer networks with shared nodes |
+| 12 | [Categorical Composition](12_categorical_composition/index.qmd) | Composing and stratifying open EBCMs |
+| 13 | [Final Size](13_final_size/index.qmd) | Analytic final size, epidemic probability, and confidence bands |
+| 14 | [Edge-based vs Pairwise](14_edge_vs_pairwise/index.qmd) | Cross-package comparison: EBCM vs NodeBasedModels' pair-closures |
+| 15 | [Reinfection Counting](15_reinfection_counting/index.qmd) | SIS reinfection strata on top of the EBCM aggregate |
+| 16 | [Cross-package SIS](16_cross_package_sis/index.qmd) | EBCM, node-based closures, and Gillespie on one SIS benchmark |
+
+## Release highlights
+
+This release hardens the package as part of the three-package
+`EdgeBasedModels` / `NodeBasedModels` / `NetworkOutbreaks` ecosystem:
+
+- SIS reinfection-counting EBCM builder (`build_sis_reinfection`) with
+  aggregate consistency tests against `build_sis`.
+- Categorical composition and Lean-backed marginalisation results (T1--T7)
+  documenting when closed dynamics commute with subgraph marginalisation.
+- Cross-package SIS benchmark vignette with matched node-level initial
+  prevalence across EBCM, node-based closures, and stochastic Gillespie.
+- Weak/test/vignette dependency structure that avoids circular precompilation
+  warnings while preserving `NetworkOutbreaks.OutbreakModel(...)` adapters.
+
+## Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/epirecipes/EdgeBasedModels.jl.git
+cd EdgeBasedModels.jl
+
+# Install the package
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+# Set up vignette dependencies
+cd vignettes
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+# Render vignettes (requires Quarto)
+quarto render
+```

@@ -1,0 +1,17 @@
+_output/
+_freeze/
+.quarto/
+Manifest.toml
+
+/.quarto/
+**/*.quarto_ipynb
+
+# Rendered vignette outputs (regenerate with `quarto render`)
+**/index.html
+**/index.pdf
+**/index.md
+**/*_files/
+**/site_libs/
+**/search.json
+**/*.tex
+**/*.log

@@ -1,0 +1,359 @@
+---
+title: "Categorical Composition"
+author: "Simon Frost"
+date: today
+subtitle: "EdgeBasedModels.jl Vignette 12"
+format:
+  html:
+    code-fold: false
+    toc: true
+engine: julia
+julia:
+  project: ".."
+---
+
+## Introduction
+
+Epidemiological models are often built by combining simpler pieces — two populations coupled by travel, or a base model stratified by age. **Categorical composition** gives this idea a formal algebraic backbone. Each submodel is an *open system* with typed *ports* that can be wired together. The wiring determines how infection pressure flows between components, and a *functor* maps the resulting network description to a concrete ODE system.
+
+Key benefits:
+
+1. **Composability** — build complex multi-population models from reusable parts.
+2. **Formal guarantees** — the functor preserves composition, so the combined ODE faithfully represents the wired network.
+3. **Natural transformations** — relate EBCM network models to simpler mass-action approximations and quantify the difference.
+
+## Setup
+
+```{julia}
+using EdgeBasedModels
+using ModelingToolkit
+using OrdinaryDiffEq
+using Plots
+```
+
+## Open systems and ports
+
+An `OpenEBCM` wraps an edge-based compartmental model together with named **ports** — typed boundary interfaces through which systems can interact. Convenience constructors `open_sir` and `open_seir` create open systems directly from a PGF and rate parameters.
+
+```{julia}
+pgf_a = poisson_pgf(5.0)
+m_sir = open_sir(pgf_a, 0.3, 0.1; name = :pop_a)
+```
+
+Each port has a name and a type (`:susceptible`, `:infectious`, or `:recovered`):
+
+```{julia}
+for p in m_sir.ports
+    println("  Port $(p.name) — type $(p.type)")
+end
+```
+
+An SEIR model has four ports (S, E, I, R), where the exposed and recovered stages are both non-infectious:
+
+```{julia}
+m_seir = open_seir(pgf_a, 0.2, 0.3, 0.1; name = :seir)
+println("SEIR ports: ", length(m_seir.ports))
+for p in m_seir.ports
+    println("  Port $(p.name) — type $(p.type)")
+end
+```
+
+## Tensor product — independent populations
+
+The tensor product $m_1 \otimes m_2$ places two open systems side by side with **no interaction**. Each component evolves independently, giving block-diagonal dynamics.
+
+```{julia}
+pgf_b = poisson_pgf(3.0)
+m1 = open_sir(pgf_a, 0.3, 0.1; name = :pop_a)
+m2 = open_sir(pgf_b, 0.2, 0.1; name = :pop_b)
+
+tp = tensor(m1, m2)
+println("Tensor product ports: ", length(tp.ports))
+```
+
+Build the ODE system and solve:
+
+```{julia}
+sys_tp = build_edge_system(tp.model)
+ic_tp = default_initial_conditions(sys_tp)
+prob_tp = ODEProblem(sys_tp.system, ic_tp, (0.0, 80.0))
+sol_tp = solve(prob_tp; abstol = 1e-8, reltol = 1e-8)
+```
+
+We can also solve each population in isolation and confirm the tensor product does not alter trajectories:
+
+```{julia}
+sys_a = build_edge_system(m1.model)
+ic_a = default_initial_conditions(sys_a)
+sol_a = solve(ODEProblem(sys_a.system, ic_a, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
+
+sys_b = build_edge_system(m2.model)
+ic_b = default_initial_conditions(sys_b)
+sol_b = solve(ODEProblem(sys_b.system, ic_b, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
+```
+
+```{julia}
+#| label: fig-tensor
+#| fig-cap: "Tensor product: two independent SIR populations evolve without interaction."
+
+# Extract S = ψ(θ) for each population
+κ_a, κ_b = 5.0, 3.0
+ψ_a(x) = exp(κ_a * (x - 1))
+ψ_b(x) = exp(κ_b * (x - 1))
+
+# Tensor system
+θ_a_tp = compartment(sol_tp, sys_tp, :θ_pop_a)
+θ_b_tp = compartment(sol_tp, sys_tp, :θ_pop_b)
+R_a_tp = compartment(sol_tp, sys_tp, :R_pop_a)
+R_b_tp = compartment(sol_tp, sys_tp, :R_pop_b)
+S_a_tp = ψ_a.(θ_a_tp)
+S_b_tp = ψ_b.(θ_b_tp)
+I_a_tp = 1.0 .- S_a_tp .- R_a_tp
+I_b_tp = 1.0 .- S_b_tp .- R_b_tp
+
+# Standalone systems
+θ_a_solo = compartment(sol_a, sys_a, :θ)
+R_a_solo = compartment(sol_a, sys_a, :R)
+S_a_solo = ψ_a.(θ_a_solo)
+I_a_solo = 1.0 .- S_a_solo .- R_a_solo
+
+θ_b_solo = compartment(sol_b, sys_b, :θ)
+R_b_solo = compartment(sol_b, sys_b, :R)
+S_b_solo = ψ_b.(θ_b_solo)
+I_b_solo = 1.0 .- S_b_solo .- R_b_solo
+
+plot(sol_tp.t, I_a_tp, label = "Pop A (tensor)", lw = 3, color = :blue)
+plot!(sol_tp.t, I_b_tp, label = "Pop B (tensor)", lw = 3, color = :red)
+plot!(sol_a.t, I_a_solo, label = "Pop A (standalone)", lw = 2, ls = :dash, color = :blue)
+plot!(sol_b.t, I_b_solo, label = "Pop B (standalone)", lw = 2, ls = :dash, color = :red)
+xlabel!("Time")
+ylabel!("Fraction infected")
+title!("Tensor Product: Independent Populations")
+```
+
+The solid (tensor) and dashed (standalone) curves overlap perfectly — the tensor product preserves each component's dynamics.
+
+## Composition via wiring — current limitations
+
+The `compose` combinator records port wiring at the categorical level, but `build_edge_system` does not yet emit a coupled ODE system from a `ComposedModel` whose wiring is non-empty: it raises an `ArgumentError` because injecting cross-system transmission pressure requires extra closure assumptions that have not been formalised in the package. The wiring metadata is still useful for bookkeeping and for downstream tools.
+
+```{julia}
+m_city  = open_sir(pgf_a, 0.3, 0.1; name = :city)
+m_rural = open_sir(pgf_b, 0.2, 0.1; name = :rural)
+
+# Wire city's infectious port (I) to rural's susceptible port (S)
+cp = EdgeBasedModels.compose(m_city, m_rural, [:I => :S])
+println("Composed ports: ", length(cp.ports))
+for p in cp.ports
+    println("  Port $(p.name) — type $(p.type)")
+end
+```
+
+Notice that the wired ports (`:I` from city, `:S` from rural) are consumed — only the remaining boundary ports appear.
+
+```{julia}
+# Confirm that wired composition is rejected by the ODE builder
+try
+    build_edge_system(cp.model)
+catch err
+    println(typeof(err), ": ", err.msg)
+end
+```
+
+To couple two populations dynamically, use `stratify` (below) or build a `MultiTypeConfigurationModel` directly — both produce fully coupled ODE systems.
+
+## Stratification — age-structured populations
+
+`stratify` crosses a base model with population strata. Given a base SIR on a Poisson network and a row-stochastic mixing matrix, it creates a `MultiTypeConfigurationModel` internally.
+
+```{julia}
+pgf_base = poisson_pgf(5.0)
+base = open_sir(pgf_base, 0.3, 0.1; name = :base)
+
+# Two age groups with assortative mixing
+mixing = [0.7 0.3;
+          0.3 0.7]
+strat = stratify(base, [:young, :old], mixing)
+println("Stratified ports: ", length(strat.ports))
+```
+
+```{julia}
+sys_strat = build_edge_system(strat.model)
+ic_strat = default_initial_conditions(sys_strat)
+prob_strat = ODEProblem(sys_strat.system, ic_strat, (0.0, 80.0))
+sol_strat = solve(prob_strat; abstol = 1e-8, reltol = 1e-8)
+```
+
+With $K=2$ types and $M=2$ stages (I, R), the multi-type system has $K^2(1+M)+K M = 16$ equations:
+
+```{julia}
+n_eqs = length(ModelingToolkit.equations(sys_strat.system))
+println("Number of equations: $n_eqs")
+```
+
+```{julia}
+#| label: fig-stratified
+#| fig-cap: "Stratified SIR: young and old populations with assortative contact mixing."
+
+R_young = compartment(sol_strat, sys_strat, :R_young)
+R_old   = compartment(sol_strat, sys_strat, :R_old)
+
+plot(sol_strat.t, R_young, label = "R (young)", lw = 2, color = :orange)
+plot!(sol_strat.t, R_old,  label = "R (old)",   lw = 2, color = :purple)
+xlabel!("Time")
+ylabel!("Fraction recovered")
+title!("Stratified SIR: Age-Structured Epidemic")
+```
+
+Both age groups experience a similar epidemic because the base network is Poisson with mean degree 5 and the mixing is moderately assortative. The young group has slightly higher within-group mixing (70% of contacts are with other young people), producing a marginally faster epidemic wave.
+
+## Natural transformations — EBCM to mass-action
+
+A **natural transformation** relates the EBCM network model to a simpler mass-action approximation. On a Poisson network the excess degree distribution equals the degree distribution, so the EBCM and mass-action SIR are closely related. The `to_mass_action` function extracts $\beta_\text{eff} = \beta \cdot \psi''(1)/\psi'(1)$ (the excess-degree ratio, *not* the mean degree) and $\gamma$. For a Poisson network this ratio equals $\langle k \rangle$, but for non-Poisson networks the two differ.
+
+```{julia}
+pgf_poisson = poisson_pgf(5.0)
+prog_sir = DiseaseProgression(
+    [DiseaseStage(:I; transmission_rate = 0.3),
+     DiseaseStage(:R; transmission_rate = 0)],
+    [DiseaseTransition(:I, :R, 0.1)]; entry = :I,
+)
+sir_model = StaticConfigurationModel(pgf_poisson, prog_sir)
+
+ma = to_mass_action(sir_model)
+println("β_eff = ", ma.β_eff, "  (expected: 0.3 × 5 = 1.5)")
+println("γ     = ", ma.γ)
+```
+
+The `compare_models` function solves both the EBCM and the mass-action approximation and returns the solutions for direct comparison:
+
+```{julia}
+result = compare_models(sir_model; tspan = (0.0, 80.0))
+println("β_eff = ", result.β_eff)
+println("γ     = ", result.γ)
+```
+
+```{julia}
+#| label: fig-natural-transformation
+#| fig-cap: "EBCM vs mass-action approximation on a Poisson(5) network."
+
+# EBCM solution
+S_ebcm = compartment(result.ebcm, result.ebcm_system, :S)
+I_ebcm = compartment(result.ebcm, result.ebcm_system, :I)
+
+# Mass-action solution
+S_ma = result.mass_action[result.ma_vars.S]
+I_ma = result.mass_action[result.ma_vars.I]
+
+plot(result.ebcm.t, I_ebcm, label = "I (EBCM)", lw = 3, color = :red)
+plot!(result.mass_action.t, I_ma, label = "I (mass-action)", lw = 2, ls = :dash, color = :red)
+plot!(result.ebcm.t, S_ebcm, label = "S (EBCM)", lw = 3, color = :blue)
+plot!(result.mass_action.t, S_ma, label = "S (mass-action)", lw = 2, ls = :dash, color = :blue)
+xlabel!("Time")
+ylabel!("Fraction of population")
+title!("Natural Transformation: EBCM → Mass-Action")
+```
+
+On the Poisson network the two curves are close — the Poisson distribution's lack of degree heterogeneity makes mass-action a reasonable approximation. Differences arise primarily because the EBCM tracks the exact depletion of susceptible edges, while mass-action assumes homogeneous mixing.
+
+We can record the natural transformation as metadata:
+
+```{julia}
+nt = NaturalTransformation(
+    :ebcm_to_mass_action,
+    StaticConfigurationModel,
+    Nothing,
+    "EBCM → mass-action; valid when network is Poisson",
+)
+println("Transform: ", nt.name, " (", nt.source_type, " → ", nt.target_type, ")")
+println("  ", nt.description)
+```
+
+## Functor and functoriality
+
+The `EBCMFunctor` is a callable that maps an open system (in the network category) to an `EdgeModelSystem` (in the ODE category) via `build_edge_system`. Categorically, a functor must preserve composition:
+
+$$
+F(m_1 \otimes m_2) \cong F(m_1) \otimes F(m_2)
+$$
+
+meaning the ODE system obtained by first composing and then applying $F$ should match the one obtained by applying $F$ to each component and then combining.
+
+```{julia}
+F = EBCMFunctor(:F)
+
+# Apply functor to a single open system
+sys_single = F(m1)
+println("Variables: ", keys(sys_single.variables))
+println("Observables: ", keys(sys_single.observables))
+```
+
+```{julia}
+ic_single = default_initial_conditions(sys_single)
+sol_single = solve(ODEProblem(sys_single.system, ic_single, (0.0, 80.0));
+                   abstol = 1e-8, reltol = 1e-8)
+println("Final S = ", compartment(sol_single, sys_single, :S)[end])
+```
+
+### Verifying functoriality
+
+`verify_functoriality` checks the functor equation by solving both paths — compose-then-map vs map-then-combine — and comparing the trajectories:
+
+```{julia}
+m_fa = open_sir(pgf_a, 0.3, 0.1; name = :fa)
+m_fb = open_sir(pgf_b, 0.2, 0.1; name = :fb)
+
+vf = verify_functoriality(m_fa, m_fb, Pair{Symbol,Symbol}[];
+                           tspan = (0.0, 80.0), atol = 1e-4)
+println("Is functorial: ", vf.is_functorial)
+println("Max trajectory difference: ", vf.max_difference)
+println("Composed retcode: ", vf.composed_retcode)
+```
+
+```{julia}
+#| label: fig-functoriality
+#| fig-cap: "Functoriality check: F(m₁⊗m₂) matches F(m₁),F(m₂) to machine precision."
+
+# Build systems for correct variable keys
+sys_fab = build_edge_system(tensor(m_fa, m_fb).model)
+sys_fa = build_edge_system(m_fa.model)
+sys_fb = build_edge_system(m_fb.model)
+
+κ_fa, κ_fb = 5.0, 3.0
+ψ_fa(x) = exp(κ_fa * (x - 1))
+ψ_fb(x) = exp(κ_fb * (x - 1))
+
+θ1_comp = compartment(vf.composed_solution, sys_fab, :θ_fa)
+θ2_comp = compartment(vf.composed_solution, sys_fab, :θ_fb)
+S1_comp = ψ_fa.(θ1_comp)
+S2_comp = ψ_fb.(θ2_comp)
+
+θ1_ind = compartment(vf.individual_solutions[1], sys_fa, :θ)
+θ2_ind = compartment(vf.individual_solutions[2], sys_fb, :θ)
+S1_ind = ψ_fa.(θ1_ind)
+S2_ind = ψ_fb.(θ2_ind)
+
+plot(vf.composed_solution.t, S1_comp, label = "Pop A — F(m₁⊗m₂)", lw = 3, color = :blue)
+plot!(vf.individual_solutions[1].t, S1_ind, label = "Pop A — F(m₁)", lw = 2, ls = :dash, color = :blue)
+plot!(vf.composed_solution.t, S2_comp, label = "Pop B — F(m₁⊗m₂)", lw = 3, color = :red)
+plot!(vf.individual_solutions[2].t, S2_ind, label = "Pop B — F(m₂)", lw = 2, ls = :dash, color = :red)
+xlabel!("Time")
+ylabel!("Fraction susceptible")
+title!("Functoriality: F(m₁⊗m₂) ≅ F(m₁)⊗F(m₂)")
+```
+
+The solid (composed) and dashed (individual) curves coincide, confirming that the EBCM functor preserves the tensor product.
+
+## Summary
+
+| Concept | Implementation | Epidemiological meaning |
+|---------|---------------|------------------------|
+| **Open system** | `OpenEBCM`, `Port` | A model with named boundary interfaces |
+| **Tensor product** | `tensor(m1, m2)` | Independent parallel populations |
+| **Composition** | `compose(m1, m2, wiring)` | Cross-infection coupling between populations |
+| **Stratification** | `stratify(base, strata, mixing)` | Age/risk structured populations |
+| **Natural transformation** | `to_mass_action`, `NaturalTransformation` | Relating network and mean-field models |
+| **Functor** | `EBCMFunctor` | Systematic mapping from network to ODE |
+| **Functoriality** | `verify_functoriality` | Composition commutes with ODE construction |
+
+The categorical framework turns model construction from ad-hoc equation manipulation into a principled algebraic workflow: define small open systems, compose them via explicit wiring diagrams, and let the functor produce the correct coupled ODE system automatically.

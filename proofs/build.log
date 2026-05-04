@@ -1,0 +1,132 @@
+⚠ [8099/8109] Replayed EBCMCategory.PairwiseClosureConditions
+warning: EBCMCategory/PairwiseClosureConditions.lean:60:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.triple_mass_conserved`:
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:74:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.triple_term_nonneg`:
+  [Fintype α]
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Fintype α] [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:83:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.weight_in_unit_interval`:
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:103:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.negative_weight_gives_negative_triple`:
+  [Fintype α]
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Fintype α] [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:137:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.barnardWeights_normalized`:
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:155:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.barnardWeights_nonneg`:
+  [Fintype α]
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Fintype α] [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: EBCMCategory/PairwiseClosureConditions.lean:197:0: automatically included section variable(s) unused in theorem `PairwiseClosureConditions.keelingWeights_nonneg`:
+  [Fintype α]
+  [DecidableEq α]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Fintype α] [DecidableEq α] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✖ [8108/8109] Building EBCMCategory.MarginalisationCharacterization (80s)
+trace: .> LEAN_PATH=/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/batteries/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/Qq/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/aesop/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/proofwidgets/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/importGraph/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/plausible/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/Cli/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/mathlib/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/packages/mdgen/.lake/build/lib/lean:/Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/build/lib/lean /Users/sdwfrost/.elan/toolchains/leanprover--lean4---v4.29.0-rc4/bin/lean /Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/EBCMCategory/MarginalisationCharacterization.lean -o /Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/build/lib/lean/EBCMCategory/MarginalisationCharacterization.olean -i /Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/build/lib/lean/EBCMCategory/MarginalisationCharacterization.ilean -c /Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/build/ir/EBCMCategory/MarginalisationCharacterization.c --setup /Users/sdwfrost/Projects/edgebasedmodels/EdgeBasedModels.jl/proofs/.lake/build/ir/EBCMCategory/MarginalisationCharacterization.setup.json --json
+error: EBCMCategory/MarginalisationCharacterization.lean:129:14: Unknown identifier `EBCMCategory.MarginalisationObstruction.Idx4`
+error: EBCMCategory/MarginalisationCharacterization.lean:131:14: Unknown identifier `EBCMCategory.MarginalisationObstruction.Idx3`
+info: EBCMCategory/MarginalisationCharacterization.lean:137:68: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: EBCMCategory/MarginalisationCharacterization.lean:137:18: unsolved goals
+case h
+u v : U4ℝ
+x✝ : sorry
+⊢ u sorry * 2 + v sorry * 2 = ((fun x ↦ u sorry * 2) + fun x ↦ v sorry * 2) x✝
+info: EBCMCategory/MarginalisationCharacterization.lean:138:75: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: EBCMCategory/MarginalisationCharacterization.lean:138:19: unsolved goals
+case h
+c : ℝ
+u : U4ℝ
+x✝ : sorry
+⊢ c * u sorry * 2 = c • (u sorry * 2)
+warning: EBCMCategory/MarginalisationCharacterization.lean:141:4: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:141:10: unused variable `u`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+error: EBCMCategory/MarginalisationCharacterization.lean:146:0: stuck at solving universe constraint
+  ?u.36372+1 =?= max 1 ?u.36373
+while trying to unify
+  Type ?u.36372 : Type (?u.36372 + 1)
+with
+  Sort (max 1 ?u.36373) : Type (max 1 ?u.36373)
+warning: EBCMCategory/MarginalisationCharacterization.lean:149:4: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:154:4: declaration uses `sorry`
+error: EBCMCategory/MarginalisationCharacterization.lean:161:27: Unknown identifier `C4ℝ.IsKirkwoodForm`
+error: EBCMCategory/MarginalisationCharacterization.lean:164:8: No goals to be solved
+error: EBCMCategory/MarginalisationCharacterization.lean:168:19: unexpected token 'at'; expected command
+error: EBCMCategory/MarginalisationCharacterization.lean:199:17: Unknown identifier `C4ℝ`
+error: EBCMCategory/MarginalisationCharacterization.lean:209:19: Unknown identifier `C4ℝ.C`
+error: EBCMCategory/MarginalisationCharacterization.lean:209:38: Unknown identifier `C4ℝ.C`
+error: EBCMCategory/MarginalisationCharacterization.lean:212:35: Unknown identifier `EBCMCategory.MarginalisationObstruction.Idx3.c`
+error: EBCMCategory/MarginalisationCharacterization.lean:213:15: Unknown identifier `C4ℝ`
+error: EBCMCategory/MarginalisationCharacterization.lean:197:62: unsolved goals
+C₃ : ClosureFamily U3ℝ
+hEq : Equivariant MℝLin sorry.C C₃.C
+h1 : MℝLin (sorry.C u₁) = C₃.C (MℝLin u₁)
+h2 : MℝLin (sorry.C u₂) = C₃.C (MℝLin u₂)
+hMeq : MℝLin u₁ = MℝLin u₂
+hF : MℝLin sorry = MℝLin sorry
+h_c : sorry () (sorry ()) + sorry () (sorry ()) = sorry () (sorry ()) + sorry () (sorry ())
+⊢ False
+warning: EBCMCategory/MarginalisationCharacterization.lean:207:10: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:207:17: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:207:21: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:213:20: declaration uses `sorry`
+warning: EBCMCategory/MarginalisationCharacterization.lean:213:20: This simp argument is unused:
+  F4Kℝ
+
+Hint: Omit it from the simp argument list.
+  simp [MℝLin, C4ℝ, F̵4̵K̵ℝ̵,̵ ̵u₁, u₂] at h_c
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: EBCMCategory/MarginalisationCharacterization.lean:213:26: This simp argument is unused:
+  u₁
+
+Hint: Omit it from the simp argument list.
+  simp [MℝLin, C4ℝ, F4Kℝ, u₁̵,̵ ̵u̵₂] at h_c
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: EBCMCategory/MarginalisationCharacterization.lean:213:30: This simp argument is unused:
+  u₂
+
+Hint: Omit it from the simp argument list.
+  simp [MℝLin, C4ℝ, F4Kℝ, u₁,̵ ̵u̵₂̵] at h_c
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: Lean exited with code 1
+Some required targets logged failures:
+- EBCMCategory.MarginalisationCharacterization
+error: build failed

@@ -1,0 +1,10 @@
+# Local assistant guidance files
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.copilot/
+.github/copilot-instructions.md
+
+# Local OS/build artifacts
+.DS_Store
+proofs/.lake/

@@ -1,0 +1,271 @@
+---
+title: "Complex Disease Models"
+author: "Simon Frost"
+date: today
+subtitle: "EdgeBasedModels.jl Vignette 03"
+format:
+  html:
+    toc: true
+    code-fold: false
+engine: julia
+julia:
+  project: ".."
+---
+
+## Introduction
+
+The expanded edge-based formulation is not limited to SIR — it handles arbitrary disease progression graphs. Each disease stage that can transmit infection gets its own edge-level probability $\varphi$, and the package automatically constructs the full system of ODEs.
+
+This vignette demonstrates:
+
+- **SEIR**: adding a latent (exposed) period
+- **SIS**: endemic dynamics without lasting immunity
+- **Multi-stage infections**: acute and chronic infectious periods with different transmission rates
+
+## Setup
+
+```{julia}
+using EdgeBasedModels
+using ModelingToolkit
+using OrdinaryDiffEq
+using Symbolics
+using Plots
+```
+
+```{julia}
+@parameters β γ κ
+pgf = poisson_pgf(κ)
+κ_val = 5.0
+ψ(x) = exp(κ_val * (x - 1))
+tspan = (0.0, 100.0)
+β_val = 0.6
+γ_val = 0.1
+```
+
+## SEIR model
+
+The SEIR model adds an exposed (latent) class $E$ between $S$ and $I$. Exposed individuals are infected but not yet infectious. The transition rate from $E$ to $I$ is $\sigma$ (so the mean latent period is $1/\sigma$).
+
+$$
+S \xrightarrow{\text{infection}} E \xrightarrow{\sigma} I \xrightarrow{\gamma} R
+$$
+
+```{julia}
+@parameters σ
+model_seir = build_seir(pgf, σ, β, γ)
+eqs = ModelingToolkit.equations(model_seir.system)
+println("SEIR: $(length(eqs)) ODEs")
+for eq in eqs
+    println("  ", eq)
+end
+```
+
+The SEIR model has 5 ODEs: $\theta$, $\varphi_E$, $\varphi_I$, $\varphi_R$, and $R$.
+
+::: {.callout-note}
+At the population level, the model tracks $S = \psi(\theta)$, $R$, and the combined "infected" fraction $E + I = 1 - S - R$. The edge-level variables $\varphi_E$ and $\varphi_I$ track the probability that a random neighbor is in each stage, providing more granular information than the population-level quantities.
+:::
+
+```{julia}
+σ_val = 0.2  # mean latent period = 5 days
+ic_seir = default_initial_conditions(model_seir)
+prob_seir = ODEProblem(
+    model_seir.system,
+    merge(ic_seir, Dict(β => β_val, γ => γ_val, σ => σ_val, κ => κ_val)),
+    tspan,
+)
+sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
+```
+
+```{julia}
+# Extract θ and R to compute population-level quantities
+state_names = string.(ModelingToolkit.unknowns(model_seir.system))
+θ_idx = findfirst(s -> startswith(s, "θ"), state_names)
+R_idx = findfirst(s -> startswith(s, "R"), state_names)
+θ_seir = sol_seir[θ_idx, :]
+R_seir = sol_seir[R_idx, :]
+S_seir = ψ.(θ_seir)
+EI_seir = 1.0 .- S_seir .- R_seir  # E + I combined
+```
+
+## Comparing SIR and SEIR
+
+```{julia}
+# Build SIR for comparison
+model_sir = build_sir(pgf, β, γ; form = :expanded)
+ic_sir = default_initial_conditions(model_sir)
+prob_sir = ODEProblem(
+    model_sir.system,
+    merge(ic_sir, Dict(β => β_val, γ => γ_val, κ => κ_val)),
+    tspan,
+)
+sol_sir = solve(prob_sir, Tsit5(); saveat = 0.5)
+
+state_names_sir = string.(ModelingToolkit.unknowns(model_sir.system))
+θ_idx_sir = findfirst(s -> startswith(s, "θ"), state_names_sir)
+R_idx_sir = findfirst(s -> startswith(s, "R"), state_names_sir)
+θ_sir = sol_sir[θ_idx_sir, :]
+R_sir = sol_sir[R_idx_sir, :]
+S_sir = ψ.(θ_sir)
+I_sir = 1.0 .- S_sir .- R_sir
+```
+
+```{julia}
+#| label: fig-sir-vs-seir
+#| fig-cap: "SIR vs SEIR: the exposed period delays and flattens the epidemic peak."
+plot(sol_sir.t, I_sir, label = "SIR (E+I)", linewidth = 2, color = :red)
+plot!(sol_seir.t, EI_seir, label = "SEIR (E+I)", linewidth = 2, color = :orange,
+      linestyle = :dash)
+plot!(sol_sir.t, R_sir, label = "R (SIR)", linewidth = 1, color = :green)
+plot!(sol_seir.t, R_seir, label = "R (SEIR)", linewidth = 1, color = :green,
+      linestyle = :dash)
+xlabel!("Time")
+ylabel!("Fraction of population")
+title!("SIR vs SEIR (σ=$σ_val, β=$β_val, γ=$γ_val)")
+```
+
+The exposed period delays the epidemic peak but does not change the final size (since $R_0$ depends only on the infectious period and transmission rate, not the latent period).
+
+## SIS model
+
+In the SIS model, individuals recover to the susceptible state — there is no lasting immunity. This leads to an endemic equilibrium where $I > 0$ persists indefinitely.
+
+```{julia}
+model_sis = build_sis(pgf, β, γ)
+eqs_sis = ModelingToolkit.equations(model_sis.system)
+println("SIS: $(length(eqs_sis)) ODE")
+for eq in eqs_sis
+    println("  ", eq)
+end
+```
+
+The SIS model has just 1 ODE for $\theta$, with $S$ and $I$ as observables.
+
+```{julia}
+prob_sis = ODEProblem(
+    model_sis.system,
+    merge(
+        Dict(model_sis.variables[:θ] => 1 - 1e-3),
+        Dict(β => β_val, γ => γ_val, κ => κ_val),
+    ),
+    (0.0, 200.0),
+)
+sol_sis = solve(prob_sis, Tsit5(); saveat = 0.5)
+
+θ_sis = sol_sis[1, :]
+S_sis = ψ.(θ_sis)
+I_sis = 1.0 .- S_sis
+```
+
+```{julia}
+#| label: fig-sis
+#| fig-cap: "SIS model showing endemic equilibrium."
+plot(sol_sis.t, S_sis, label = "S", linewidth = 2, color = :blue)
+plot!(sol_sis.t, I_sis, label = "I", linewidth = 2, color = :red)
+xlabel!("Time")
+ylabel!("Fraction of population")
+title!("SIS on Poisson network (β=$β_val, γ=$γ_val, κ=$κ_val)")
+```
+
+Unlike SIR, the infection reaches an endemic equilibrium where a constant fraction of the population remains infected.
+
+## Custom multi-stage infection
+
+For diseases with multiple infectious stages (e.g., acute followed by chronic), we build a `DiseaseProgression` directly. Each stage can have a different transmission rate.
+
+Consider a model where infection proceeds: $I_1 \xrightarrow{\gamma_1} I_2 \xrightarrow{\gamma_2} R$, with $I_1$ (acute) having transmission rate $\beta_1 = 0.8$ and $I_2$ (chronic) having $\beta_2 = 0.15$.
+
+```{julia}
+@parameters β₁ β₂ γ₁ γ₂
+
+progression = DiseaseProgression(
+    [
+        DiseaseStage(:I1; transmission_rate = β₁),
+        DiseaseStage(:I2; transmission_rate = β₂),
+        DiseaseStage(:R; transmission_rate = 0),
+    ],
+    [
+        DiseaseTransition(:I1, :I2, γ₁),
+        DiseaseTransition(:I2, :R, γ₂),
+    ];
+    entry = :I1,
+)
+
+model_multi = build_edge_system(
+    StaticConfigurationModel(pgf, progression);
+    form = :expanded,
+)
+eqs_multi = ModelingToolkit.equations(model_multi.system)
+println("Two-stage infection: $(length(eqs_multi)) ODEs")
+for eq in eqs_multi
+    println("  ", eq)
+end
+```
+
+```{julia}
+ic_multi = default_initial_conditions(model_multi)
+prob_multi = ODEProblem(
+    model_multi.system,
+    merge(ic_multi, Dict(β₁ => 0.8, β₂ => 0.15, γ₁ => 0.5, γ₂ => 0.05, κ => κ_val)),
+    (0.0, 150.0),
+)
+sol_multi = solve(prob_multi, Tsit5(); saveat = 0.5)
+```
+
+```{julia}
+state_names_multi = string.(ModelingToolkit.unknowns(model_multi.system))
+θ_idx_m = findfirst(s -> startswith(s, "θ"), state_names_multi)
+R_idx_m = findfirst(s -> startswith(s, "R"), state_names_multi)
+θ_multi = sol_multi[θ_idx_m, :]
+R_multi = sol_multi[R_idx_m, :]
+S_multi = ψ.(θ_multi)
+I_multi = 1.0 .- S_multi .- R_multi
+```
+
+```{julia}
+#| label: fig-multistage
+#| fig-cap: "Two-stage infection with acute (high β) and chronic (low β) phases."
+plot(sol_multi.t, S_multi, label = "S", linewidth = 2, color = :blue)
+plot!(sol_multi.t, I_multi, label = "I₁ + I₂", linewidth = 2, color = :red)
+plot!(sol_multi.t, R_multi, label = "R", linewidth = 2, color = :green)
+xlabel!("Time")
+ylabel!("Fraction of population")
+title!("Two-stage Infection (β₁=0.8, β₂=0.15)")
+```
+
+## Edge-level dynamics
+
+One of the unique features of edge-based models is access to the edge-level variables. These show the probability that a random neighbor is in each disease stage.
+
+```{julia}
+# Extract φ variables from the multi-stage solution
+φ_idxs = Dict{String,Int}()
+for (i, s) in enumerate(state_names_multi)
+    if startswith(s, "φ")
+        φ_idxs[s] = i
+    end
+end
+println("Edge-level variables:")
+for (name, idx) in sort(collect(φ_idxs); by = first)
+    println("  [$idx] $name")
+end
+```
+
+```{julia}
+#| label: fig-edge-level
+#| fig-cap: "Edge-level probabilities for the two-stage infection model."
+p = plot(xlabel = "Time", ylabel = "Edge probability",
+         title = "Edge-level states (φ variables)")
+for (name, idx) in sort(collect(φ_idxs); by = first)
+    short = replace(name, r"\(t\)" => "")
+    plot!(p, sol_multi.t, sol_multi[idx, :], label = short, linewidth = 2)
+end
+p
+```
+
+## Summary
+
+- **SEIR**: 5 ODEs — the exposed period delays but doesn't change the final epidemic size.
+- **SIS**: 1 ODE — produces endemic equilibria.
+- **Multi-stage**: arbitrary disease graphs via `DiseaseProgression` with per-stage transmission rates.
+- The package automates all the bookkeeping for edge-level variables, regardless of disease complexity.

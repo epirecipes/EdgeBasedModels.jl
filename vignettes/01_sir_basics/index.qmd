@@ -1,0 +1,194 @@
+---
+title: "SIR Model on a Network"
+author: "Simon Frost"
+date: today
+subtitle: "EdgeBasedModels.jl Vignette 01"
+format:
+  html:
+    toc: true
+    code-fold: false
+engine: julia
+julia:
+  project: ".."
+---
+
+## Introduction
+
+Edge-based compartmental models (EBCMs) provide an exact, deterministic framework for tracking epidemics on configuration-model networks. Instead of simulating individual transmission events, we track the probability $\theta(t)$ that a random edge in the network has *not* transmitted infection by time $t$.
+
+Combined with the network's **probability generating function (PGF)** $\psi(x) = \sum_k p_k x^k$ — which encodes the degree distribution — we can derive the fraction susceptible as $S(t) = \psi(\theta(t))$ and the fraction recovered $R(t)$ from a small system of ODEs.
+
+The **compact formulation** (Miller 2011) for SIR on a configuration model network requires just two ODEs:
+
+$$
+\dot{\theta} = -\beta\theta + \beta\frac{\psi'(\theta)}{\psi'(1)} + \gamma(1 - \theta)
+$$
+$$
+\dot{R} = \gamma\left(1 - \psi(\theta) - R\right)
+$$
+
+where $\beta$ is the per-edge transmission rate and $\gamma$ is the recovery rate.
+
+## Setup
+
+```{julia}
+using EdgeBasedModels
+using ModelingToolkit
+using OrdinaryDiffEq
+using Symbolics
+using Plots
+```
+
+## Defining the network
+
+We model a Poisson (Erdős–Rényi) network with mean degree $\kappa = 5$. The PGF is $\psi(x) = e^{\kappa(x-1)}$.
+
+```{julia}
+@parameters β γ κ
+pgf = poisson_pgf(κ)
+```
+
+We can verify the mean degree:
+
+```{julia}
+md = mean_degree(pgf)
+println("Mean degree: ", md)
+```
+
+## Building the compact SIR model
+
+The `build_sir` function constructs the edge-based ODE system. The `:compact` form produces just 2 ODEs.
+
+```{julia}
+model_compact = build_sir(pgf, β, γ; form = :compact)
+eqs = ModelingToolkit.equations(model_compact.system)
+println("Number of ODEs: ", length(eqs))
+for eq in eqs
+    println("  ", eq)
+end
+```
+
+The model returns an `EdgeModelSystem` with the compiled system, a dictionary of state variables, and a dictionary of observables:
+
+```{julia}
+println("State variables: ", keys(model_compact.variables))
+println("Observables:     ", keys(model_compact.observables))
+```
+
+## Solving the ODE
+
+We set $\beta = 0.6$, $\gamma = 0.1$, and $\kappa = 5$, and seed the epidemic with a small perturbation $\theta(0) = 1 - \varepsilon$.
+
+```{julia}
+tspan = (0.0, 80.0)
+prob = ODEProblem(
+    model_compact.system,
+    merge(
+        Dict(model_compact.variables[:θ] => 1 - 1e-3,
+             model_compact.variables[:R] => 0.0),
+        Dict(β => 0.6, γ => 0.1, κ => 5.0),
+    ),
+    tspan,
+)
+sol = solve(prob, Tsit5(); saveat = 0.5)
+```
+
+Now we extract the population-level quantities using the model's named variables and observables rather than assuming a positional ordering in the ODE state vector. For a Poisson PGF, $S(t) = \psi(\theta(t)) = e^{\kappa(\theta - 1)}$:
+
+```{julia}
+S_vals = compartment(sol, model_compact, :S)
+I_vals = compartment(sol, model_compact, :I)
+R_vals = compartment(sol, model_compact, :R)
+```
+
+```{julia}
+#| label: fig-sir-compact
+#| fig-cap: "SIR epidemic on a Poisson network (compact formulation)."
+plot(sol.t, S_vals, label = "S", linewidth = 2, color = :blue)
+plot!(sol.t, I_vals, label = "I", linewidth = 2, color = :red)
+plot!(sol.t, R_vals, label = "R", linewidth = 2, color = :green)
+xlabel!("Time")
+ylabel!("Fraction of population")
+title!("SIR on Poisson network (κ=5, β=0.6, γ=0.1)")
+```
+
+## Expanded formulation
+
+The **expanded** form tracks edge-level probabilities $\varphi_I$ and $\varphi_R$ explicitly, plus the population-level $R$. This form generalises to arbitrary disease progression graphs.
+
+```{julia}
+model_expanded = build_sir(pgf, β, γ; form = :expanded)
+eqs_exp = ModelingToolkit.equations(model_expanded.system)
+println("Number of ODEs: ", length(eqs_exp))
+for eq in eqs_exp
+    println("  ", eq)
+end
+```
+
+```{julia}
+println("State variables: ", keys(model_expanded.variables))
+println("Observables:     ", keys(model_expanded.observables))
+```
+
+Let us solve the expanded model and verify it gives the same epidemic curve:
+
+```{julia}
+ic_exp = default_initial_conditions(model_expanded)
+prob_exp = ODEProblem(
+    model_expanded.system,
+    merge(ic_exp, Dict(β => 0.6, γ => 0.1, κ => 5.0)),
+    tspan,
+)
+sol_exp = solve(prob_exp, Tsit5(); saveat = 0.5)
+```
+
+```{julia}
+S_exp = compartment(sol_exp, model_expanded, :S)
+I_exp = compartment(sol_exp, model_expanded, :I)
+```
+
+```{julia}
+#| label: fig-sir-comparison
+#| fig-cap: "Compact (solid) and expanded (dashed) formulations give identical results."
+plot(sol.t, I_vals, label = "I (compact)", linewidth = 3, color = :red)
+plot!(sol_exp.t, I_exp, label = "I (expanded)", linewidth = 2, color = :red,
+      linestyle = :dash)
+xlabel!("Time")
+ylabel!("Fraction infected")
+title!("Compact vs Expanded Formulation")
+```
+
+The two formulations give identical epidemic curves, confirming that the compact form (2 ODEs) is an exact reduction of the expanded form (5 ODEs after `mtkcompile`) for SIR.
+
+## Effect of transmission rate
+
+```{julia}
+#| label: fig-sir-beta
+#| fig-cap: "Effect of transmission rate β on the epidemic curve."
+betas = [0.2, 0.4, 0.6, 0.8]
+p = plot(xlabel = "Time", ylabel = "Fraction infected",
+         title = "Effect of β on epidemic dynamics (κ=5, γ=0.1)")
+
+for b in betas
+    prob_b = ODEProblem(
+        model_compact.system,
+        merge(
+            Dict(model_compact.variables[:θ] => 1 - 1e-3,
+                 model_compact.variables[:R] => 0.0),
+            Dict(β => b, γ => 0.1, κ => 5.0),
+        ),
+        tspan,
+    )
+    sol_b = solve(prob_b, Tsit5(); saveat = 0.5)
+    I_b = compartment(sol_b, model_compact, :I)
+    plot!(p, sol_b.t, I_b, label = "β = $b", linewidth = 2)
+end
+p
+```
+
+## Summary
+
+- The **compact** formulation produces 2 ODEs and is the most efficient for SIR on static networks.
+- The **expanded** formulation produces $1 + 2M$ ODEs (where $M$ is the number of non-susceptible stages, so 5 ODEs for SIR) but generalises to arbitrary disease progression graphs (SEIR, multi-stage, etc.).
+- Both formulations give identical results for SIR.
+- The PGF encodes the network's degree distribution — we used a Poisson PGF here, but the package supports arbitrary degree distributions via `polynomial_pgf`.
