@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Simon Frost">
-<meta name="dcterms.date" content="2026-03-30">
+<meta name="dcterms.date" content="2026-05-07">
 
 <title>Multiplex Networks</title>
 <style>
@@ -2404,7 +2404,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 30, 2026</p>
+      <p class="date">May 7, 2026</p>
     </div>
   </div>
   
@@ -2437,40 +2437,46 @@ S(t) = \prod_{i} \psi_i\bigl(\theta_i(t)\bigr)
 <p>We define helper functions to extract trajectories from multiplex ODE solutions.</p>
 <div id="4" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="st">Extract θ values from a multiplex solution by matching variable names.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="st">Extract a named trajectory from a multiplex solution.</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extract_θ</span>(sol, sys, layer_names)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    state_names <span class="op">=</span> <span class="fu">string</span>.(ModelingToolkit.<span class="fu">unknowns</span>(sys))</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    θ_vals <span class="op">=</span> <span class="fu">Dict</span><span class="dt">{Symbol,Vector{Float64}}</span>()</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> layer_names</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        idx <span class="op">=</span> <span class="fu">findfirst</span>(s <span class="op">-&gt;</span> <span class="fu">startswith</span>(s, <span class="st">&quot;θ_</span><span class="sc">$</span>name<span class="st">&quot;</span>), state_names)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        θ_vals[name] <span class="op">=</span> sol[idx, <span class="op">:</span>]</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> θ_vals</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="st">Extract the R trajectory from a multiplex solution.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extract_R</span>(sol, sys)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    state_names <span class="op">=</span> <span class="fu">string</span>.(ModelingToolkit.<span class="fu">unknowns</span>(sys))</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> <span class="fu">findfirst</span>(s <span class="op">-&gt;</span> <span class="fu">startswith</span>(s, <span class="st">&quot;R&quot;</span>), state_names)</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sol[idx, <span class="op">:</span>]</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="st">Compute S(t) = ∏ψᵢ(θᵢ) for Poisson layers with given mean degrees.</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">compute_S</span>(θ_dict, mean_degrees)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    layer_names <span class="op">=</span> <span class="fu">collect</span>(<span class="fu">keys</span>(θ_dict))</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="fu">length</span>(<span class="fu">first</span>(<span class="fu">values</span>(θ_dict)))</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> <span class="fu">ones</span>(n)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> layer_names</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        κ <span class="op">=</span> mean_degrees[name]</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        S <span class="op">.*=</span> <span class="fu">exp</span>.(κ <span class="op">.*</span> (θ_dict[name] <span class="op">.-</span> <span class="fl">1</span>))</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> S</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">named_trajectory</span>(sol, sys, name<span class="op">::</span><span class="dt">Symbol</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    target <span class="op">=</span> <span class="fu">string</span>(name) <span class="op">*</span> <span class="st">&quot;(t)&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> <span class="fu">findfirst</span>(v <span class="op">-&gt;</span> <span class="fu">string</span>(v) <span class="op">==</span> target <span class="op">||</span> <span class="fu">endswith</span>(<span class="fu">string</span>(v), target), ModelingToolkit.<span class="fu">unknowns</span>(sys))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    var <span class="op">===</span> <span class="cn">nothing</span> <span class="op">&amp;&amp;</span> <span class="fu">throw</span>(<span class="fu">ArgumentError</span>(<span class="st">&quot;unknown trajectory: </span><span class="sc">$</span>name<span class="st">&quot;</span>))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sol[ModelingToolkit.<span class="fu">unknowns</span>(sys)[var]]</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="st">Extract θ values from a multiplex solution by matching variable names.</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extract_θ</span>(sol, sys, layer_names)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    θ_vals <span class="op">=</span> <span class="fu">Dict</span><span class="dt">{Symbol,Vector{Float64}}</span>()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> layer_names</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        θ_vals[name] <span class="op">=</span> <span class="fu">named_trajectory</span>(sol, sys, <span class="fu">Symbol</span>(<span class="st">&quot;θ_</span><span class="sc">$</span>name<span class="st">&quot;</span>))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> θ_vals</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="st">Extract the R trajectory from a multiplex solution.</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">extract_R</span>(sol, sys)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">named_trajectory</span>(sol, sys, <span class="op">:</span>R)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="st">Compute S(t) = ∏ψᵢ(θᵢ) for Poisson layers with given mean degrees.</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">compute_S</span>(θ_dict, mean_degrees)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    layer_names <span class="op">=</span> <span class="fu">collect</span>(<span class="fu">keys</span>(θ_dict))</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="fu">length</span>(<span class="fu">first</span>(<span class="fu">values</span>(θ_dict)))</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> <span class="fu">ones</span>(n)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> layer_names</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        κ <span class="op">=</span> mean_degrees[name]</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        S <span class="op">.*=</span> <span class="fu">exp</span>.(κ <span class="op">.*</span> (θ_dict[name] <span class="op">.-</span> <span class="fl">1</span>))</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> S</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <pre><code>Main.Notebook.compute_S</code></pre>
 </div>
@@ -2517,7 +2523,7 @@ S(t) = \prod_{i} \psi_i\bigl(\theta_i(t)\bigr)
 <div class="ansi-escaped-output">
 <pre><span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 </pre>
 </div>
 </div>
@@ -2642,10 +2648,10 @@ Figure 2: Two-layer multiplex SIR epidemic. S, I, and R trajectories computed f
 <div class="ansi-escaped-output">
 <pre><span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 </pre>
 </div>
 </div>
@@ -2743,7 +2749,7 @@ Sum of single layers: 6.25</code></pre>
 </section>
 <section id="three-layer-example" class="level2">
 <h2 class="anchored" data-anchor-id="three-layer-example">Three-Layer Example</h2>
-<p>Adding more layers is straightforward — each layer introduces three additional ODEs (<span class="math inline">\(\theta_i\)</span>, <span class="math inline">\(\varphi_{S,i}\)</span>, <span class="math inline">\(\varphi_{I,i}\)</span>) but the framework remains the same.</p>
+<p>Adding more layers is straightforward. In the compact multiplex implementation used here, each additional layer introduces one additional edge-survival equation <span class="math inline">\(\theta_i\)</span>, together with the shared recovery equation <span class="math inline">\(R\)</span>. So an <span class="math inline">\(L\)</span>-layer model has <span class="math inline">\(L + 1\)</span> ODEs in total.</p>
 <p>Consider a population with household, school, and community contacts:</p>
 <ul>
 <li><strong>Household</strong>: Poisson(3), <span class="math inline">\(\beta = 0.4\)</span>, <span class="math inline">\(\gamma = 0.1\)</span> — few but intense contacts.</li>
@@ -2767,7 +2773,7 @@ Sum of single layers: 6.25</code></pre>
 <div class="ansi-escaped-output">
 <pre><span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 </pre>
 </div>
 </div>
@@ -2911,61 +2917,61 @@ Figure 5: Three-layer multiplex epidemic. The product formula S(t) = ∏ψᵢ(�
 <div class="ansi-escaped-output">
 <pre><span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 </pre>
 </div>
 </div>
@@ -3069,13 +3075,13 @@ Figure 8: Per-layer R₀ contributions for the three-layer model. Targeting the
 <div class="ansi-escaped-output">
 <pre><span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 <span class="ansi-yellow-fg ansi-bold">┌ </span><span class="ansi-yellow-fg ansi-bold">Warning: </span>`SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
 <span class="ansi-yellow-fg ansi-bold">│ </span>`SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/uIKoY/src/deprecations.jl:53</span>
+<span class="ansi-yellow-fg ansi-bold">└ </span><span class="ansi-bright-black-fg">@ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53</span>
 </pre>
 </div>
 </div>
