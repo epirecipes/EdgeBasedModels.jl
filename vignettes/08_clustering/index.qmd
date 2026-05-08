@@ -126,25 +126,13 @@ sol2 = solve(prob2, Tsit5(); saveat = 0.5)
 Extract the epidemic compartments using the PGFs:
 
 ```{julia}
-# Unclustered: S = ψ(θ)
-ψ(x) = exp(5.0 * (x - 1))
-θ_idx1 = findfirst(v -> startswith(string(v), "θ"),
-                   string.(ModelingToolkit.unknowns(model_unclustered.system)))
-R_idx1 = findfirst(v -> startswith(string(v), "R"),
-                   string.(ModelingToolkit.unknowns(model_unclustered.system)))
-S1 = ψ.(sol1[θ_idx1, :])
-R1 = sol1[R_idx1, :]
-I1 = 1.0 .- S1 .- R1
+S1 = compartment(sol1, model_unclustered, :S)
+I1 = compartment(sol1, model_unclustered, :I)
+R1 = compartment(sol1, model_unclustered, :R)
 
-# Clustered: S = g(θ₂, θ₃²)
-g_clust(θ2, θ3) = exp(3.0 * (θ2 - 1) + 1.0 * (θ3^2 - 1))
-vars2 = string.(ModelingToolkit.unknowns(model_clustered.system))
-θ2_idx = findfirst(v -> startswith(v, "θ₂"), vars2)
-θ3_idx = findfirst(v -> startswith(v, "θ₃"), vars2)
-R_idx2 = findfirst(v -> startswith(v, "R"), vars2)
-S2 = g_clust.(sol2[θ2_idx, :], sol2[θ3_idx, :])
-R2 = sol2[R_idx2, :]
-I2 = 1.0 .- S2 .- R2
+S2 = compartment(sol2, model_clustered, :S)
+I2 = compartment(sol2, model_clustered, :I)
+R2 = compartment(sol2, model_clustered, :R)
 ```
 
 ```{julia}
@@ -180,15 +168,9 @@ for frac in fracs
     prob_i = ODEProblem(model_i.system, ic_i, tspan)
     sol_i = solve(prob_i, Tsit5(); saveat = 0.5)
 
-    vars_i = string.(ModelingToolkit.unknowns(model_i.system))
-    θ2_i = findfirst(v -> startswith(v, "θ₂"), vars_i)
-    θ3_i = findfirst(v -> startswith(v, "θ₃"), vars_i)
-    R_i = findfirst(v -> startswith(v, "R"), vars_i)
-
-    g_i(θ2, θ3) = exp(κ_s_i * (θ2 - 1) + κ_t_i * (θ3^2 - 1))
-    S_i = g_i.(sol_i[θ2_i, :], sol_i[θ3_i, :])
-    R_i_vals = sol_i[R_i, :]
-    I_i = 1.0 .- S_i .- R_i_vals
+    S_i = compartment(sol_i, model_i, :S)
+    I_i = compartment(sol_i, model_i, :I)
+    R_i_vals = compartment(sol_i, model_i, :R)
     C_i = 2κ_t_i / (2κ_t_i + κ_s_i)
 
     push!(results, (frac = frac, C = C_i, t = sol_i.t, I = I_i, S = S_i, R = R_i_vals))
@@ -270,14 +252,8 @@ ic_seir = merge(default_initial_conditions(model_seir), params_seir)
 prob_seir = ODEProblem(model_seir.system, ic_seir, tspan)
 sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
 
-vars_seir = string.(ModelingToolkit.unknowns(model_seir.system))
-θ2_seir = findfirst(v -> startswith(v, "θ₂"), vars_seir)
-θ3_seir = findfirst(v -> startswith(v, "θ₃"), vars_seir)
-R_seir = findfirst(v -> startswith(v, "R"), vars_seir)
-
-g_seir(θ2, θ3) = exp(3.0 * (θ2 - 1) + 1.0 * (θ3^2 - 1))
-S_seir = g_seir.(sol_seir[θ2_seir, :], sol_seir[θ3_seir, :])
-R_seir_vals = sol_seir[R_seir, :]
+S_seir = compartment(sol_seir, model_seir, :S)
+R_seir_vals = compartment(sol_seir, model_seir, :R)
 I_seir = 1.0 .- S_seir .- R_seir_vals
 ```
 

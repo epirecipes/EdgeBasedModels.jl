@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+EdgeBasedModels = "788486a7-4543-4eb7-a8c1-3fa6b4d68a5e"
+
+[compat]
+Documenter = "1"

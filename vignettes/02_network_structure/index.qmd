@@ -111,6 +111,10 @@ title!("Degree Distributions")
 
 For the edge-based model, $R_0 = \frac{\beta}{\beta + \gamma} \cdot \frac{\psi''(1)}{\psi'(1)}$. The excess degree ratio $\psi''(1)/\psi'(1)$ is the key network-dependent factor.
 
+::: {.callout-note}
+**$R_0=2$ anchor.** We choose $\gamma=0.25$ and compute the per-edge $\beta$ from the Poisson $\kappa=5$ baseline: $T=2/5$ and $\beta=1/6$. Reusing that $\beta$ on the heterogeneous network demonstrates how degree variance changes $R_0$.
+:::
+
 ```{julia}
 # Poisson: excess degree = κ
 poisson_excess = 5.0  # ψ''(1)/ψ'(1) = κ for Poisson
@@ -125,11 +129,16 @@ hetero_excess = d2_at_1 / d1_at_1
 println("Poisson excess degree:       ", poisson_excess)
 println("Heterogeneous excess degree:  ", round(hetero_excess; digits = 2))
 
-β_val, γ_val = 0.3, 0.1
+γ_val = 0.25
+R0_target = 2.0
+seed_fraction = 0.01
+T_pois = R0_target / poisson_excess
+β_val = T_pois * γ_val / (1 - T_pois)
 T = β_val / (β_val + γ_val)
-println("\nTransmissibility T = β/(β+γ) = ", T)
+println("\nR₀=2 anchor uses β = ", round(β_val; digits = 4), " for the Poisson κ=5 baseline")
+println("Transmissibility T = β/(β+γ) = ", round(T; digits = 4))
 println("R₀ (Poisson):       ", round(T * poisson_excess; digits = 2))
-println("R₀ (Heterogeneous): ", round(T * hetero_excess; digits = 2))
+println("R₀ (Heterogeneous, same β): ", round(T * hetero_excess; digits = 2))
 ```
 
 The heterogeneous network has a higher $R_0$ despite having the same mean degree, because its higher degree variance increases the excess degree ratio.
@@ -145,17 +154,15 @@ model_pois = build_sir(pgf_poisson, β, γ; form = :compact)
 prob_pois = ODEProblem(
     model_pois.system,
     merge(
-        Dict(model_pois.variables[:θ] => 1 - 1e-3,
-             model_pois.variables[:R] => 0.0),
+        default_initial_conditions(model_pois; seed_fraction = seed_fraction),
         Dict(β => β_val, γ => γ_val, κ => 5.0),
     ),
     tspan,
 )
 sol_pois = solve(prob_pois, Tsit5(); saveat = 0.5)
-θ_pois = sol_pois[1, :]
-S_pois = ψ_poisson.(θ_pois)
-R_pois = sol_pois[2, :]
-I_pois = 1.0 .- S_pois .- R_pois
+S_pois = compartment(sol_pois, model_pois, :S)
+I_pois = compartment(sol_pois, model_pois, :I)
+R_pois = compartment(sol_pois, model_pois, :R)
 ```
 
 ```{julia}
@@ -163,7 +170,7 @@ I_pois = 1.0 .- S_pois .- R_pois
 model_het = build_sir(pgf_hetero, β, γ; form = :expanded)
 
 # Get initial conditions
-ic_het = default_initial_conditions(model_het)
+ic_het = default_initial_conditions(model_het; seed_fraction = seed_fraction)
 
 prob_het = ODEProblem(
     model_het.system,
@@ -172,20 +179,9 @@ prob_het = ODEProblem(
 )
 sol_het = solve(prob_het, Tsit5(); saveat = 0.5)
 
-# Find θ and R indices
-state_names = string.(ModelingToolkit.unknowns(model_het.system))
-θ_idx = findfirst(s -> startswith(s, "θ"), state_names)
-R_idx = findfirst(s -> startswith(s, "R"), state_names)
-
-θ_het = sol_het[θ_idx, :]
-R_het = sol_het[R_idx, :]
-
-# Evaluate polynomial PGF numerically at each θ value
-pgf_expr = pgf_hetero.expression
-pgf_var = pgf_hetero.variable
-S_het = [Float64(Symbolics.value(Symbolics.substitute(pgf_expr, Dict(pgf_var => θ_v))))
-         for θ_v in θ_het]
-I_het = 1.0 .- S_het .- R_het
+S_het = compartment(sol_het, model_het, :S)
+I_het = compartment(sol_het, model_het, :I)
+R_het = compartment(sol_het, model_het, :R)
 ```
 
 ```{julia}
@@ -195,7 +191,7 @@ plot(sol_pois.t, I_pois, label = "Poisson (κ=5)", linewidth = 2, color = :blue)
 plot!(sol_het.t, I_het, label = "Heterogeneous", linewidth = 2, color = :red)
 xlabel!("Time")
 ylabel!("Fraction infected")
-title!("Network Heterogeneity and Epidemic Dynamics (β=$β_val, γ=$γ_val)")
+title!("Network Heterogeneity and Dynamics (Poisson baseline R₀=2)")
 ```
 
 ```{julia}

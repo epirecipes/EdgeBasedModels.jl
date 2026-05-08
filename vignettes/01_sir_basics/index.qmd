@@ -77,16 +77,26 @@ println("Observables:     ", keys(model_compact.observables))
 
 ## Solving the ODE
 
-We set $\beta = 0.6$, $\gamma = 0.1$, and $\kappa = 5$, and seed the epidemic with a small perturbation $\theta(0) = 1 - \varepsilon$.
+We anchor this network example to the well-mixed reference $R_0 = 2$ with $\gamma = 0.25$ and 1% initial infection. For a Poisson configuration model, $\kappa_{\mathrm{excess}} = \kappa$, so $T = R_0/\kappa$ and $\beta = T\gamma/(1-T)$.
+
+::: {.callout-note}
+**$R_0=2$ anchor.** Here $\kappa=5$, so $T=2/5$ and the comparable per-edge transmission rate is $\beta=1/6 \approx 0.1667$, not the well-mixed mass-action value 0.5.
+:::
 
 ```{julia}
+γ_val = 0.25
+R0_target = 2.0
+seed_fraction = 0.01
+κ_val = 5.0
+κ_excess = κ_val
+T_val = R0_target / κ_excess
+β_val = T_val * γ_val / (1 - T_val)
 tspan = (0.0, 80.0)
 prob = ODEProblem(
     model_compact.system,
     merge(
-        Dict(model_compact.variables[:θ] => 1 - 1e-3,
-             model_compact.variables[:R] => 0.0),
-        Dict(β => 0.6, γ => 0.1, κ => 5.0),
+        default_initial_conditions(model_compact; seed_fraction = seed_fraction),
+        Dict(β => β_val, γ => γ_val, κ => κ_val),
     ),
     tspan,
 )
@@ -109,7 +119,7 @@ plot!(sol.t, I_vals, label = "I", linewidth = 2, color = :red)
 plot!(sol.t, R_vals, label = "R", linewidth = 2, color = :green)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("SIR on Poisson network (κ=5, β=0.6, γ=0.1)")
+title!("SIR on Poisson network (κ=5, R₀=2, γ=0.25)")
 ```
 
 ## Expanded formulation
@@ -133,10 +143,10 @@ println("Observables:     ", keys(model_expanded.observables))
 Let us solve the expanded model and verify it gives the same epidemic curve:
 
 ```{julia}
-ic_exp = default_initial_conditions(model_expanded)
+ic_exp = default_initial_conditions(model_expanded; seed_fraction = seed_fraction)
 prob_exp = ODEProblem(
     model_expanded.system,
-    merge(ic_exp, Dict(β => 0.6, γ => 0.1, κ => 5.0)),
+    merge(ic_exp, Dict(β => β_val, γ => γ_val, κ => κ_val)),
     tspan,
 )
 sol_exp = solve(prob_exp, Tsit5(); saveat = 0.5)
@@ -165,17 +175,16 @@ The two formulations give identical epidemic curves, confirming that the compact
 ```{julia}
 #| label: fig-sir-beta
 #| fig-cap: "Effect of transmission rate β on the epidemic curve."
-betas = [0.2, 0.4, 0.6, 0.8]
+betas = β_val .* [0.5, 1.0, 1.5, 2.0]
 p = plot(xlabel = "Time", ylabel = "Fraction infected",
-         title = "Effect of β on epidemic dynamics (κ=5, γ=0.1)")
+         title = "Effect of β on epidemic dynamics (κ=5, central R₀=2)")
 
 for b in betas
     prob_b = ODEProblem(
         model_compact.system,
         merge(
-            Dict(model_compact.variables[:θ] => 1 - 1e-3,
-                 model_compact.variables[:R] => 0.0),
-            Dict(β => b, γ => 0.1, κ => 5.0),
+            default_initial_conditions(model_compact; seed_fraction = seed_fraction),
+            Dict(β => b, γ => γ_val, κ => κ_val),
         ),
         tspan,
     )

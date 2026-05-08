@@ -38,11 +38,18 @@ pgf = poisson_pgf(κ)
 κ_val = 5.0
 ψ(x) = exp(κ_val * (x - 1))
 tspan = (0.0, 100.0)
-β_val = 0.6
-γ_val = 0.1
+γ_val = 0.25
+R0_target = 2.0
+seed_fraction = 0.01
+T_val = R0_target / κ_val
+β_val = T_val * γ_val / (1 - T_val)
 ```
 
 ## SEIR model
+
+::: {.callout-note}
+**$R_0=2$ anchor.** Generic SIR/SIS comparisons use $\gamma=0.25$, 1% seeding, and Poisson $\kappa=5$, giving $T=2/5$ and per-edge $\beta=1/6$. The SEIR latent period changes timing but not this transmissibility-based $R_0$.
+:::
 
 The SEIR model adds an exposed (latent) class $E$ between $S$ and $I$. Exposed individuals are infected but not yet infectious. The transition rate from $E$ to $I$ is $\sigma$ (so the mean latent period is $1/\sigma$).
 
@@ -68,7 +75,7 @@ At the population level, the model tracks $S = \psi(\theta)$, $R$, and the combi
 
 ```{julia}
 σ_val = 0.2  # mean latent period = 5 days
-ic_seir = default_initial_conditions(model_seir)
+ic_seir = default_initial_conditions(model_seir; seed_fraction = seed_fraction)
 prob_seir = ODEProblem(
     model_seir.system,
     merge(ic_seir, Dict(β => β_val, γ => γ_val, σ => σ_val, κ => κ_val)),
@@ -78,13 +85,8 @@ sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
 ```
 
 ```{julia}
-# Extract θ and R to compute population-level quantities
-state_names = string.(ModelingToolkit.unknowns(model_seir.system))
-θ_idx = findfirst(s -> startswith(s, "θ"), state_names)
-R_idx = findfirst(s -> startswith(s, "R"), state_names)
-θ_seir = sol_seir[θ_idx, :]
-R_seir = sol_seir[R_idx, :]
-S_seir = ψ.(θ_seir)
+S_seir = compartment(sol_seir, model_seir, :S)
+R_seir = compartment(sol_seir, model_seir, :R)
 EI_seir = 1.0 .- S_seir .- R_seir  # E + I combined
 ```
 
@@ -93,7 +95,7 @@ EI_seir = 1.0 .- S_seir .- R_seir  # E + I combined
 ```{julia}
 # Build SIR for comparison
 model_sir = build_sir(pgf, β, γ; form = :expanded)
-ic_sir = default_initial_conditions(model_sir)
+ic_sir = default_initial_conditions(model_sir; seed_fraction = seed_fraction)
 prob_sir = ODEProblem(
     model_sir.system,
     merge(ic_sir, Dict(β => β_val, γ => γ_val, κ => κ_val)),
@@ -101,13 +103,9 @@ prob_sir = ODEProblem(
 )
 sol_sir = solve(prob_sir, Tsit5(); saveat = 0.5)
 
-state_names_sir = string.(ModelingToolkit.unknowns(model_sir.system))
-θ_idx_sir = findfirst(s -> startswith(s, "θ"), state_names_sir)
-R_idx_sir = findfirst(s -> startswith(s, "R"), state_names_sir)
-θ_sir = sol_sir[θ_idx_sir, :]
-R_sir = sol_sir[R_idx_sir, :]
-S_sir = ψ.(θ_sir)
-I_sir = 1.0 .- S_sir .- R_sir
+S_sir = compartment(sol_sir, model_sir, :S)
+I_sir = compartment(sol_sir, model_sir, :I)
+R_sir = compartment(sol_sir, model_sir, :R)
 ```
 
 ```{julia}
@@ -145,16 +143,15 @@ The SIS model has just 1 ODE for $\theta$, with $S$ and $I$ as observables.
 prob_sis = ODEProblem(
     model_sis.system,
     merge(
-        Dict(model_sis.variables[:θ] => 1 - 1e-3),
+        default_initial_conditions(model_sis; seed_fraction = seed_fraction),
         Dict(β => β_val, γ => γ_val, κ => κ_val),
     ),
     (0.0, 200.0),
 )
 sol_sis = solve(prob_sis, Tsit5(); saveat = 0.5)
 
-θ_sis = sol_sis[1, :]
-S_sis = ψ.(θ_sis)
-I_sis = 1.0 .- S_sis
+S_sis = compartment(sol_sis, model_sis, :S)
+I_sis = compartment(sol_sis, model_sis, :I)
 ```
 
 ```{julia}
@@ -213,13 +210,9 @@ sol_multi = solve(prob_multi, Tsit5(); saveat = 0.5)
 ```
 
 ```{julia}
-state_names_multi = string.(ModelingToolkit.unknowns(model_multi.system))
-θ_idx_m = findfirst(s -> startswith(s, "θ"), state_names_multi)
-R_idx_m = findfirst(s -> startswith(s, "R"), state_names_multi)
-θ_multi = sol_multi[θ_idx_m, :]
-R_multi = sol_multi[R_idx_m, :]
-S_multi = ψ.(θ_multi)
-I_multi = 1.0 .- S_multi .- R_multi
+S_multi = compartment(sol_multi, model_multi, :S)
+I_multi = compartment(sol_multi, model_multi, :I)
+R_multi = compartment(sol_multi, model_multi, :R)
 ```
 
 ```{julia}
@@ -239,15 +232,15 @@ One of the unique features of edge-based models is access to the edge-level vari
 
 ```{julia}
 # Extract φ variables from the multi-stage solution
-φ_idxs = Dict{String,Int}()
-for (i, s) in enumerate(state_names_multi)
-    if startswith(s, "φ")
-        φ_idxs[s] = i
+φ_vars = Dict{String,Any}()
+for (name, var) in model_multi.variables
+    if startswith(String(name), "φ")
+        φ_vars[String(name)] = var
     end
 end
 println("Edge-level variables:")
-for (name, idx) in sort(collect(φ_idxs); by = first)
-    println("  [$idx] $name")
+for (name, _) in sort(collect(φ_vars); by = first)
+    println("  $name")
 end
 ```
 
@@ -256,9 +249,9 @@ end
 #| fig-cap: "Edge-level probabilities for the two-stage infection model."
 p = plot(xlabel = "Time", ylabel = "Edge probability",
          title = "Edge-level states (φ variables)")
-for (name, idx) in sort(collect(φ_idxs); by = first)
+for (name, var) in sort(collect(φ_vars); by = first)
     short = replace(name, r"\(t\)" => "")
-    plot!(p, sol_multi.t, sol_multi[idx, :], label = short, linewidth = 2)
+    plot!(p, sol_multi.t, sol_multi[var], label = short, linewidth = 2)
 end
 p
 ```

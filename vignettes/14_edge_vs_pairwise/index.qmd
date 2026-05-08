@@ -36,7 +36,7 @@ one session and run two matched comparisons:
    uses `erdos_renyi_network(5)` (a `HeterogeneousNetwork` whose degree
    distribution is Poisson($5$)).
 
-Within each scenario we hold the disease parameters $(\beta, \gamma)$ fixed.
+Within each scenario we recompute the per-edge transmission rate so the network epidemic has the same $R_0=2$ anchor as the well-mixed reference.
 
 ## Setup
 
@@ -53,12 +53,22 @@ using Statistics
 ```
 
 ```{julia}
-β = 0.10      # per-edge transmission rate
-γ = 0.10      # recovery rate
+γ = 0.25      # recovery rate
+R0_target = 2.0
 κ = 5         # mean / regular degree
+T_regular = R0_target / (κ - 1)
+β_regular = T_regular * γ / (1 - T_regular)
+T_poisson = R0_target / κ
+β_poisson = T_poisson * γ / (1 - T_poisson)
+β = β_regular
+seed_fraction = 0.01
 tspan = (0.0, 120.0)
 saveat = 1.0;
 ```
+
+::: {.callout-note}
+**$R_0=2$ anchor.** For the 5-regular case, $\kappa_{\mathrm{excess}}=4$, so $\beta=0.25$. For Poisson(5), $\kappa_{\mathrm{excess}}=5$, so $\beta=1/6$.
+:::
 
 ## Scenario A — $k$-regular network ($k=5$)
 
@@ -73,7 +83,7 @@ vanishes), so we expect — and observe — them to coincide exactly.
 regular_pgf(k::Int) = polynomial_pgf(vcat(zeros(k), [1.0]))
 
 ebcm_reg = build_sir(regular_pgf(κ), β, γ)
-ic_r = default_initial_conditions(ebcm_reg)
+ic_r = default_initial_conditions(ebcm_reg; seed_fraction = seed_fraction)
 sol_r = solve(ODEProblem(ebcm_reg.system, ic_r, tspan);
               abstol=1e-9, reltol=1e-9, saveat=saveat)
 
@@ -85,7 +95,7 @@ R_r = compartment(ebcm_reg, sol_r, :R)
 
 ```{julia}
 function run_pairwise(net, closure)
-    psys = NBM.generate_pairwise(NBM.sir_model(), net, closure; tspan = tspan)
+    psys = NBM.generate_pairwise(NBM.sir_model(), net, closure; tspan = tspan, seed_fraction = seed_fraction)
     sol  = NBM.solve_pairwise(psys, Dict(:τ => β, :γ => γ); saveat = saveat)
     (; t = sol.t,
        S = NBM.compartment(psys, sol, :S),
@@ -112,8 +122,9 @@ implemented only for `HomogeneousNetwork` so we report only Bernoulli and
 Keeling.)
 
 ```{julia}
+β = β_poisson
 ebcm_pois = build_sir(poisson_pgf(Float64(κ)), β, γ)
-ic_p = default_initial_conditions(ebcm_pois)
+ic_p = default_initial_conditions(ebcm_pois; seed_fraction = seed_fraction)
 sol_p = solve(ODEProblem(ebcm_pois.system, ic_p, tspan);
               abstol=1e-9, reltol=1e-9, saveat=saveat)
 
@@ -140,7 +151,7 @@ plot!(plt, bern_r.t, bern_r.I, label="Pairwise / Bernoulli", lw=2, ls=:dash,    
 plot!(plt, keel_r.t, keel_r.I, label="Pairwise / Keeling",   lw=2, ls=:dot,     color=2)
 plot!(plt, barn_r.t, barn_r.I, label="Pairwise / Barnard",   lw=2, ls=:dashdot, color=3)
 xlabel!(plt, "time"); ylabel!(plt, "I(t)")
-title!(plt, "Scenario A — 5-regular  (β=$β, γ=$γ)")
+title!(plt, "Scenario A — 5-regular  (R₀=2, γ=$γ)")
 ```
 
 ## Side-by-side trajectories — Poisson network
@@ -154,7 +165,7 @@ plt2 = plot(sol_p.t, I_p, label="EBCM (Poisson)", lw=3, color=:black, legend=:to
 plot!(plt2, bern_p.t, bern_p.I, label="Pairwise / Bernoulli", lw=2, ls=:dash, color=1)
 plot!(plt2, keel_p.t, keel_p.I, label="Pairwise / Keeling",   lw=2, ls=:dot,  color=2)
 xlabel!(plt2, "time"); ylabel!(plt2, "I(t)")
-title!(plt2, "Scenario B — Poisson($κ)  (β=$β, γ=$γ)")
+title!(plt2, "Scenario B — Poisson($κ)  (R₀=2, γ=$γ)")
 ```
 
 ## Quantitative agreement at the peak
@@ -201,15 +212,17 @@ look at the **final attack rate** predicted by each method.
 #|   the Bernoulli (mean-field) closure systematically over-predicts because
 #|   it ignores the correlation between an infected node and its neighbours."
 ks = 3:1:12
-β_sweep, γ_sweep = 0.10, 0.10
+γ_sweep = γ
 
 ebcm_R   = Float64[]
 bern_R   = Float64[]
 keel_R   = Float64[]
 
 for k in ks
+    T_sweep = R0_target / Float64(k)
+    β_sweep = T_sweep * γ_sweep / (1 - T_sweep)
     e = build_sir(poisson_pgf(Float64(k)), β_sweep, γ_sweep)
-    ic = default_initial_conditions(e)
+    ic = default_initial_conditions(e; seed_fraction = seed_fraction)
     sol = solve(ODEProblem(e.system, ic, (0.0, 400.0));
                 abstol=1e-9, reltol=1e-9, saveat=400.0)
     push!(ebcm_R, compartment(e, sol, :R)[end])
@@ -218,7 +231,7 @@ for k in ks
                               (NBM.BernoulliClosure(), NBM.KeelingClosure()))
         psys = NBM.generate_pairwise(NBM.sir_model(),
                                       NBM.erdos_renyi_network(Float64(k)),
-                                      closure; tspan=(0.0, 400.0))
+                                      closure; tspan=(0.0, 400.0), seed_fraction = seed_fraction)
         sol = NBM.solve_pairwise(psys, Dict(:τ => β_sweep, :γ => γ_sweep);
                                   saveat=400.0)
         push!(vec, NBM.compartment(psys, sol, :R)[end])

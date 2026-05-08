@@ -65,12 +65,18 @@ result = build_edge_system(scm)
 
 Set up numeric parameters and solve:
 
+::: {.callout-note}
+**$R_0=2$ anchor.** For the Poisson($\kappa=10$) SIR example, $T=2/10$ and with $\gamma=0.25$ the comparable per-edge rate is $\beta=0.0625$. We seed 1% of the population.
+:::
+
 ```{julia}
 κ_val = 10.0
-β_val = 0.3
-γ_val = 0.1
-ε = 1e-3
-tspan = (0.0, 60.0)
+γ_val = 0.25
+R0_target = 2.0
+T_val = R0_target / κ_val
+β_val = T_val * γ_val / (1 - T_val)
+ε = 0.01
+tspan = (0.0, 80.0)
 
 ic = default_initial_conditions(result; ε = ε)
 params = Dict(κ => κ_val, β => β_val, γ_cat => γ_val)
@@ -84,9 +90,9 @@ sol = solve(prob, Tsit5())
 κ_val_num = 10.0
 ψ(x) = exp(κ_val_num * (x - 1))
 θ_vals = compartment(sol, result, :θ)
-S_vals = ψ.(θ_vals)
+S_vals = compartment(sol, result, :S)
 R_vals = compartment(sol, result, :R)
-I_vals = 1.0 .- S_vals .- R_vals
+I_vals = compartment(sol, result, :I)
 
 plot(sol.t, S_vals, label="S", lw=2)
 plot!(sol.t, I_vals, label="I", lw=2)
@@ -253,9 +259,9 @@ sol_multi = solve(prob_multi, Tsit5())
 #| label: fig-multistage-catalyst
 #| fig-cap: "Two-stage infectious disease on a Poisson network. The acute phase (I₁) has higher transmissibility than the chronic phase (I₂)."
 θ_multi = compartment(sol_multi, result_multi, :θ)
-S_multi = ψ.(θ_multi)
+S_multi = compartment(sol_multi, result_multi, :S)
 R_multi = compartment(sol_multi, result_multi, :R)
-I_multi = 1.0 .- S_multi .- R_multi
+I_multi = compartment(sol_multi, result_multi, :I)
 
 plot(sol_multi.t, S_multi, label="S", lw=2)
 plot!(sol_multi.t, I_multi, label="I₁ + I₂", lw=2)

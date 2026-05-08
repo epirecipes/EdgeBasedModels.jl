@@ -60,15 +60,25 @@ end
 
 ## Static SIR Baseline
 
-Before introducing edge dynamics, we build a standard static SIR on a Poisson network with mean degree $\kappa = 5$, transmission rate $\beta = 0.6$, and recovery rate $\gamma = 0.1$.
+Before introducing edge dynamics, we build a standard static SIR on a Poisson network with mean degree $\kappa = 5$.
+
+::: {.callout-note}
+**$R_0=2$ anchor.** We use $\gamma=0.25$, $\kappa=5$, $T=2/5$, and per-edge $\beta=1/6$ with 1% initial infection. Dynamic variants reuse these disease parameters so changes reflect edge turnover.
+:::
 
 ```{julia}
 static_result = build_sir(pgf, β, γ; form=:expanded)
+γ_val = 0.25
+R0_target = 2.0
+seed_fraction = 0.01
+κ_val = 5.0
+T_val = R0_target / κ_val
+β_val = T_val * γ_val / (1 - T_val)
 ```
 
 ```{julia}
-ic_static = default_initial_conditions(static_result)
-p_static = Dict(β => 0.6, γ => 0.1, κ => 5.0)
+ic_static = default_initial_conditions(static_result; seed_fraction = seed_fraction)
+p_static = Dict(β => β_val, γ => γ_val, κ => κ_val)
 tspan = (0.0, 50.0)
 prob_static = ODEProblem(static_result.system, merge(ic_static, p_static), tspan)
 sol_static = solve(prob_static, Tsit5())
@@ -83,7 +93,7 @@ plot!(sol_static.t, I_s, label="I", lw=2, color=:red)
 plot!(sol_static.t, R_s, label="R", lw=2, color=:green)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Static SIR (κ=5, β=0.6, γ=0.1)")
+title!("Static SIR (κ=5, R₀=2, γ=0.25)")
 ```
 
 ## Dynamic SIR Model
@@ -120,8 +130,8 @@ println("Observables: ", keys(dyn_result.observables))
 Now solve the dynamic model:
 
 ```{julia}
-ic_dyn = default_initial_conditions(dyn_result)
-p_dyn = Dict(β => 0.6, γ => 0.1, κ => 5.0, η₁ => 0.5, η₂ => 0.3)
+ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction)
+p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.5, η₂ => 0.3)
 prob_dyn = ODEProblem(dyn_result.system, merge(ic_dyn, p_dyn), tspan)
 sol_dyn = solve(prob_dyn, Tsit5())
 ```
@@ -151,12 +161,12 @@ We now compare three scenarios to see how the rate of edge turnover affects the 
 
 ```{julia}
 # Slow edge dynamics
-p_slow = Dict(β => 0.6, γ => 0.1, κ => 5.0, η₁ => 0.1, η₂ => 0.05)
+p_slow = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.1, η₂ => 0.05)
 prob_slow = ODEProblem(dyn_result.system, merge(ic_dyn, p_slow), tspan)
 sol_slow = solve(prob_slow, Tsit5())
 
 # Fast edge dynamics
-p_fast = Dict(β => 0.6, γ => 0.1, κ => 5.0, η₁ => 2.0, η₂ => 1.2)
+p_fast = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 2.0, η₂ => 1.2)
 prob_fast = ODEProblem(dyn_result.system, merge(ic_dyn, p_fast), tspan)
 sol_fast = solve(prob_fast, Tsit5())
 ```

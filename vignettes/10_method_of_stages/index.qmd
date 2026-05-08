@@ -130,13 +130,9 @@ prob_exp = ODEProblem(
 )
 sol_exp = solve(prob_exp, Tsit5(); saveat = 0.5)
 
-state_names_exp = string.(ModelingToolkit.unknowns(model_exp.system))
-θ_idx_exp = findfirst(s -> startswith(s, "θ"), state_names_exp)
-R_idx_exp = findfirst(s -> startswith(s, "R"), state_names_exp)
-θ_exp = sol_exp[θ_idx_exp, :]
-R_exp = sol_exp[R_idx_exp, :]
-S_exp = ψ.(θ_exp)
-I_exp = 1.0 .- S_exp .- R_exp
+S_exp = compartment(sol_exp, model_exp, :S)
+I_exp = compartment(sol_exp, model_exp, :I)
+R_exp = compartment(sol_exp, model_exp, :R)
 ```
 
 ```{julia}
@@ -149,13 +145,9 @@ prob_erlang = ODEProblem(
 )
 sol_erlang = solve(prob_erlang, Tsit5(); saveat = 0.5)
 
-state_names_erlang = string.(ModelingToolkit.unknowns(model_erlang.system))
-θ_idx_erl = findfirst(s -> startswith(s, "θ"), state_names_erlang)
-R_idx_erl = findfirst(s -> startswith(s, "R"), state_names_erlang)
-θ_erl = sol_erlang[θ_idx_erl, :]
-R_erl = sol_erlang[R_idx_erl, :]
-S_erl = ψ.(θ_erl)
-I_erl = 1.0 .- S_erl .- R_erl
+S_erl = compartment(sol_erlang, model_erlang, :S)
+I_erl = compartment(sol_erlang, model_erlang, :I)
+R_erl = compartment(sol_erlang, model_erlang, :R)
 ```
 
 ```{julia}
@@ -208,10 +200,7 @@ for n in [1, 2, 5, 10, 20]
     )
     sol_n = solve(prob_n, Tsit5(); saveat = 0.5)
 
-    sn = string.(ModelingToolkit.unknowns(model_n.system))
-    θ_n = sol_n[findfirst(s -> startswith(s, "θ"), sn), :]
-    R_n = sol_n[findfirst(s -> startswith(s, "R"), sn), :]
-    I_n = 1.0 .- ψ.(θ_n) .- R_n
+    I_n = compartment(sol_n, model_n, :I)
 
     cv = round(1 / √n; digits = 2)
     plot!(p, sol_n.t, I_n, label = "n=$n (CV=$cv)", linewidth = 2)
@@ -273,10 +262,7 @@ for cv in [1.0, 0.5, 0.3, 0.2]
     )
     sol_cv = solve(prob_cv, Tsit5(); saveat = 0.5)
 
-    sn = string.(ModelingToolkit.unknowns(model_cv.system))
-    θ_cv = sol_cv[findfirst(s -> startswith(s, "θ"), sn), :]
-    R_cv = sol_cv[findfirst(s -> startswith(s, "R"), sn), :]
-    I_cv = 1.0 .- ψ.(θ_cv) .- R_cv
+    I_cv = compartment(sol_cv, model_cv, :I)
 
     plot!(p, sol_cv.t, I_cv, label = "CV=$cv (n=$n)", linewidth = 2)
 end
@@ -334,10 +320,8 @@ prob_seir_exp = ODEProblem(
 )
 sol_seir_exp = solve(prob_seir_exp, Tsit5(); saveat = 0.5)
 
-sn_se = string.(ModelingToolkit.unknowns(model_seir_exp.system))
-θ_se = sol_seir_exp[findfirst(s -> startswith(s, "θ"), sn_se), :]
-R_se = sol_seir_exp[findfirst(s -> startswith(s, "R"), sn_se), :]
-S_se = ψ.(θ_se)
+S_se = compartment(sol_seir_exp, model_seir_exp, :S)
+R_se = compartment(sol_seir_exp, model_seir_exp, :R)
 EI_se = 1.0 .- S_se .- R_se
 ```
 
@@ -351,10 +335,8 @@ prob_seir_erl = ODEProblem(
 )
 sol_seir_erl = solve(prob_seir_erl, Tsit5(); saveat = 0.5)
 
-sn_sel = string.(ModelingToolkit.unknowns(model_seir_erlang.system))
-θ_sel = sol_seir_erl[findfirst(s -> startswith(s, "θ"), sn_sel), :]
-R_sel = sol_seir_erl[findfirst(s -> startswith(s, "R"), sn_sel), :]
-S_sel = ψ.(θ_sel)
+S_sel = compartment(sol_seir_erl, model_seir_erlang, :S)
+R_sel = compartment(sol_seir_erl, model_seir_erlang, :R)
 EI_sel = 1.0 .- S_sel .- R_sel
 ```
 

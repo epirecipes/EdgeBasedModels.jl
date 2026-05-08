@@ -28,6 +28,10 @@ stochastic ground truth, on the **same SIS benchmark** as NBM vignette 13.
 
 ## Setup
 
+::: {.callout-note}
+**$R_0=2$ anchor.** For SIS on a $k$-regular configuration-model network, $R_0=T(k-1)$ with $T=\beta/(\beta+\gamma)$. We use $k=4$, $\gamma=0.25$, $T=2/3$, hence $\beta=0.5$, with 1% initial infection.
+:::
+
 ```{julia}
 ENV["GKSwstype"] = "100"  # offscreen GR output for reproducible Quarto renders
 using EdgeBasedModels
@@ -43,13 +47,16 @@ using Markdown
 ```
 
 ```{julia}
-# Benchmark parameters — identical to NBM vignette 13
+# Benchmark parameters — matched by the R₀=2 invariant
 N        = 500
-k        = 3
-β_val    = 0.6
-γ_val    = 0.4
-ε_val    = 0.05
-tmax     = 80.0
+k        = 4
+γ_val    = 0.25
+R0_target = 2.0
+κ_excess = k - 1
+T_val    = R0_target / κ_excess
+β_val    = T_val * γ_val / (1 - T_val)
+ε_val    = 0.01
+tmax     = 120.0
 ensemble = 48
 save_dt  = 1.0
 
@@ -186,18 +193,12 @@ I_re    = NBM.reinfection_totals(psys_re, sol_re)[:I]
 @printf("NBM reinfection L=1 endpoint I/N = %.5f\n", I_re[end])
 ```
 
-### Motif closure: $m = 3$
+### Motif closure
+
+The current motif implementation supports $k=3$ but not the $k=4$ regular network required for the feasible $R_0=2$ configuration-model anchor, so this panel is omitted from the refactored benchmark.
 
 ```{julia}
-sys_motif = NBM.motif_based_sis(β = β_val, γ = γ_val, k = k, m = 3,
-                                tspan  = (0.0, tmax),
-                                N      = Float64(N), ε = ε_val,
-                                n_p3   = Float64(n_p3_count),
-                                n_c3   = Float64(n_triangles))
-sol_motif = NBM.solve_motif(sys_motif; saveat = save_dt)
-iI_motif  = sys_motif.index[(:singleton, [:I])]
-I_motif   = [u[iI_motif] / N for u in sol_motif.u]
-@printf("Motif m=3 endpoint I/N = %.5f\n", I_motif[end])
+I_motif = nothing
 ```
 
 ### Neighbourhood closure: $n = 2$
@@ -219,7 +220,6 @@ Verify all deterministic outputs land on the same time grid:
 @assert length(I_reinf)  == length(tgrid)
 @assert collect(sol_pair.t)  == tgrid
 @assert collect(sol_re.t)    == tgrid
-@assert collect(sol_motif.t) == tgrid
 @assert collect(sol_nbr.t)   == tgrid
 ```
 
@@ -248,7 +248,6 @@ panels = [
     comparison_panel(I_reinf, "EBCM reinfection L=1", :steelblue, :dash),
     comparison_panel(I_pair, "standard pairwise", :red, :dash),
     comparison_panel(I_re, "NBM reinfection L=1", :orange, :dashdot),
-    comparison_panel(I_motif, "motif m=3", :green, :dot),
     comparison_panel(I_nbr, "neighbourhood n=2", :purple, :dash),
 ]
 
@@ -266,7 +265,6 @@ rows = [
     ("EBCM + reinfection L=1",     I_reinf[end], I_reinf[end] - ref),
     ("Standard pairwise (Keeling)", I_pair[end], I_pair[end]  - ref),
     ("NBM reinfection L=1",        I_re[end],    I_re[end]    - ref),
-    ("Motif m=3",                   I_motif[end], I_motif[end] - ref),
     ("Neighbourhood n=2",           I_nbr[end],   I_nbr[end]   - ref),
 ]
 lines = String[
