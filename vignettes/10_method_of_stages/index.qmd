@@ -39,20 +39,23 @@ using Plots
 ```{julia}
 @parameters β γ κ
 pgf = poisson_pgf(κ)
+# Universal anchors: γ=0.25, R₀=2, β derived per scenario (see plan.md)
 κ_val = 5.0
-β_val = 0.5
-γ_val = 0.1
+γ_val = 0.25
+R0_target = 2.0
+T_val = R0_target / κ_val
+β_val = T_val * γ_val / (1 - T_val)
 ψ(x) = exp(κ_val * (x - 1))
-tspan = (0.0, 120.0)
+tspan = (0.0, 80.0)
 ```
 
 ## Exponential vs Erlang distributions
 
-Before building epidemic models, let us visualize how the Erlang distribution compares to the exponential. All distributions below have the same mean sojourn time $1/\gamma = 10$, but different shapes.
+Before building epidemic models, let us visualize how the Erlang distribution compares to the exponential. All distributions below have the same anchored mean sojourn time $1/\gamma = 4$, but different shapes.
 
 ```{julia}
 #| label: fig-distributions
-#| fig-cap: "Erlang distributions with the same mean (1/γ = 10) but increasing shape parameter n. As n increases, the distribution concentrates around the mean."
+#| fig-cap: "Erlang distributions with the same mean (1/γ = 4) but increasing shape parameter n. As n increases, the distribution concentrates around the mean."
 
 function erlang_pdf(x, n, total_rate)
     λ = n * total_rate
@@ -161,7 +164,7 @@ plot!(sol_erlang.t, R_erl, label = "R (Erlang, n=5)", linewidth = 1, color = :bl
       linestyle = :dash)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Exponential vs Erlang SIR (β=$β_val, γ=$γ_val)")
+title!("Exponential vs Erlang SIR (R₀=2 anchor)")
 ```
 
 The final sizes converge to the same value — both epidemics infect the same total fraction of the population. However, the Erlang model produces a sharper, higher peak that arrives earlier. This is because a more concentrated infectious period means individuals transmit infection over a narrower time window, leading to more synchronised dynamics.

@@ -72,17 +72,24 @@ The result is a symbolic expression in terms of $\beta$, $\gamma$, and $\kappa$ 
 
 ## Numeric $R_0$ Evaluation
 
-We evaluate $R_0$ at specific parameter values by substituting into the symbolic expression:
+We evaluate $R_0$ at the universal anchor ($\gamma = 0.25$, $R_0 = 2$) by deriving the Poisson configuration-model transmission rate for $\kappa = 5$:
 
 ```{julia}
+# Universal anchors: γ=0.25, R₀=2, β derived per scenario (see plan.md)
+γ_anchor = 0.25
+R0_anchor = 2.0
+κ_anchor = 5.0
+T_anchor = R0_anchor / κ_anchor
+β_anchor = T_anchor * γ_anchor / (1 - T_anchor)
+
 R0_val = Symbolics.value(
-    Symbolics.substitute(R0_sir, Dict(β => 0.6, γ => 0.1, κ => 5.0))
+    Symbolics.substitute(R0_sir, Dict(β => β_anchor, γ => γ_anchor, κ => κ_anchor))
 )
 println("R₀ = ", R0_val)
-println("Expected: βκ/(β+γ) = ", 0.6 * 5.0 / (0.6 + 0.1))
+println("Expected anchor R₀ = ", R0_anchor)
 ```
 
-With $\beta = 0.6$, $\gamma = 0.1$, and $\kappa = 5$, we get $R_0 = 3/0.7 \approx 4.29$, confirming the analytic formula.
+With $\beta = 1/6$, $\gamma = 0.25$, and $\kappa = 5$, we get $R_0 = 2$, confirming the analytic formula at the shared anchor.
 
 ## $R_0$ for SEIR
 
@@ -110,7 +117,7 @@ println("Symbolic R₀ (SEIR): ", R0_seir)
 
 ```{julia}
 R0_seir_val = Symbolics.value(
-    Symbolics.substitute(R0_seir, Dict(β => 0.6, γ => 0.1, σ => 0.2, κ => 5.0))
+    Symbolics.substitute(R0_seir, Dict(β => β_anchor, γ => γ_anchor, σ => 0.2, κ => κ_anchor))
 )
 println("SEIR R₀ = ", R0_seir_val)
 println("SIR  R₀ = ", R0_val)
@@ -231,10 +238,10 @@ Because $R_0$ is a symbolic expression, we can evaluate it over parameter ranges
 
 ```{julia}
 #| label: fig-r0-vs-kappa
-#| fig-cap: "R₀ as a function of mean network degree κ, for fixed β = 0.6 and γ = 0.1. The dashed line marks the epidemic threshold R₀ = 1."
+#| fig-cap: "R₀ as a function of mean network degree κ, for anchored β = 1/6 and γ = 0.25. The dashed line marks the epidemic threshold R₀ = 1."
 κ_range = 0.1:0.1:10.0
 R0_vs_κ = [
-    Symbolics.value(Symbolics.substitute(R0_sir, Dict(β => 0.6, γ => 0.1, κ => κ_v)))
+    Symbolics.value(Symbolics.substitute(R0_sir, Dict(β => β_anchor, γ => γ_anchor, κ => κ_v)))
     for κ_v in κ_range
 ]
 
@@ -245,16 +252,16 @@ ylabel!("R₀")
 title!("R₀ vs Network Connectivity")
 ```
 
-For a Poisson network with $R_0 = \beta\kappa/(\beta + \gamma)$, the epidemic threshold $R_0 = 1$ occurs at $\kappa^* = (\beta + \gamma)/\beta$. With $\beta = 0.6$ and $\gamma = 0.1$, this gives $\kappa^* = 0.7/0.6 \approx 1.17$.
+For a Poisson network with $R_0 = \beta\kappa/(\beta + \gamma)$, the epidemic threshold $R_0 = 1$ occurs at $\kappa^* = (\beta + \gamma)/\beta$. With the anchored values $\beta = 1/6$ and $\gamma = 0.25$, this gives $\kappa^* = 2.5$.
 
 ### $R_0$ versus transmission rate $\beta$
 
 ```{julia}
 #| label: fig-r0-vs-beta
-#| fig-cap: "R₀ as a function of transmission rate β, for fixed κ = 5 and γ = 0.1."
+#| fig-cap: "R₀ as a function of transmission rate β, for fixed κ = 5 and anchored γ = 0.25."
 β_range = 0.01:0.01:1.0
 R0_vs_β = [
-    Symbolics.value(Symbolics.substitute(R0_sir, Dict(β => β_v, γ => 0.1, κ => 5.0)))
+    Symbolics.value(Symbolics.substitute(R0_sir, Dict(β => β_v, γ => γ_anchor, κ => κ_anchor)))
     for β_v in β_range
 ]
 

@@ -88,8 +88,15 @@ Let us build both an unclustered and a clustered SIR model with comparable mean 
 ```{julia}
 @parameters β γ
 
+# Universal anchors: γ=0.25, R₀=2, β derived per scenario (see plan.md)
+γ_val = 0.25
+R0_target = 2.0
+κ_total = 5.0
+T_unclustered = R0_target / κ_total
+β_val = T_unclustered * γ_val / (1 - T_unclustered)
+
 # Unclustered: all edges are single-stubs, mean degree 5
-pgf_unclustered = poisson_pgf(5.0)
+pgf_unclustered = poisson_pgf(κ_total)
 model_unclustered = build_sir(pgf_unclustered, β, γ; form = :expanded)
 
 # Clustered: κ_s=3, κ_t=1 → total mean degree = 3 + 2(1) = 5
@@ -106,11 +113,11 @@ println("Clustered variables:   ", keys(model_clustered.variables))
 
 ## Comparing clustered vs unclustered epidemics
 
-We now solve both models with $\beta = 0.5$ and $\gamma = 0.1$, and compare the epidemic curves.
+We now solve both models with the unclustered Poisson baseline anchored at $R_0 = 2$ ($\beta = 1/6$, $\gamma = 0.25$), and compare the epidemic curves.
 
 ```{julia}
 tspan = (0.0, 80.0)
-params = Dict(β => 0.5, γ => 0.1)
+params = Dict(β => β_val, γ => γ_val)
 
 # Unclustered
 ic1 = merge(default_initial_conditions(model_unclustered), params)
@@ -146,7 +153,7 @@ plot!(sol2.t, I2, label = "I (clustered)", linewidth = 2, color = :red, linestyl
 plot!(sol2.t, R2, label = "R (clustered)", linewidth = 2, color = :green, linestyle = :dash)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Clustered vs Unclustered SIR (β=0.5, γ=0.1)")
+title!("Clustered vs Unclustered SIR (R₀=2 unclustered baseline)")
 ```
 
 The dashed (clustered) epidemic has a lower peak prevalence and a delayed peak compared to the solid (unclustered) curves. The final epidemic size is also smaller with clustering.
@@ -212,9 +219,9 @@ for frac in fracs_fine
     push!(C_vals, C_i)
 
     prog = DiseaseProgression(
-        [DiseaseStage(:I; transmission_rate = 0.5),
+        [DiseaseStage(:I; transmission_rate = β_val),
          DiseaseStage(:R; transmission_rate = 0)],
-        [DiseaseTransition(:I, :R, 0.1)]; entry = :I)
+        [DiseaseTransition(:I, :R, γ_val)]; entry = :I)
     cm = ClusteredConfigurationModel(cpgf_i, prog)
     R0_i = basic_reproduction_number(cm)
     push!(R0_vals, Float64(Symbolics.value(R0_i)))
@@ -228,7 +235,7 @@ plot(C_vals, R0_vals, linewidth = 2, color = :darkred, marker = :circle, markers
      label = "R₀")
 xlabel!("Clustering coefficient C")
 ylabel!("R₀")
-title!("R₀ vs Clustering (total mean degree = 5, β=0.5, γ=0.1)")
+title!("R₀ vs Clustering (total mean degree = 5, anchored β, γ)")
 hline!([1.0], linestyle = :dash, color = :gray, label = "R₀ = 1")
 ```
 
@@ -247,7 +254,7 @@ println("SEIR clustered variables: ", keys(model_seir.variables))
 ```
 
 ```{julia}
-params_seir = Dict(β => 0.5, γ => 0.1, σ => 0.2)
+params_seir = Dict(β => β_val, γ => γ_val, σ => 0.2)
 ic_seir = merge(default_initial_conditions(model_seir), params_seir)
 prob_seir = ODEProblem(model_seir.system, ic_seir, tspan)
 sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
@@ -265,7 +272,7 @@ plot!(sol_seir.t, I_seir, label = "E + I", linewidth = 2, color = :red)
 plot!(sol_seir.t, R_seir_vals, label = "R", linewidth = 2, color = :green)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Clustered SEIR (κ_s=3, κ_t=1, σ=0.2, β=0.5, γ=0.1)")
+title!("Clustered SEIR (κ_s=3, κ_t=1, σ=0.2, anchored β, γ)")
 ```
 
 The latent period further delays and flattens the epidemic curve on top of the clustering effect.
