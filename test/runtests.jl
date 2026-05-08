@@ -219,7 +219,7 @@ import Catalyst
 
         ic_seed = default_initial_conditions(model; seed_fraction = 0.02)
         ic_eps = default_initial_conditions(model; ε = 0.02)
-        @test ic_seed[model.variables[:θ]] ≈ 0.98
+        @test ic_seed[model.variables[:θ]] ≈ 1.0
         @test ic_seed[model.variables[:R]] ≈ 0.0
         @test ic_seed == ic_eps
     end
@@ -313,11 +313,11 @@ import Catalyst
             @test haskey(result.observables, Symbol("φ_S_", j, "_", l))
         end
 
-        # Default initial conditions should set all θ near 1
+        # Default initial conditions should set all θ to 1
         ic = default_initial_conditions(result)
-        @test length(ic) == 16
+        @test length(ic) == 18
         theta_vars = [v for (k, v) in result.variables if startswith(string(k), "θ")]
-        @test all(ic[v] ≈ 0.999 for v in theta_vars)
+        @test all(ic[v] ≈ 1.0 for v in theta_vars)
         @test ic[result.variables[:pop_I_A]] ≈ 1e-3
         @test ic[result.variables[:pop_I_B]] ≈ 1e-3
     end

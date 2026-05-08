@@ -135,6 +135,26 @@ function _default_seed_metadata(entry_var, susceptible_expr)
     )
 end
 
+# --- Seed-fraction parameter ---
+#
+# We use Miller's standard "explicit ρ" convention for initial conditions:
+# fraction ρ of nodes are initially infected uniformly at random. With θ(0)=1,
+# this is encoded by multiplying every susceptible-side PGF term by (1-ρ):
+#
+#   S(t)   = (1-ρ)·ψ(θ(t))
+#   φ_S(t) = (1-ρ)·ψ'(θ)/ψ'(1)
+#
+# Initial conditions: θ(0)=1, φ_R(0)=0, φ_I(0)=ρ, pop_I(0)=ρ, pop_R(0)=0.
+# This is the *only* convention under which compact and expanded EBCM forms
+# agree exactly (Miller, 2011, J. Math. Biol.). Setting θ(0)<1 instead would
+# implicitly require φ_R(0)=γρ/β > 0, an unphysical initial condition.
+#
+# `ρ` is exposed as a symbolic model parameter so that users can override its
+# value at problem-construction time without rebuilding the symbolic system.
+function _seed_parameter()
+    only(@parameters ρ)
+end
+
 # --- Convenience constructors ---
 
 function build_sir(pgf::DegreePGF, β, γ;
@@ -179,16 +199,18 @@ end
 
 function build_sis(pgf::DegreePGF, β, γ;
                    name::Symbol = :sis_ebm)
-    # SIS: after recovery, the neighbor returns to susceptible. In the EBCM framework,
-    # this means φ_I flows back to φ_S rather than to a terminal φ_R. We model this
-    # with a single infectious stage where recovery resets the edge to susceptible.
-    # The φ_S equation is still algebraic, so we add a "waning" term to the θ equation:
-    # dθ/dt = -β·φ_I + γ·(1 - θ)  (recovery restores edges)
-    # This uses the compact formulation directly.
+    # SIS: after recovery, the neighbor returns to susceptible. With explicit
+    # seed ρ (uniform-random initial infection), the susceptible-side PGF gets
+    # a (1-ρ) factor:
+    #   S(t)   = (1-ρ)·ψ(θ)
+    #   φ_S(t) = (1-ρ)·ψ'(θ)/ψ'(1)
+    # IC θ(0)=1 ⇒ φ_S(0) = 1-ρ, φ_I(0) = θ - φ_S = ρ, S(0) = 1-ρ, I(0) = ρ.
     t = t_nounits
     D = D_nounits
 
     @variables θ(t) S(t) I(t)
+    ρ = _seed_parameter()
+    q = 1 - ρ
 
     ψ_θ = _eval_pgf(pgf, θ)
 
@@ -196,16 +218,15 @@ function build_sis(pgf::DegreePGF, β, γ;
     ψ_prime_1 = _eval_pgf_deriv(pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(pgf, 2, θ)
 
-    phi_S = Symbolics.simplify(ψ_prime_θ / ψ_prime_1)
+    phi_S = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
     phi_I = Symbolics.simplify(θ - phi_S)
 
-    # SIS: θ̇ = −β·φ_I (transmission) + γ·(θ − φ_S) (recovery restores edges)
-    # Since φ_I = θ - φ_S, recovery of φ_I returns it to φ_S, effectively restoring θ.
+    # SIS: θ̇ = −β·φ_I (transmission) + γ·(1 − θ) (recovery restores edges)
     θ_dot = Symbolics.simplify(-β * phi_I + γ * (1 - θ))
 
     eqs = Equation[
         D(θ) ~ θ_dot,
-        S ~ ψ_θ,
+        S ~ q * ψ_θ,
         I ~ 1 - S,
     ]
 
@@ -215,7 +236,8 @@ function build_sis(pgf::DegreePGF, β, γ;
     variables = Dict{Symbol, Any}(:θ => θ)
     observables = Dict{Symbol, Any}(:S => S, :I => I, :φ_S => phi_S, :φ_I => phi_I)
 
-    return EdgeModelSystem(simplified, variables, observables)
+    metadata = Dict{Symbol, Any}(:rho_param => ρ)
+    return EdgeModelSystem(simplified, variables, observables, metadata)
 end
 
 function _is_sis_progression(prog::DiseaseProgression)
@@ -266,19 +288,23 @@ function _build_compact(model::StaticConfigurationModel; name::Symbol)
     γ_val = sum(tr.rate for tr in recovery_transitions)
 
     @variables θ(t) R(t) S(t) I(t)
+    ρ = _seed_parameter()
+    q = 1 - ρ
 
     ψ_θ = _eval_pgf(model.pgf, θ)
     ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
 
-    # Miller compact equation: θ̇ = −βθ + β·ψ'(θ)/ψ'(1) + γ(1−θ)
-    θ_dot = Symbolics.simplify(-β_val * θ + β_val * (ψ_prime_θ / ψ_prime_1) + γ_val * (1 - θ))
-    R_dot = Symbolics.simplify(γ_val * (1 - ψ_θ - R))
+    # Miller compact equation with explicit seed ρ:
+    #   θ̇ = −β·θ + β·(1-ρ)·ψ'(θ)/ψ'(1) + γ(1−θ)
+    # (recovers Miller 2011 eq. 7 in the limit ρ→0).
+    θ_dot = Symbolics.simplify(-β_val * θ + β_val * q * (ψ_prime_θ / ψ_prime_1) + γ_val * (1 - θ))
+    R_dot = Symbolics.simplify(γ_val * (1 - q * ψ_θ - R))
 
     eqs = Equation[
         D(θ) ~ θ_dot,
         D(R) ~ R_dot,
-        S ~ ψ_θ,
+        S ~ q * ψ_θ,
         I ~ 1 - S - R,
     ]
 
@@ -288,7 +314,8 @@ function _build_compact(model::StaticConfigurationModel; name::Symbol)
     variables = Dict{Symbol, Any}(:θ => θ, :R => R)
     observables = Dict{Symbol, Any}(:S => S, :I => I, :ψ_θ => ψ_θ)
 
-    return EdgeModelSystem(simplified, variables, observables)
+    metadata = Dict{Symbol, Any}(:rho_param => ρ)
+    return EdgeModelSystem(simplified, variables, observables, metadata)
 end
 
 # --- Expanded φ-variable formulation ---
@@ -299,6 +326,8 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     D = D_nounits
 
     θ = only(@variables θ(t))
+    ρ = _seed_parameter()
+    q = 1 - ρ
 
     # Create φ variables for each non-susceptible stage
     phi = Dict{Symbol, Any}()
@@ -307,7 +336,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
         phi[stage.name] = only(@variables $(varname)(t))
     end
 
-    # Susceptible φ is algebraic: φ_S = ψ'(θ)/ψ'(1)
+    # Susceptible φ is algebraic: φ_S = (1-ρ)·ψ'(θ)/ψ'(1)
     phi_S = only(@variables $(Symbol("phi_", prog.susceptible))(t))
 
     # PGF evaluations
@@ -316,14 +345,16 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
 
-    phi_S_expr = Symbolics.simplify(ψ_prime_θ / ψ_prime_1)
+    phi_S_expr = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
 
     # Edge hazard: total transmission rate across test edge
     edge_hazard = Symbolics.simplify(sum(
         stage.transmission_rate * phi[stage.name] for stage in prog.stages
     ))
 
-    # Excess hazard: edge_hazard · ψ''(θ)/ψ'(θ)
+    # Excess hazard: edge_hazard · ψ''(θ)/ψ'(θ).  The (1-ρ) factor lives inside
+    # phi_S, so the inflow term `excess_hazard * phi_S` already carries it; do
+    # NOT multiply by (1-ρ) again here.
     excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
 
     S_pop = only(@variables S(t))
@@ -336,7 +367,8 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
-    incidence = Symbolics.simplify(edge_hazard * ψ_prime_θ)
+    # Population incidence: -dS/dt = (1-ρ)·ψ'(θ)·edge_hazard
+    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
 
     # Build equations
     eqs = Equation[]
@@ -370,7 +402,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -392,6 +424,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     )
 
     metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
+    metadata[:rho_param] = ρ
     metadata[:edge_seed_groups] = Any[
         (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),
     ]
@@ -484,32 +517,34 @@ end
 
 function default_initial_conditions(model::EdgeModelSystem; ε = 1e-3, seed_fraction = ε)
     ic = Dict{Any, Float64}()
+    # Set θ(0) = 1 (no transmission yet) and all population/edge stage
+    # variables to zero. Seed mass goes into the entry stage via metadata
+    # below, and ρ (the initial-infected fraction parameter) is set explicitly.
     for (sym, var) in model.variables
         if startswith(string(sym), "θ")
-            ic[var] = 1.0 - seed_fraction
+            ic[var] = 1.0
         else
             ic[var] = 0.0
         end
     end
-    for group in get(model.metadata, :seed_groups, Any[])
-        susceptible_value = Symbolics.simplify(Symbolics.substitute(group.susceptible_expr, ic))
-        susceptible_numeric = _maybe_to_float64(susceptible_value)
-        seed_mass = isnothing(susceptible_numeric) ? seed_fraction :
-            max(0.0, 1.0 - susceptible_numeric)
-        ic[group.entry] = seed_mass
+    # ρ parameter: the canonical "initial infected fraction" embedded in the
+    # algebraic relations S = (1-ρ)·ψ(θ), φ_S = (1-ρ)·ψ'(θ)/ψ'(1).
+    if haskey(model.metadata, :rho_param)
+        ic[model.metadata[:rho_param]] = Float64(seed_fraction)
     end
-    # Seed entry edge variable so transmission can start. In Miller's expanded
-    # EBCM, φ_S(t) = ψ'(θ)/ψ'(1) is algebraic, and the entry-stage edge
-    # probability satisfies φ_entry(0) = θ(0) - φ_S(θ(0)) when other φ's are 0.
-    # Without this, φ_entry(0) = 0 implies edge_hazard(0) = 0 and the epidemic
-    # never starts. We substitute the full ic dict so the formula works for
-    # multivariate (multi-type, clustered) cases where φ_S depends on several θ.
-    # Falls back to seed_fraction if substitution remains symbolic.
-    # Explicit assignments: list of (var, expr) pairs. Each `expr` is
-    # substituted with the current `ic` (after the θ defaults and seed_groups
-    # step) and the resulting numeric value is written into `ic[var]`.
-    # Used by builders (e.g., `build_sis_reinfection`) that need to seed
-    # additional state variables beyond the single entry stage.
+    if haskey(model.metadata, :rho_params)
+        # Multi-type case: vector of (param, weight) pairs (or vector of params
+        # if uniform seeding). Each ρ_j is set to seed_fraction by default.
+        for entry in model.metadata[:rho_params]
+            param = entry isa Tuple ? entry[1] : entry
+            ic[param] = Float64(seed_fraction)
+        end
+    end
+    for group in get(model.metadata, :seed_groups, Any[])
+        ic[group.entry] = Float64(seed_fraction)
+    end
+    # Seed entry edge variable so transmission can start. Under the explicit-ρ
+    # convention with θ(0)=1, φ_S(0) = (1-ρ)·1 = 1-ρ, so φ_entry(0) = ρ.
     for assignment in get(model.metadata, :explicit_assignments, Any[])
         var, expr = assignment
         substituted = Symbolics.simplify(Symbolics.substitute(expr, ic))
@@ -522,16 +557,18 @@ function default_initial_conditions(model::EdgeModelSystem; ε = 1e-3, seed_frac
         ic[assignment.var] = Float64(assignment.value(seed_fraction))
     end
     for group in get(model.metadata, :edge_seed_groups, Any[])
-        θ_val = haskey(group, :theta) ? get(ic, group.theta, nothing) : nothing
+        # With θ(0)=1 and the (1-ρ) factor inside φ_S, φ_entry(0) reduces to ρ.
+        # We compute it from the symbolic phi_S_expr for robustness across
+        # multivariate (multi-type / clustered) cases.
         phi_S_subst = Symbolics.simplify(Symbolics.substitute(group.phi_S_expr, ic))
         phi_S_numeric = _maybe_to_float64(phi_S_subst)
+        θ_val = haskey(group, :theta) ? get(ic, group.theta, nothing) : nothing
         if phi_S_numeric !== nothing && θ_val !== nothing
             ic[group.entry] = max(0.0, θ_val - phi_S_numeric)
         elseif phi_S_numeric !== nothing
-            # No single θ identified (multivariate case): seed with 1 - φ_S.
             ic[group.entry] = max(0.0, 1.0 - phi_S_numeric)
         else
-            ic[group.entry] = seed_fraction
+            ic[group.entry] = Float64(seed_fraction)
         end
     end
     return ic
@@ -612,6 +649,8 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
 
     θ = only(@variables θ(t))
+    ρ = _seed_parameter()
+    q = 1 - ρ
 
     # φ variables for each non-susceptible stage
     phi = Dict{Symbol, Any}()
@@ -638,9 +677,8 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
 
-    # φ_S algebraic: for dynamic networks, φ_S = ψ'(θ)/ψ'(1) still holds
-    # because it represents the probability a random active neighbor is susceptible
-    phi_S_expr = Symbolics.simplify(ψ_prime_θ / ψ_prime_1)
+    # φ_S algebraic: with explicit seed ρ, φ_S = (1-ρ)·ψ'(θ)/ψ'(1)
+    phi_S_expr = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
 
     # Edge hazard (from active edges only)
     edge_hazard = Symbolics.simplify(sum(
@@ -660,17 +698,14 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     push!(eqs, phi_S ~ phi_S_expr)
 
     # θ ODE: active edges that transmit OR break
-    # dθ/dt = -edge_hazard - η₂·(φ_S + Σ φ_stage) + η₁·φ_D
-    # When an active edge breaks, it becomes dormant (leaves θ).
-    # When a dormant edge forms, it becomes active (enters θ).
     active_phi_sum = phi_S + sum(phi[s.name] for s in prog.stages)
     push!(eqs, D(θ) ~ Symbolics.simplify(-edge_hazard - η₂ * active_phi_sum + η₁ * phi_D))
 
-    # φ_D ODE: dormant edges
-    # dφ_D/dt = η₂·(φ_S + Σ φ_stage) - η₁·φ_D
+    # φ_D ODE
     push!(eqs, D(phi_D) ~ Symbolics.simplify(η₂ * active_phi_sum - η₁ * phi_D))
 
-    incidence = Symbolics.simplify(edge_hazard * ψ_prime_θ)
+    # Population incidence (1-ρ factor on susceptible side)
+    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
 
     # φ ODEs for each disease stage
     for stage in prog.stages
@@ -686,25 +721,18 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
         push!(inflow_terms, η₁ * phi_D * pop[stage.name])
         inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
 
-        # Outflow: transmission + progression + edge breaking
         outflow_terms = Any[stage.transmission_rate * φ_var]
         for tr in outgoing[stage.name]
             push!(outflow_terms, tr.rate * φ_var)
         end
-        push!(outflow_terms, η₂ * φ_var)  # Edge breaking moves to dormant
+        push!(outflow_terms, η₂ * φ_var)
         outflow = foldl(+, outflow_terms)
-
-        # Inflow from dormant: when a dormant edge forms to a node in this stage
-        # The probability a dormant stub connects to stage m is proportional to
-        # the population fraction in stage m. For SIR, this is handled by η₁.
-        # In the simple model, newly formed edges connect to a random node,
-        # so the fraction in each state matches the population proportions.
 
         push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -726,6 +754,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     )
 
     metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
+    metadata[:rho_param] = ρ
     metadata[:edge_seed_groups] = Any[
         (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),
     ]
@@ -774,6 +803,10 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
     t = t_nounits
     D = D_nounits
 
+    # Per-type seed fraction parameters: ρ_j for j in types.
+    # Susceptible-side expressions for type j get a (1-ρ_j) factor.
+    rho = Dict{Symbol, Any}(j => only(@parameters $(Symbol("ρ_", j))) for j in types)
+    q = Dict{Symbol, Any}(j => 1 - rho[j] for j in types)
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
@@ -844,8 +877,8 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
         sub_ones = Dict{Any, Any}(v => 1 for v in pgf_j.variables)
         denominator = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_expr, sub_ones)))
 
-        push!(eqs, phi_S[(j, l)] ~ Symbolics.simplify(numerator / denominator))
-        phi_S_expr[(j, l)] = Symbolics.simplify(numerator / denominator)
+        push!(eqs, phi_S[(j, l)] ~ Symbolics.simplify(q[j] * numerator / denominator))
+        phi_S_expr[(j, l)] = Symbolics.simplify(q[j] * numerator / denominator)
     end
 
     # --- Edge hazard and excess hazard per type pair ---
@@ -900,7 +933,9 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
         for j in types
             push!(incidence_terms, edge_hazard[(j, l)] * susceptible_partial[(l, j)])
         end
-        incidence[l] = Symbolics.simplify(_sum_expr(incidence_terms))
+        # (1-ρ_l) factor: probability the type-l node being infected was
+        # initially susceptible (rather than seeded as initial infective).
+        incidence[l] = Symbolics.simplify(q[l] * _sum_expr(incidence_terms))
     end
 
     # --- θ ODEs ---
@@ -956,7 +991,7 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
 
             push!(eqs, D(pop_var) ~ Symbolics.simplify(inflow - outflow))
         end
-        push!(eqs, S_pop[l] ~ ψ_at_theta[l])
+        push!(eqs, S_pop[l] ~ q[l] * ψ_at_theta[l])
         push!(eqs, I_pop[l] ~ _sum_stage_populations(pop, [(stage, l) for stage in infected]))
     end
 
@@ -994,6 +1029,7 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
     end
 
     metadata = Dict{Symbol, Any}(
+        :rho_params => Any[rho[j] for j in types],
         :seed_groups => Any[
             (; entry = pop[(prog.entry, l)], susceptible_expr = ψ_at_theta[l]) for l in types
         ],
@@ -1034,6 +1070,9 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
     recovered = _recovered_stages(prog, outgoing)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
 
+    ρ = _seed_parameter()
+    q = 1 - ρ
+
     # θ₂ = single-edge survivor, θ₃ = triangle-edge survivor
     θ₂ = only(@variables θ₂(t))
     θ₃ = only(@variables θ₃(t))
@@ -1067,13 +1106,13 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
     # φ2_S = g_x(θ₂, θ₃²) / g_x(1, 1) — excess degree for single edges
     gx_theta = _eval_clustered_deriv(model.pgf, :single, 1, θ₂, θ₃^2)
     gx_1 = _eval_clustered_deriv(model.pgf, :single, 1, 1, 1)
-    phi2_S_expr = Symbolics.simplify(gx_theta / gx_1)
+    phi2_S_expr = Symbolics.simplify(q * gx_theta / gx_1)
 
-    # φ3_S = g_y(θ₂, θ₃²) · θ₃ / g_y(1, 1) — excess degree for triangle edges
+    # φ3_S = (1-ρ)·g_y(θ₂, θ₃²) · θ₃ / g_y(1, 1) — excess degree for triangle edges
     # (chain rule: d/dθ₃ g(θ₂, θ₃²) = 2θ₃ g_y(θ₂, θ₃²))
     gy_theta = _eval_clustered_deriv(model.pgf, :triangle, 1, θ₂, θ₃^2)
     gy_1 = _eval_clustered_deriv(model.pgf, :triangle, 1, 1, 1)
-    phi3_S_expr = Symbolics.simplify(gy_theta * θ₃ / gy_1)
+    phi3_S_expr = Symbolics.simplify(q * gy_theta * θ₃ / gy_1)
 
     # Edge hazards
     edge_hazard2 = Symbolics.simplify(sum(
@@ -1114,7 +1153,7 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
         ) / (gy_theta * 2θ₃),
     )
 
-    incidence = Symbolics.simplify(gx_theta * edge_hazard2 + 2 * θ₃ * gy_theta * edge_hazard3)
+    incidence = Symbolics.simplify(q * (gx_theta * edge_hazard2 + 2 * θ₃ * gy_theta * edge_hazard3))
 
     eqs = Equation[]
 
@@ -1165,7 +1204,7 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ g_at_theta)
+    push!(eqs, S_pop ~ q * g_at_theta)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -1185,6 +1224,7 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
     )
 
     metadata = _default_seed_metadata(pop[prog.entry], g_at_theta)
+    metadata[:rho_param] = ρ
     metadata[:edge_seed_groups] = Any[
         (; entry = phi2[prog.entry], theta = θ₂, phi_S_expr = phi2_S_expr),
         (; entry = phi3[prog.entry], theta = θ₃, phi_S_expr = phi3_S_expr),

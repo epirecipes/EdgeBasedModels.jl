@@ -134,6 +134,11 @@ function _build_subsystem_equations(model::StaticConfigurationModel, prefix::Sym
     t = t_nounits
     D = D_nounits
 
+    # Per-subsystem seed-fraction parameter ρ_<prefix>; susceptible-side
+    # algebraic relations get a (1-ρ) factor (Miller 2011 Option B).
+    ρ = only(@parameters $(Symbol(:ρ_, prefix)))
+    q = 1 - ρ
+
     # θ variable — named θ_<prefix> so default_initial_conditions recognises it
     θ = only(@variables $(Symbol(:θ_, prefix))(t))
 
@@ -153,7 +158,7 @@ function _build_subsystem_equations(model::StaticConfigurationModel, prefix::Sym
     ψ_prime_1  = _eval_pgf_deriv(model.pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
 
-    phi_S_expr = Symbolics.simplify(ψ_prime_θ / ψ_prime_1)
+    phi_S_expr = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
 
     edge_hazard = Symbolics.simplify(sum(
         stage.transmission_rate * phi[stage.name] for stage in prog.stages))
@@ -171,7 +176,7 @@ function _build_subsystem_equations(model::StaticConfigurationModel, prefix::Sym
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
-    incidence = Symbolics.simplify(edge_hazard * ψ_prime_θ)
+    incidence = Symbolics.simplify(q * edge_hazard * ψ_prime_θ)
 
     # ---- Build equations (same logic as _build_expanded) ----
     eqs = Equation[]
@@ -204,7 +209,7 @@ function _build_subsystem_equations(model::StaticConfigurationModel, prefix::Sym
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     # ---- Collect variable / observable dicts ----
@@ -238,6 +243,7 @@ function _build_subsystem_equations(model::StaticConfigurationModel, prefix::Sym
         S_pop       = S_pop,
         I_pop       = I_pop,
         progression = prog,
+        rho         = ρ,
         seed_groups = Any[(; entry = pop[prog.entry], susceptible_expr = ψ_θ)],
         edge_seed_groups = Any[
             (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),
@@ -256,6 +262,7 @@ function build_edge_system(model::TensorModel; name::Symbol = :tensor_ebm)
     all_obs  = Dict{Symbol, Any}()
     seed_groups = Any[]
     edge_seed_groups = Any[]
+    rho_params = Any[]
 
     for (prefix, submodel) in model.components
         sub = _build_subsystem_equations(submodel, prefix)
@@ -264,11 +271,13 @@ function build_edge_system(model::TensorModel; name::Symbol = :tensor_ebm)
         merge!(all_obs,  sub.observables)
         append!(seed_groups, sub.seed_groups)
         append!(edge_seed_groups, sub.edge_seed_groups)
+        push!(rho_params, sub.rho)
     end
 
     sys      = System(all_eqs, t; name = name)
     compiled = mtkcompile(sys)
     metadata = Dict{Symbol, Any}(
+        :rho_params => rho_params,
         :seed_groups => seed_groups,
         :edge_seed_groups => edge_seed_groups,
     )
@@ -322,6 +331,7 @@ function build_edge_system(model::ComposedModel; name::Symbol = :composed_ebm)
     all_vars = merge(sub1.variables, sub2.variables)
     all_obs  = merge(sub1.observables, sub2.observables)
     metadata = Dict{Symbol, Any}(
+        :rho_params => Any[sub1.rho, sub2.rho],
         :seed_groups => vcat(sub1.seed_groups, sub2.seed_groups),
         :edge_seed_groups => vcat(sub1.edge_seed_groups, sub2.edge_seed_groups),
     )
