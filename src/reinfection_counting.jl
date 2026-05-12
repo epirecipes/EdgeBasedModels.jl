@@ -161,9 +161,9 @@ An `EdgeModelSystem` exposing:
 - `L = 0` is the unstratified two-state edge model `{S_0, I_0}`.
 - For `L = 1` the dynamics distinguish the never-infected susceptibles
   (`S_0`) from the recovered susceptibles (`S_1`).
-- Initial conditions use EdgeBasedModels' usual `seed_fraction` convention:
-  `seed_fraction` is converted through the PGF as
-  `S_0(0)=ψ(1-seed_fraction)`, `I_entry(0)=1-S_0(0)`.
+- Initial conditions use EdgeBasedModels' explicit-ρ `seed_fraction`
+  convention: the initial node-level infected fraction is `seed_fraction`
+  directly, with `S_0(0) = 1 - seed_fraction`, `I_entry(0) = seed_fraction`.
 """
 function build_sis_reinfection(pgf::DegreePGF, β, γ, L::Integer;
                                name::Symbol = :sis_reinf_ebm)
@@ -323,9 +323,10 @@ function build_sis_reinfection(pgf::DegreePGF, β, γ, L::Integer;
     )
 
     entry_I = L == 0 ? :I_0 : :I_1
-    initial_S0(seed_fraction) =
-        _to_float64(_cleanup_exp_zero(Symbolics.simplify(_eval_pgf(pgf, 1.0 - seed_fraction))))
-    initial_I(seed_fraction) = max(0.0, 1.0 - initial_S0(seed_fraction))
+    # Under the explicit-ρ convention, `seed_fraction` is the initial
+    # node-level infected fraction directly (Miller 2011 Option B).
+    initial_S0(seed_fraction) = max(0.0, 1.0 - seed_fraction)
+    initial_I(seed_fraction)  = seed_fraction
     initial_node(sym::Symbol, seed_fraction) =
         sym == :S_0 ? initial_S0(seed_fraction) :
         sym == entry_I ? initial_I(seed_fraction) : 0.0

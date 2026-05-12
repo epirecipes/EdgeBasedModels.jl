@@ -66,10 +66,9 @@ initial_infected = collect(1:round(Int, ε_val * N))
 # Degenerate PGF for a k-regular network: ψ(z) = z^k
 regular_pgf(n::Int) = polynomial_pgf(vcat(zeros(n), [1.0]))
 
-# EBCM initial conditions are expressed as an edge non-transmission deficit:
-# θ(0) = 1 - edge_seed.  For ψ(z)=z^k, node prevalence is
-# I(0) = 1 - ψ(θ(0)), so match the node-based/Gillespie ε by inversion.
-edge_seed = 1 - (1 - ε_val)^(1 / k)
+# Under the explicit-ρ convention, `seed_fraction` directly sets the
+# initial node prevalence: ρ = ε_val, with θ(0) = 1, S(0) = (1-ρ)·ψ(1).
+node_seed = ε_val
 ```
 
 ## Stochastic ground truth (Gillespie SSA)
@@ -119,7 +118,7 @@ $I = 1-S$, where $\phi_I = \theta - \psi'(\theta)/\psi'(1)$.
 ```{julia}
 ebcm_sis = build_sis(regular_pgf(k), β_val, γ_val)
 
-ic_sis = default_initial_conditions(ebcm_sis; seed_fraction = edge_seed)
+ic_sis = default_initial_conditions(ebcm_sis; seed_fraction = node_seed)
 sol_sis = solve_epidemic(ebcm_sis;
                           tspan  = (0.0, tmax),
                           init   = ic_sis,
@@ -143,7 +142,7 @@ trajectory.
 ```{julia}
 L_reinf = 1
 ebcm_reinf = build_sis_reinfection(regular_pgf(k), β_val, γ_val, L_reinf)
-ic_reinf = default_initial_conditions(ebcm_reinf; seed_fraction = edge_seed)
+ic_reinf = default_initial_conditions(ebcm_reinf; seed_fraction = node_seed)
 sol_reinf = solve_epidemic(ebcm_reinf;
                            tspan  = (0.0, tmax),
                            init   = ic_reinf,

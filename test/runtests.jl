@@ -1389,8 +1389,8 @@ import Catalyst
                                    abstol = 1e-9, reltol = 1e-9, saveat = 0.5)
 
             @test haskey(sys_r.variables, :edge_S_0_I_0)
-            S0 = exp(-5.0e-2)
-            I0 = 1 - S0
+            S0 = 1 - 1e-2
+            I0 = 1e-2
             @test ic_r[sys_r.variables[:S_0]] ≈ S0 atol = 1e-12
             @test ic_r[sys_r.variables[:I_0]] ≈ I0 atol = 1e-12
             @test ic_r[sys_r.variables[:edge_S_0_I_0]] ≈ 5.0 * S0 * I0 atol = 1e-12

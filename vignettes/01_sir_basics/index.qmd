@@ -159,10 +159,11 @@ I_exp = compartment(sol_exp, model_expanded, :I)
 
 ```{julia}
 #| label: fig-sir-comparison
-#| fig-cap: "Compact (solid) and expanded (dashed) formulations give identical results."
-plot(sol.t, I_vals, label = "I (compact)", linewidth = 3, color = :red)
-plot!(sol_exp.t, I_exp, label = "I (expanded)", linewidth = 2, color = :red,
-      linestyle = :dash)
+#| fig-cap: "Expanded (line) and compact (markers) formulations overlap exactly."
+plot(sol_exp.t, I_exp, label = "I (expanded)", linewidth = 2, color = :red)
+scatter!(sol.t[1:4:end], I_vals[1:4:end], label = "I (compact)",
+         markershape = :circle, markersize = 4, markerstrokewidth = 0,
+         color = :black)
 xlabel!("Time")
 ylabel!("Fraction infected")
 title!("Compact vs Expanded Formulation")
