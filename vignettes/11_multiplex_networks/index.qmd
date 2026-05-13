@@ -85,19 +85,19 @@ end
 
 We start with two contact layers representing distinct social settings:
 
-- **Household**: dense contacts (Poisson mean degree 3), moderate per-contact transmission rate $\beta = 0.3$, recovery rate $\gamma = 0.1$.
-- **Community**: more contacts (Poisson mean degree 8), lower per-contact transmission rate $\beta = 0.1$, same recovery rate.
+- **Household**: dense contacts (Poisson mean degree 3), per-edge transmissibility $T = 0.75$ ($\beta = 0.75$), recovery rate $\gamma = 0.25$.
+- **Community**: more contacts (Poisson mean degree 8), per-edge transmissibility $T = 0.5$ ($\beta = 0.25$), same recovery rate.
 
 ```{julia}
 pgf_hh = poisson_pgf(3.0)
 pgf_cm = poisson_pgf(8.0)
 
 layers_2 = [
-    (:household, pgf_hh, 0.3, 0.1),
-    (:community, pgf_cm, 0.1, 0.1),
+    (:household, pgf_hh, 0.75, 0.25),
+    (:community, pgf_cm, 0.25, 0.25),
 ]
 
-(sys_2, u0_2, tspan_2, p_2) = build_multiplex_sir(layers_2; tspan = (0.0, 100.0))
+(sys_2, u0_2, tspan_2, p_2) = build_multiplex_sir(layers_2; tspan = (0.0, 40.0))
 ```
 
 ```{julia}
@@ -148,16 +148,16 @@ Which layer drives the epidemic? We can answer this by comparing the full two-la
 
 ```{julia}
 layers_hh_only = [
-    (:household, pgf_hh, 0.3, 0.1),
-    (:community, pgf_cm, 0.0, 0.1),  # community switched off
+    (:household, pgf_hh, 0.75, 0.25),
+    (:community, pgf_cm, 0.0, 0.25),  # community switched off
 ]
 layers_cm_only = [
-    (:household, pgf_hh, 0.0, 0.1),  # household switched off
-    (:community, pgf_cm, 0.1, 0.1),
+    (:household, pgf_hh, 0.0, 0.25),  # household switched off
+    (:community, pgf_cm, 0.25, 0.25),
 ]
 
-(sys_hh, u0_hh, ts_hh, p_hh) = build_multiplex_sir(layers_hh_only; tspan = (0.0, 100.0))
-(sys_cm, u0_cm, ts_cm, p_cm) = build_multiplex_sir(layers_cm_only; tspan = (0.0, 100.0))
+(sys_hh, u0_hh, ts_hh, p_hh) = build_multiplex_sir(layers_hh_only; tspan = (0.0, 40.0))
+(sys_cm, u0_cm, ts_cm, p_cm) = build_multiplex_sir(layers_cm_only; tspan = (0.0, 40.0))
 
 sol_hh = solve(ODEProblem(sys_hh, u0_hh, ts_hh, p_hh), Tsit5(); saveat = 0.5)
 sol_cm = solve(ODEProblem(sys_cm, u0_cm, ts_cm, p_cm), Tsit5(); saveat = 0.5)
@@ -202,9 +202,9 @@ Adding more layers is straightforward. In the compact multiplex implementation u
 
 Consider a population with household, school, and community contacts:
 
-- **Household**: Poisson(3), $\beta = 0.4$, $\gamma = 0.1$ — few but intense contacts.
-- **School**: Poisson(15), $\beta = 0.05$, $\gamma = 0.1$ — many contacts, low per-contact transmission.
-- **Community**: Poisson(5), $\beta = 0.15$, $\gamma = 0.1$ — moderate in both dimensions.
+- **Household**: Poisson(3), $T = 0.8$ ($\beta = 1.0$), $\gamma = 0.25$ — few but intense contacts.
+- **School**: Poisson(15), $T = 1/3$ ($\beta = 0.125$), $\gamma = 0.25$ — many contacts, low per-contact transmission.
+- **Community**: Poisson(5), $T = 0.6$ ($\beta = 0.375$), $\gamma = 0.25$ — moderate in both dimensions.
 
 ```{julia}
 pgf_school = poisson_pgf(15.0)
@@ -212,12 +212,12 @@ pgf_cm3 = poisson_pgf(5.0)
 pgf_hh3 = poisson_pgf(3.0)
 
 layers_3 = [
-    (:household, pgf_hh3,  0.4,  0.1),
-    (:school,    pgf_school, 0.05, 0.1),
-    (:community, pgf_cm3,  0.15, 0.1),
+    (:household, pgf_hh3,    1.0,   0.25),
+    (:school,    pgf_school, 0.125, 0.25),
+    (:community, pgf_cm3,    0.375, 0.25),
 ]
 
-(sys_3, u0_3, ts_3, p_3) = build_multiplex_sir(layers_3; tspan = (0.0, 100.0))
+(sys_3, u0_3, ts_3, p_3) = build_multiplex_sir(layers_3; tspan = (0.0, 40.0))
 sol_3 = solve(ODEProblem(sys_3, u0_3, ts_3, p_3), Tsit5(); saveat = 0.5)
 ```
 
@@ -255,7 +255,7 @@ Despite having the highest mean degree, the school layer has the lowest per-cont
 
 ## Varying Layer Structure
 
-How does the distribution of contacts across layers affect epidemic outcomes? We fix the **total mean contacts** at 10 and vary the allocation between a "close" layer (high $\beta = 0.3$) and a "casual" layer (low $\beta = 0.08$), both with $\gamma = 0.1$.
+How does the distribution of contacts across layers affect epidemic outcomes? We fix the **total mean contacts** at 10 and vary the allocation between a "close" layer ($T = 0.75$, $\beta = 0.75$) and a "casual" layer ($T = 4/9 \approx 0.44$, $\beta = 0.2$), both with $\gamma = 0.25$.
 
 ```{julia}
 #| label: fig-allocation
@@ -266,9 +266,9 @@ final_θ_close = Float64[]
 final_θ_casual = Float64[]
 
 total_contacts = 10.0
-β_close = 0.3
-β_casual = 0.08
-γ_val = 0.1
+β_close = 0.75
+β_casual = 0.2
+γ_val = 0.25
 
 for f in close_fracs
     k_close = f * total_contacts
@@ -281,7 +281,7 @@ for f in close_fracs
         (:casual, pgf_a, β_casual, γ_val),
     ]
 
-    (sys_v, u0_v, ts_v, p_v) = build_multiplex_sir(layers_v; tspan = (0.0, 200.0))
+    (sys_v, u0_v, ts_v, p_v) = build_multiplex_sir(layers_v; tspan = (0.0, 80.0))
     sol_v = solve(ODEProblem(sys_v, u0_v, ts_v, p_v), Tsit5())
 
     R_v = extract_R(sol_v, sys_v)
@@ -357,7 +357,7 @@ for (i, (name, pgf_l, β_l, γ_l)) in enumerate(layers_3)
     modified = collect(layers_3)
     modified[i] = (name, pgf_l, β_l * 0.5, γ_l)
 
-    (sys_int, u0_int, ts_int, p_int) = build_multiplex_sir(modified; tspan = (0.0, 200.0))
+    (sys_int, u0_int, ts_int, p_int) = build_multiplex_sir(modified; tspan = (0.0, 40.0))
     sol_int = solve(ODEProblem(sys_int, u0_int, ts_int, p_int), Tsit5())
 
     R_int = extract_R(sol_int, sys_int)

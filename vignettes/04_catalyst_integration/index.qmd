@@ -76,7 +76,7 @@ R0_target = 2.0
 T_val = R0_target / κ_val
 β_val = T_val * γ_val / (1 - T_val)
 ε = 0.01
-tspan = (0.0, 80.0)
+tspan = (0.0, 40.0)
 
 ic = default_initial_conditions(result; ε = ε)
 params = Dict(κ => κ_val, β => β_val, γ_cat => γ_val)

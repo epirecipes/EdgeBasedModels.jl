@@ -62,7 +62,7 @@ T_poisson = R0_target / κ
 β_poisson = T_poisson * γ / (1 - T_poisson)
 β = β_regular
 seed_fraction = 0.01
-tspan = (0.0, 120.0)
+tspan = (0.0, 40.0)
 saveat = 1.0;
 ```
 

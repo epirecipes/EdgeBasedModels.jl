@@ -37,7 +37,7 @@ using Plots
 pgf = poisson_pgf(κ)
 κ_val = 5.0
 ψ(x) = exp(κ_val * (x - 1))
-tspan = (0.0, 100.0)
+tspan = (0.0, 40.0)
 γ_val = 0.25
 R0_target = 2.0
 seed_fraction = 0.01
@@ -146,7 +146,7 @@ prob_sis = ODEProblem(
         default_initial_conditions(model_sis; seed_fraction = seed_fraction),
         Dict(β => β_val, γ => γ_val, κ => κ_val),
     ),
-    (0.0, 200.0),
+    (0.0, 80.0),
 )
 sol_sis = solve(prob_sis, Tsit5(); saveat = 0.5)
 

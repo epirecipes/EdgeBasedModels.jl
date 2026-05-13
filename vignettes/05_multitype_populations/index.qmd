@@ -143,18 +143,25 @@ We assign numeric parameter values representing a contact structure where Young 
 | $\kappa_{YO}$ | 2 | Young → Old contacts |
 | $\kappa_{OY}$ | 2 | Old → Young contacts |
 | $\kappa_{OO}$ | 4 | Old → Old contacts |
-| $\beta$ | 0.3 | Transmission rate |
-| $\gamma$ | 0.1 | Recovery rate |
+| $\gamma$ | 0.25 | Recovery rate |
+| $T$ | 0.75 | Edge transmissibility |
+| $\beta$ | 0.75 | Transmission rate ($\beta = T\gamma/(1-T)$) |
+
+**Canonical anchor.** This vignette uses $\gamma = 0.25$ and per-edge transmissibility
+$T = \beta/(\beta+\gamma) = 0.75$, giving $\beta = T\gamma/(1-T) = 0.75$.
+$R_0 = T\,\rho(M)$ where $M$ is the next-generation matrix derived from the contact
+structure; preserving $T$ preserves $R_0$.
 
 ```{julia}
 κ_YY_val = 6.0
 κ_YO_val = 2.0
 κ_OY_val = 2.0
 κ_OO_val = 4.0
-β_val = 0.3
-γ_val = 0.1
-ε = 1e-3
-tspan = (0.0, 80.0)
+γ_val = 0.25
+T_val = 0.75
+β_val = T_val * γ_val / (1 - T_val)
+ε = 1e-2
+tspan = (0.0, 40.0)
 ```
 
 Set up initial conditions and parameters:

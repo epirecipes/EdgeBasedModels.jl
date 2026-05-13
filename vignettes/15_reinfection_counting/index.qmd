@@ -75,8 +75,8 @@ pgf = regular_pgf(k)
 L    = 3
 
 system = build_sis_reinfection(pgf, β, γ, L)
-ic     = default_initial_conditions(system; ε = 0.02)
-prob   = ODEProblem(system.system, ic, (0.0, 30.0))
+ic     = default_initial_conditions(system; ε = 0.01)
+prob   = ODEProblem(system.system, ic, (0.0, 40.0))
 sol    = solve(prob, Tsit5(); saveat = 0.25)
 ts     = sol.t
 ```
@@ -147,14 +147,14 @@ g = random_regular_graph(N, k; rng = StableRNG(42))
 
 om   = OutbreakModel(sis_model(), Dict(:β => β, :γ => γ))
 spec = OutbreakSpec(model = om, network = g,
-                    initial = SeedFraction(:I => 0.02),
-                    tspan   = (0.0, 30.0))
+                    initial = SeedFraction(:I => 0.01),
+                    tspan   = (0.0, 40.0))
 
 ens = simulate_ensemble(spec; nsims = 40, seed = 123)
 ```
 
 For each trajectory we histogram the per-node infection counts at
-$t = 30$ and saturate counts above $L$:
+$t = 40$ and saturate counts above $L$:
 
 ```{julia}
 counts = vcat([t.final_infection_counts for t in ens.trajectories]...)
@@ -176,7 +176,7 @@ end
 groupedbar([hist_frac pred],
     label = ["Simulation" "EBCM (layered)"],
     xlabel = "Infection count p", ylabel = "fraction of nodes",
-    title = "Reinfection histogram at t = 30",
+    title = "Reinfection histogram at t = 40",
     bar_position = :dodge,
     xticks = (1:(L+1), string.(0:L)))
 ```

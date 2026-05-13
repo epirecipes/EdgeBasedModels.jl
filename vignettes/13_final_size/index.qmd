@@ -47,14 +47,14 @@ using Plots
 
 The function `final_size(model)` takes a `StaticConfigurationModel` and returns a named tuple `(R_infinity, θ_infinity)` by iterating the fixed-point equation to convergence.
 
-Let us compute the final size for an SIR epidemic on a Poisson network with mean degree $\kappa = 5$, transmission rate $\beta = 0.5$, and recovery rate $\gamma = 0.1$:
+Let us compute the final size for an SIR epidemic on a Poisson network with mean degree $\kappa = 5$, transmission rate $\beta = 1/6 \approx 0.1667$, and recovery rate $\gamma = 0.25$ — anchored to $R_0 = T\kappa = 2$ ($T = \beta/(\beta+\gamma) = 0.4$):
 
 ```{julia}
 pgf = poisson_pgf(5)
 
 sir_prog = DiseaseProgression(
-    [DiseaseStage(:I; transmission_rate=0.5), DiseaseStage(:R)],
-    [DiseaseTransition(:I, :R, 0.1)];
+    [DiseaseStage(:I; transmission_rate=1/6), DiseaseStage(:R)],
+    [DiseaseTransition(:I, :R, 0.25)];
     entry=:I
 )
 model = StaticConfigurationModel(pgf, sir_prog)
@@ -69,8 +69,8 @@ println("θ∞ = $(round(fs.θ_infinity, digits=6))")
 We can verify the analytic final size by running the ODE model to large $t$:
 
 ```{julia}
-sir_system = build_sir(pgf, 0.5, 0.1; form=:expanded)
-ic = default_initial_conditions(sir_system; ε=1e-3)
+sir_system = build_sir(pgf, 1/6, 0.25; form=:expanded)
+ic = default_initial_conditions(sir_system; ε=1e-2)
 prob = ODEProblem(sir_system.system, ic, (0.0, 200.0))
 sol = solve(prob, Tsit5(); saveat=0.5)
 
@@ -84,15 +84,15 @@ The two values agree to high precision, confirming that `final_size` gives the e
 
 ## Final Size vs $R_0$
 
-The relationship between $R_0$ and the final epidemic size produces a classic sigmoid curve. We sweep $R_0$ by varying the transmission rate $\beta$ while holding $\gamma = 0.1$ and $\kappa = 5$ fixed:
+The relationship between $R_0$ and the final epidemic size produces a classic sigmoid curve. We sweep $R_0$ by varying the transmission rate $\beta$ while holding $\gamma = 0.25$ and $\kappa = 5$ fixed (the $R_0 = 2$ canonical anchor sits on this curve at $\beta = 1/6$):
 
 ```{julia}
 #| label: fig-final-size-vs-r0
 #| fig-cap: "Final epidemic size as a function of R₀ for a Poisson(5) network. The epidemic threshold at R₀ = 1 is marked by a dashed line."
-γ_val = 0.1
+γ_val = 0.25
 κ_val = 5
 
-β_range = range(0.01, 1.0, length=200)
+β_range = range(0.01, 2.5, length=200)
 R0_vals = Float64[]
 fs_vals = Float64[]
 
@@ -147,7 +147,7 @@ fs_hetero = Float64[]
 
 for T_val in T_range
     # Back out β from T = β/(β+γ)  →  β = T·γ/(1-T)
-    γ_fix = 0.1
+    γ_fix = 0.25
     β_val = T_val * γ_fix / (1 - T_val)
 
     prog = DiseaseProgression(
@@ -185,10 +185,10 @@ The epidemic probability is then $1 - \psi(1 - T + Tq)$. For $R_0 \leq 1$, the e
 ```{julia}
 #| label: fig-epidemic-probability
 #| fig-cap: "Final size and epidemic probability as functions of R₀. The epidemic probability is always smaller than the final size: even when a major epidemic occurs, some individuals escape infection."
-γ_ep = 0.1
+γ_ep = 0.25
 κ_ep = 5
 
-β_ep_range = range(0.01, 1.0, length=200)
+β_ep_range = range(0.01, 2.5, length=200)
 R0_ep = Float64[]
 fs_ep = Float64[]
 ep_ep = Float64[]
@@ -229,8 +229,8 @@ where $h'(\theta) = T \cdot \psi''(\theta)/\psi'(1)$ is the derivative of the fi
 ```{julia}
 pgf_cb = poisson_pgf(5)
 prog_cb = DiseaseProgression(
-    [DiseaseStage(:I; transmission_rate=0.5), DiseaseStage(:R)],
-    [DiseaseTransition(:I, :R, 0.1)]; entry=:I
+    [DiseaseStage(:I; transmission_rate=1/6), DiseaseStage(:R)],
+    [DiseaseTransition(:I, :R, 0.25)]; entry=:I
 )
 model_cb = StaticConfigurationModel(pgf_cb, prog_cb)
 
@@ -245,10 +245,10 @@ end
 ```{julia}
 #| label: fig-confidence-bands
 #| fig-cap: "95% confidence bands for the final size as a function of R₀, for population sizes N = 100, 1000, and 10000. Bands narrow with increasing N."
-γ_cb = 0.1
+γ_cb = 0.25
 κ_cb = 5
 
-β_cb_range = range(0.025, 1.0, length=150)
+β_cb_range = range(0.025, 2.5, length=150)
 R0_cb = Float64[]
 mean_cb = Float64[]
 lower_100 = Float64[]
@@ -304,7 +304,7 @@ fs_matrix = zeros(length(κ_range_2d), length(T_range_2d))
 
 for (i, κ_val) in enumerate(κ_range_2d)
     for (j, T_val) in enumerate(T_range_2d)
-        γ_fix = 0.1
+        γ_fix = 0.25
         β_val = T_val * γ_fix / (1 - T_val)
         prog = DiseaseProgression(
             [DiseaseStage(:I; transmission_rate=β_val), DiseaseStage(:R)],

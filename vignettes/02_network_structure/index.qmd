@@ -146,7 +146,7 @@ The heterogeneous network has a higher $R_0$ despite having the same mean degree
 ## Epidemic dynamics comparison
 
 ```{julia}
-tspan = (0.0, 100.0)
+tspan = (0.0, 40.0)
 ψ_poisson(x) = exp(5.0 * (x - 1))
 
 # Poisson model

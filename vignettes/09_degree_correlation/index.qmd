@@ -99,7 +99,7 @@ In the neutral case, the neighbor-degree distribution is the same regardless of 
 
 ## R₀ and Assortativity
 
-How does assortativity affect $R_0$? We sweep $r$ from 0 to 1 for a fixed transmissibility $T = 0.75$ ($\beta = 0.3$, $\gamma = 0.1$).
+How does assortativity affect $R_0$? We sweep $r$ from 0 to 1 for a fixed transmissibility $T = 0.75$ ($\beta = 0.75$, $\gamma = 0.25$).
 
 ```{julia}
 T = 0.75

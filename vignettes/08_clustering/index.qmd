@@ -116,7 +116,7 @@ println("Clustered variables:   ", keys(model_clustered.variables))
 We now solve both models with the unclustered Poisson baseline anchored at $R_0 = 2$ ($\beta = 1/6$, $\gamma = 0.25$), and compare the epidemic curves.
 
 ```{julia}
-tspan = (0.0, 80.0)
+tspan = (0.0, 40.0)
 params = Dict(β => β_val, γ => γ_val)
 
 # Unclustered

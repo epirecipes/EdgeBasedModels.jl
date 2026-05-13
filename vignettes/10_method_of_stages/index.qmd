@@ -46,7 +46,7 @@ R0_target = 2.0
 T_val = R0_target / κ_val
 β_val = T_val * γ_val / (1 - T_val)
 ψ(x) = exp(κ_val * (x - 1))
-tspan = (0.0, 80.0)
+tspan = (0.0, 40.0)
 ```
 
 ## Exponential vs Erlang distributions

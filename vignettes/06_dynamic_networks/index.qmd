@@ -79,7 +79,7 @@ T_val = R0_target / κ_val
 ```{julia}
 ic_static = default_initial_conditions(static_result; seed_fraction = seed_fraction)
 p_static = Dict(β => β_val, γ => γ_val, κ => κ_val)
-tspan = (0.0, 50.0)
+tspan = (0.0, 40.0)
 prob_static = ODEProblem(static_result.system, merge(ic_static, p_static), tspan)
 sol_static = solve(prob_static, Tsit5())
 ```

@@ -91,7 +91,7 @@ seed_fraction = 0.01
 κ_excess = κ_val
 T_val = R0_target / κ_excess
 β_val = T_val * γ_val / (1 - T_val)
-tspan = (0.0, 80.0)
+tspan = (0.0, 40.0)
 prob = ODEProblem(
     model_compact.system,
     merge(
