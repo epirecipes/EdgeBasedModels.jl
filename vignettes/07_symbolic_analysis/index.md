@@ -258,7 +258,7 @@ end
       Differential(t, 1)(pop_R(t)) ~ pop_I(t)*γ
       Differential(t, 1)(pop_I(t)) ~ -pop_I(t)*γ + exp((-1 + θ(t))*κ)*phi_I(t)*β*κ*(1 - ρ)
       Differential(t, 1)(phi_R(t)) ~ phi_I(t)*γ
-      Differential(t, 1)(phi_I(t)) ~ -phi_I(t)*(β + γ) + phi_S(t)*phi_I(t)*β*κ
+      Differential(t, 1)(phi_I(t)) ~ (exp(0)*phi_I(t)*(β + γ) - exp((-1 + θ(t))*κ)*phi_I(t)*β*κ*(1 - ρ)) / (-exp(0))
       Differential(t, 1)(θ(t)) ~ -phi_I(t)*β
 
 We can also inspect the state variables and observables:
@@ -286,8 +286,8 @@ end
 ```
 
     Observed (algebraic) variables:
-      phi_S(t) ~ (exp((-1 + θ(t))*κ)*(1 - ρ)) / exp(0)
       S(t) ~ exp((-1 + θ(t))*κ)*(1 - ρ)
+      phi_S(t) ~ (exp((-1 + θ(t))*κ)*(1 - ρ)) / exp(0)
       I(t) ~ pop_I(t)
 
 The expanded form makes the edge-level dynamics explicit: each $\varphi$
@@ -315,7 +315,7 @@ end
       Differential(t, 1)(pop_E(t)) ~ -pop_E(t)*σ + exp((-1 + θ(t))*κ)*phi_I(t)*β*κ*(1 - ρ)
       Differential(t, 1)(phi_R(t)) ~ phi_I(t)*γ
       Differential(t, 1)(phi_I(t)) ~ phi_E(t)*σ - phi_I(t)*(β + γ)
-      Differential(t, 1)(phi_E(t)) ~ -phi_E(t)*σ + phi_S(t)*phi_I(t)*β*κ
+      Differential(t, 1)(phi_E(t)) ~ (phi_E(t)*exp(0)*σ - exp((-1 + θ(t))*κ)*phi_I(t)*β*κ*(1 - ρ)) / (-exp(0))
       Differential(t, 1)(θ(t)) ~ -phi_I(t)*β
 
 ## Parameter Sensitivity of $R_0$
