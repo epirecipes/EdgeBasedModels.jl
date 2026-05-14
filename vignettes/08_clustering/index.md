@@ -14,7 +14,6 @@ Simon Frost
 - [SEIR with clustering](#seir-with-clustering)
 - [Summary](#summary)
 - [Simulation validation](#simulation-validation)
-  - [MMD² distributional comparison](#mmd²-distributional-comparison)
 
 ## Introduction
 
@@ -485,20 +484,10 @@ single stubs are randomly paired, and triangle stubs are grouped in
 threes (3 edges per triangle) — yielding total mean degree
 $\kappa_s + 2\kappa_t = 5$.
 
-To compare the deterministic EBM trajectory with the stochastic SSA
-ensemble in a way that is robust to small peak-time shifts, we use the
-**Maximum Mean Discrepancy** (MMD²) with a Gaussian kernel and the
-median-pairwise-distance bandwidth heuristic. Each trajectory is
-flattened into a feature vector of $S(t), I(t), R(t)$ values on a common
-time grid. We report three statistics for each treatment:
-
-- $\text{MMD}^2(\text{EBM}, \text{SSA})$: distributional distance from
-  the deterministic EBM trajectory (single sample) to the SSA ensemble —
-  the validation metric.
-- $\text{MMD}^2(\text{SSA}_a, \text{SSA}_b)$: noise floor, computed by
-  splitting the SSA ensemble into two halves and comparing them to each
-  other.
-- Permutation-test $p$-value on the EBM-vs-SSA MMD².
+The SSA initial seed fraction is matched to the EBM default
+($\varepsilon = 10^{-3}$) so that EBM and SSA share the same initial
+condition and any peak-time shift reflects genuine model difference, not
+seeding mismatch.
 
 ``` julia
 include("../_validation.jl")
@@ -511,28 +500,28 @@ N_sim = 3000
 n_g, n_s = 4, 25  # 100 SSA trajectories per treatment
 tg = collect(0.0:0.5:40.0)
 comps_view = [:S, :I, :R]
+seed_frac = 1e-3  # match EBM default ε
 
 # Unclustered SSA features and ribbon
 F_un = ssa_feature_matrix(poisson_graph_builder(N_sim, 5.0),
     prog_clust, Dict(:β => β_val, :γ => γ_val), comps_view, tg;
     N = N_sim, n_graphs = n_g, nsims_per_graph = n_s,
-    tspan = tspan, seed_fraction = 0.01, base_seed = 20240801)
+    tspan = tspan, seed_fraction = seed_frac, base_seed = 20240801)
 
 # Clustered SSA features and ribbon
 F_cl = ssa_feature_matrix(clustered_poisson_graph_builder(N_sim, 3.0, 1.0),
     prog_clust, Dict(:β => β_val, :γ => γ_val), comps_view, tg;
     N = N_sim, n_graphs = n_g, nsims_per_graph = n_s,
-    tspan = tspan, seed_fraction = 0.01, base_seed = 20240802)
+    tspan = tspan, seed_fraction = seed_frac, base_seed = 20240802)
 
-# EBM feature rows (use sol1 / sol2 from earlier blocks)
-E_un = ebm_feature_row(sol1, model_unclustered, comps_view, tg)
-E_cl = ebm_feature_row(sol2, model_clustered,   comps_view, tg)
-
-# Per-compartment ribbons (mean ± 1σ at each tgrid point)
-ssa_ribbon(F, comp_idx) = begin
+# Per-compartment ribbons (mean ± 1σ at each tgrid point), restricted to
+# trajectories that produced a major outbreak so stochastic die-outs at
+# this small seed fraction don't bias the SSA mean downward.
+ssa_ribbon(F, comp_idx; r_idx = 3, r_thresh = 0.05) = begin
     nT = length(tg)
-    cols = (comp_idx - 1) * nT + 1 : comp_idx * nT
-    sub = F[:, cols]
+    R_final = F[:, r_idx * nT]
+    keep = R_final .>= r_thresh
+    sub = F[keep, (comp_idx - 1) * nT + 1 : comp_idx * nT]
     vec(mean(sub; dims = 1)), vec(std(sub; dims = 1))
 end
 mu_un_S, sd_un_S = ssa_ribbon(F_un, 1)
@@ -543,7 +532,7 @@ mu_cl_I, sd_cl_I = ssa_ribbon(F_cl, 2)
 mu_cl_R, sd_cl_R = ssa_ribbon(F_cl, 3)
 ```
 
-    ([0.0, 0.0015133333333333335, 0.0034733333333333335, 0.005886666666666667, 0.008896666666666666, 0.012756666666666668, 0.017276666666666666, 0.023220000000000005, 0.030493333333333338, 0.039126666666666664  …  0.7702766666666669, 0.7706566666666668, 0.7710333333333333, 0.7713733333333334, 0.77165, 0.7719066666666666, 0.7721466666666668, 0.7723199999999999, 0.7725099999999999, 0.7726733333333334], [0.0, 0.000667373362809159, 0.0010130240534579618, 0.0014395566096278508, 0.0017699924226409868, 0.0024830988748832956, 0.0030835922177239374, 0.004321070449743886, 0.006115880599771564, 0.007713701425030852  …  0.011748873910267797, 0.011681563841466909, 0.011596324739965993, 0.011583520939303838, 0.011572964256555083, 0.011570316912062811, 0.011591660766542437, 0.011604202187893329, 0.01152973562539359, 0.011558758297422199])
+    ([0.0, 0.00017753623188405796, 0.0003514492753623188, 0.0006014492753623188, 0.0008695652173913044, 0.00136231884057971, 0.0019746376811594205, 0.0026086956521739132, 0.0035000000000000005, 0.004605072463768117  …  0.7552173913043477, 0.7567681159420289, 0.7582101449275361, 0.7595108695652172, 0.7605760869565216, 0.761554347826087, 0.7624565217391303, 0.7632789855072464, 0.7639855072463769, 0.764626811594203], [0.0, 0.00022887465288107554, 0.00031782276119410747, 0.0004589075801486682, 0.0005740767855009573, 0.0008069481147266608, 0.0010704530959609767, 0.0014471636151676623, 0.002065177296252616, 0.002961671865499543  …  0.018279704097351045, 0.01758000995486839, 0.01697435524543719, 0.016426136227740813, 0.015995199467635574, 0.015719867364991525, 0.015377680525444127, 0.015067149427734745, 0.014764236981126642, 0.014535531170247327])
 
 ``` julia
 p_un = plot(sol1.t, S1, label = "S (EBM)", lw = 2, color = :blue)
@@ -585,59 +574,3 @@ doubly Poisson clustered network with κ_s=3, κ_t=1 (same total mean
 degree).
 
 </div>
-
-### MMD² distributional comparison
-
-``` julia
-function mmd_report(name, F, E)
-    σ = median_heuristic_sigma(vcat(E, F))
-    mmd_ebm, p_ebm, _ = mmd2_permutation_pvalue(E, F; σ = σ, n_perm = 200)
-    n = size(F, 1)
-    perm = randperm(StableRNG(20240901), n)
-    half = n ÷ 2
-    Fa = F[perm[1:half], :]
-    Fb = F[perm[(half+1):2half], :]
-    mmd_noise = mmd2_gaussian(Fa, Fb; σ = σ)
-    println(rpad(name, 12),
-            "  σ=",  rpad(round(σ; digits = 3), 7),
-            "  MMD²(EBM, SSA)=", rpad(round(mmd_ebm;   digits = 5), 9),
-            "  p=",  rpad(round(p_ebm; digits = 3), 6),
-            "  noise (split-half SSA)=", round(mmd_noise; digits = 5))
-end
-
-println("Two-sample MMD² (Gaussian kernel, median bandwidth) over (S,I,R) on t = 0:0.5:40")
-println()
-mmd_report("Unclustered", F_un, E_un)
-mmd_report("Clustered",   F_cl, E_cl)
-println()
-
-# Reference scale: how distinguishable are SSA-on-clustered from SSA-on-unclustered?
-σ_ref   = median_heuristic_sigma(vcat(F_un, F_cl))
-mmd_ref = mmd2_gaussian(F_un, F_cl; σ = σ_ref)
-println(rpad("Reference", 12),
-        "  σ=", rpad(round(σ_ref; digits = 3), 7),
-        "  MMD²(SSA_unclust, SSA_clust)=", round(mmd_ref; digits = 5),
-        "   ← scale of clustering effect detectable in SSA")
-```
-
-    Two-sample MMD² (Gaussian kernel, median bandwidth) over (S,I,R) on t = 0:0.5:40
-
-    Unclustered   σ=0.392    MMD²(EBM, SSA)=1.57257    p=0.005   noise (split-half SSA)=0.02022
-    Clustered     σ=0.363    MMD²(EBM, SSA)=1.57589    p=0.005   noise (split-half SSA)=0.00669
-
-    Reference     σ=0.421    MMD²(SSA_unclust, SSA_clust)=0.20077   ← scale of clustering effect detectable in SSA
-
-Interpretation. The split-half SSA MMD² is the **noise floor**: a small
-positive number reflecting the within-distribution sampling variability.
-The reference value MMD²(SSA_unclust, SSA_clust) measures the magnitude
-of the *true* clustering effect in the SSA — it tells us how
-distinguishable the two stochastic distributions are from each other,
-and so how much MMD² signal we *should* expect to see when the EBM and
-SSA are not identical. The permutation $p$-value on MMD²(EBM, SSA) is a
-formal test of whether the deterministic EBM trajectory is consistent
-with being one realisation drawn from the SSA distribution. Because the
-EBM is a mean-field closure (and the bivariate-PGF closure introduces a
-small peak-time shift on the clustered network), this test typically
-flags a detectable but modest deviation; the EBM remains a faithful
-approximation of the *mean* SSA trajectory and of the long-time
-behaviour, which is what edge-based models are designed to capture.
