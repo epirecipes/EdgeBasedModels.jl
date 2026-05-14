@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Simon Frost">
-<meta name="dcterms.date" content="2026-05-12">
+<meta name="dcterms.date" content="2026-05-13">
 
 <title>Final Size and Equilibrium Analysis</title>
 <style>
@@ -2376,8 +2376,9 @@ window.Quarto = {
   <li><a href="#confidence-bands-for-finite-populations" id="toc-confidence-bands-for-finite-populations" class="nav-link" data-scroll-target="#confidence-bands-for-finite-populations">Confidence Bands for Finite Populations</a></li>
   <li><a href="#final-size-sensitivity-to-network-connectivity" id="toc-final-size-sensitivity-to-network-connectivity" class="nav-link" data-scroll-target="#final-size-sensitivity-to-network-connectivity">Final Size Sensitivity to Network Connectivity</a></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#simulation-validation" id="toc-simulation-validation" class="nav-link" data-scroll-target="#simulation-validation">Simulation validation</a></li>
   </ul>
-</nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li><li><a href="index.md"><i class="bi bi-file-code"></i>Github (GFM)</a></li></ul></div></nav>
 </div>
 <main class="content" id="quarto-document-content">
 
@@ -2401,7 +2402,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 12, 2026</p>
+      <p class="date">May 13, 2026</p>
     </div>
   </div>
   
@@ -2768,6 +2769,11 @@ Figure 5: Final size as a function of mean degree κ and transmissibility T. Th
 <li>The <strong>contour plot</strong> of final size in the <span class="math inline">\((\kappa, T)\)</span> plane provides a clear picture of the epidemic threshold and its dependence on network connectivity.</li>
 </ul>
 <p>These analytic results complement the ODE simulations in earlier vignettes and are particularly valuable for parameter space exploration, sensitivity analysis, and rapid model comparison.</p>
+</section>
+<section id="simulation-validation" class="level2">
+<h2 class="anchored" data-anchor-id="simulation-validation">Simulation validation</h2>
+<p>This vignette focuses on a scenario for which <code>NetworkOutbreaks.jl</code> does not yet provide an out-of-the-box stochastic ground truth (multi-type host graphs with prescribed mixing matrices, time-varying networks via the EBCM rewiring schedule, multiplex layers, degree-correlated configuration models, clustered graphs with prescribed triangle counts, or final-size sweeps over <span class="math inline">\(R_0\)</span>).</p>
+<p>A future revision will add the missing primitives to NetworkOutbreaks.jl and overlay the corresponding Gillespie SSA ribbon here. Until then, see <a href="../01_sir_basics/index.html">vignette 01</a> for the validation pattern on a single-layer Poisson configuration-model network with the same canonical parameters.</p>
 </section>
 
 </main>
