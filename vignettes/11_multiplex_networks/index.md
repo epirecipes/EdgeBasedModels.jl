@@ -136,13 +136,9 @@ layers_2 = [
       β_community, Dict{Any, Float64}(θ_community(t) => 0.999999, θ_household(t) => 0.999999, R(t) => 0.0), (0.0, 40.0), Dict{Any, Float64}(β_household => 0.75, γ_community => 0.25, β_community => 0.25, γ_household => 0.25))
 
 ``` julia
-prob_2 = ODEProblem(sys_2, u0_2, tspan_2, p_2)
+prob_2 = ODEProblem(sys_2, merge(u0_2, p_2), tspan_2)
 sol_2 = solve(prob_2, Tsit5(); saveat = 0.5)
 ```
-
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
 
     retcode: Success
     Interpolation: 1st order linear
@@ -169,25 +165,25 @@ sol_2 = solve(prob_2, Tsit5(); saveat = 0.5)
      40.0
     u: 81-element Vector{Vector{Float64}}:
      [0.0, 0.999999, 0.999999]
-     [1.9037333638324806e-6, 0.9999978830014408, 0.9999981317457995]
-     [5.586270637950471e-6, 0.9999955193673978, 0.9999965099466582]
-     [1.2963795252471611e-5, 0.9999905205961395, 0.9999934812177048]
-     [2.8032481823357808e-5, 0.9999799281013796, 0.9999878201438239]
-     [5.8987473368398796e-5, 0.9999575658099057, 0.9999772563995205]
-     [0.00012317313195520853, 0.9999101341696877, 0.9999575004311371]
-     [0.0002559827226708661, 0.9998101174178753, 0.9999206500158302]
-     [0.0005326887624646913, 0.9995981834564704, 0.9998517358767466]
-     [0.0011063538856580088, 0.9991523848071234, 0.9997232324534551]
+     [3.63279446628779e-6, 0.999995742264062, 0.9999897915403911]
+     [2.422259667017793e-5, 0.9999765605470764, 0.9999382828010519]
+     [0.00014213475595432605, 0.9998661230469152, 0.999643560035654]
+     [0.0008158107420174954, 0.999234796551605, 0.9979606301411036]
+     [0.004546433575994476, 0.9957424583906558, 0.9886719572364643]
+     [0.022311257119507554, 0.979211827512088, 0.9451808429462397]
+     [0.07572686335067384, 0.9306173065698817, 0.8224450832543508]
+     [0.16023638595115797, 0.8577967265479756, 0.6557695976706662]
+     [0.2506693936188328, 0.7863253926489508, 0.5161292964972096]
      ⋮
-     [0.9961425066126374, 0.509915668718441, 0.35993224303696864]
-     [0.9962554251319498, 0.509915091323134, 0.3599309813676528]
-     [0.9963546547899027, 0.5099146805312321, 0.3599304338533057]
-     [0.996441636222471, 0.5099144344437839, 0.35993071603391025]
-     [0.9965177818603123, 0.5099143335673971, 0.35993176550763034]
-     [0.9965844759287668, 0.5099143408142376, 0.3599333419308108]
-     [0.9966430744478575, 0.50991440150203, 0.3599350270179772]
-     [0.99669490523229, 0.5099144433540579, 0.35993622454183616]
-     [0.9967412678914528, 0.5099143764991632, 0.3599361603332753]
+     [0.997756473556317, 0.5009767458991977, 0.2516374960942665]
+     [0.9977905840619087, 0.500976313043348, 0.2517821580952215]
+     [0.997820466090964, 0.5009764647141596, 0.251721918244749]
+     [0.9978466768797258, 0.5009769516341833, 0.25154493193008315]
+     [0.9978698572079168, 0.5009773098758451, 0.2514139455614775]
+     [0.997890472508553, 0.5009773717545006, 0.25138705707824005]
+     [0.99790884218409, 0.5009771438441062, 0.25146188562276606]
+     [0.997925139606422, 0.5009768069772188, 0.2515755715405377]
+     [0.997939392116882, 0.5009767162449962, 0.25160477638012474]
 
 ### Layer dynamics
 
@@ -264,16 +260,9 @@ layers_cm_only = [
 (sys_hh, u0_hh, ts_hh, p_hh) = build_multiplex_sir(layers_hh_only; tspan = (0.0, 40.0))
 (sys_cm, u0_cm, ts_cm, p_cm) = build_multiplex_sir(layers_cm_only; tspan = (0.0, 40.0))
 
-sol_hh = solve(ODEProblem(sys_hh, u0_hh, ts_hh, p_hh), Tsit5(); saveat = 0.5)
-sol_cm = solve(ODEProblem(sys_cm, u0_cm, ts_cm, p_cm), Tsit5(); saveat = 0.5)
+sol_hh = solve(ODEProblem(sys_hh, merge(u0_hh, p_hh), ts_hh), Tsit5(); saveat = 0.5)
+sol_cm = solve(ODEProblem(sys_cm, merge(u0_cm, p_cm), ts_cm), Tsit5(); saveat = 0.5)
 ```
-
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
 
     retcode: Success
     Interpolation: 1st order linear
@@ -300,25 +289,25 @@ sol_cm = solve(ODEProblem(sys_cm, u0_cm, ts_cm, p_cm), Tsit5(); saveat = 0.5)
      40.0
     u: 81-element Vector{Vector{Float64}}:
      [0.0, 0.999999, 0.999999]
-     [1.7418168861796123e-6, 0.9999978829802608, 0.9999991175031239]
-     [4.814268345489551e-6, 0.9999955197981547, 0.9999992211992145]
-     [1.0821747966762235e-5, 0.9999905202395178, 0.9999993127108231]
-     [2.315147529198865e-5, 0.9999799320816687, 0.9999993934693263]
-     [4.888985381271335e-5, 0.9999575647583266, 0.9999994647386696]
-     [0.00010319870730818935, 0.9999101610643433, 0.999999527633424]
-     [0.00021763570317271505, 0.9998101202076266, 0.9999995831380423]
-     [0.0004598024916388071, 0.9995983196636054, 0.9999996321205314]
-     [0.0009695197193934345, 0.9991525238313534, 0.9999996753475557]
+     [1.9682069851703285e-6, 0.9999973539570957, 0.9999991175031212]
+     [5.960822364933464e-6, 0.9999939324789047, 0.9999992211992138]
+     [1.4244389589973176e-5, 0.9999867522749707, 0.9999993127107802]
+     [3.1654318794299666e-5, 0.9999715824689565, 0.999999393469343]
+     [6.827212703831255e-5, 0.9999396022922835, 0.9999994647386083]
+     [0.00014581210139864354, 0.9998718143451505, 0.9999995276334621]
+     [0.00030920178586646066, 0.9997289171760659, 0.9999995831379876]
+     [0.0006549410705557083, 0.9994265237111511, 0.9999996321205747]
+     [0.0013819926810231594, 0.9987907420501887, 0.9999996753475187]
      ⋮
-     [0.9791673714544527, 0.5099153433683767, 0.9999999998768098]
-     [0.9792872652678989, 0.5099145900435029, 0.9999999998915157]
-     [0.9793920775375972, 0.5099141754171672, 0.9999999999043659]
-     [0.9794834275646928, 0.5099140837307381, 0.9999999999155594]
-     [0.9795629533741391, 0.5099142600022587, 0.9999999999252982]
-     [0.9796323117146988, 0.5099146100264463, 0.9999999999337872]
-     [0.9796931780589428, 0.5099150003746933, 0.9999999999412349]
-     [0.9797472466032511, 0.5099152583950658, 0.9999999999478529]
-     [0.979796230267812, 0.509915172212305, 0.999999999953856]
+     [0.9792306230573605, 0.5099140076194297, 0.9999999998775039]
+     [0.9793402265924366, 0.5099140910202603, 0.999999999891754]
+     [0.9794355347944357, 0.5099145179106217, 0.9999999999041369]
+     [0.9795186881804505, 0.5099151325160176, 0.9999999999149347]
+     [0.9795918648460826, 0.5099157223677209, 0.9999999999244357]
+     [0.9796572804654428, 0.5099160183027741, 0.9999999999329348]
+     [0.979717052162368, 0.5099157333625755, 0.999999999940714]
+     [0.9797705466170944, 0.5099153154117279, 0.9999999999476803]
+     [0.97981776202141, 0.5099149834325335, 0.999999999953828]
 
 ``` julia
 θ_hh_only = extract_θ(sol_hh, sys_hh, layer_names_2)
@@ -395,12 +384,8 @@ layers_3 = [
 ]
 
 (sys_3, u0_3, ts_3, p_3) = build_multiplex_sir(layers_3; tspan = (0.0, 40.0))
-sol_3 = solve(ODEProblem(sys_3, u0_3, ts_3, p_3), Tsit5(); saveat = 0.5)
+sol_3 = solve(ODEProblem(sys_3, merge(u0_3, p_3), ts_3), Tsit5(); saveat = 0.5)
 ```
-
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
 
     retcode: Success
     Interpolation: 1st order linear
@@ -427,25 +412,25 @@ sol_3 = solve(ODEProblem(sys_3, u0_3, ts_3, p_3), Tsit5(); saveat = 0.5)
      40.0
     u: 81-element Vector{Vector{Float64}}:
      [0.0, 0.999999, 0.999999, 0.999999]
-     [4.035181039411381e-6, 0.9999981317704423, 0.9999978830768897, 0.999997601312889]
-     [1.2059053202190848e-5, 0.9999965097300056, 0.9999955186507687, 0.9999942461621603]
-     [2.861893446114082e-5, 0.999993480475346, 0.9999905176427427, 0.9999862114638478]
-     [6.353237963023399e-5, 0.9999878196715031, 0.9999799266433688, 0.9999669224731994]
-     [0.0001379180395095931, 0.9999772464263456, 0.9999575206358935, 0.9999206933975028]
-     [0.00029749358848960467, 0.9999575025549644, 0.9999101620946143, 0.9998100556428509]
-     [0.0006425686298901025, 0.9999206041829444, 0.9998099289232673, 0.9995443527816668]
-     [0.001389162095836451, 0.9998517477592871, 0.9995986949361022, 0.9989104665598317]
-     [0.0030116783405372623, 0.9997231235467874, 0.9991537975398073, 0.9973954639208771]
+     [1.783810622744761e-5, 0.9999738293319783, 0.9999904026667394, 0.9999368546517261]
+     [0.00036165574780582514, 0.9994876881811198, 0.9998220269174593, 0.9987529907087456]
+     [0.006487649656226426, 0.9908470081169506, 0.9968225207246775, 0.9778010042627571]
+     [0.057432350354192675, 0.9208477192841362, 0.9720990503295311, 0.81473544654546]
+     [0.15585921429416905, 0.7974321028858508, 0.9257960497877081, 0.5648926152428037]
+     [0.25329408669449993, 0.6931119100724087, 0.8823363202573526, 0.40048708405130645]
+     [0.34063657104773704, 0.6149797281028747, 0.8456547921111012, 0.3084937698010898]
+     [0.4179777923194391, 0.5574665291676003, 0.8151187083133106, 0.2584953174724962]
+     [0.4863054196310205, 0.515288933556277, 0.7897676005269574, 0.2315047862852041]
      ⋮
-     [0.9992533901778872, 0.4357113185231438, 0.669004168566396, 0.29711658937955926]
-     [0.9993339938603532, 0.43571209344347667, 0.6690025147697976, 0.2971207569036151]
-     [0.9994043377661466, 0.4357132969788976, 0.6690013832567686, 0.2971258390446272]
-     [0.9994660644095402, 0.4357145763219518, 0.669000569563543, 0.2971306335628207]
-     [0.9995208282887318, 0.4357154623167825, 0.6689998288429275, 0.297133507770993]
-     [0.9995702958858443, 0.43571536945913064, 0.6689988758643015, 0.2971323985345136]
-     [0.999614863041008, 0.43571463485639866, 0.6689978013261588, 0.2971291365271092]
-     [0.9996541928076319, 0.43571406682277364, 0.6689969047138696, 0.29712706558131485]
-     [0.9996889012199003, 0.4357136275917451, 0.6689961565535301, 0.2971257551363464]
+     [0.9997740028941887, 0.40001827298798553, 0.6666777551677318, 0.19992754090982262]
+     [0.999796979079336, 0.40001826884456937, 0.6666775938090409, 0.19999323313184483]
+     [0.9998172545940696, 0.4000182609174536, 0.6666774591857255, 0.20013218249756473]
+     [0.9998351490716251, 0.40001826013125386, 0.666677348722546, 0.20014089011600394]
+     [0.9998509439627565, 0.40001826596435003, 0.666677258367058, 0.20002838298341405]
+     [0.9998648825118841, 0.4000182692878587, 0.6666771831213587, 0.19996321735418415]
+     [0.999877181371112, 0.40001826764499177, 0.6666771198453879, 0.1999905053746088]
+     [0.9998880343962171, 0.4000182628616879, 0.6666770666848597, 0.20007644320698464]
+     [0.9998976126466488, 0.4000182610466125, 0.6666770230712625, 0.20010831102961008]
 
 ``` julia
 layer_names_3 = [:household, :school, :community]
@@ -528,7 +513,7 @@ for f in close_fracs
     ]
 
     (sys_v, u0_v, ts_v, p_v) = build_multiplex_sir(layers_v; tspan = (0.0, 80.0))
-    sol_v = solve(ODEProblem(sys_v, u0_v, ts_v, p_v), Tsit5())
+    sol_v = solve(ODEProblem(sys_v, merge(u0_v, p_v), ts_v), Tsit5())
 
     R_v = extract_R(sol_v, sys_v)
     θ_v = extract_θ(sol_v, sys_v, [:close, :casual])
@@ -547,67 +532,9 @@ ylabel!("Final infected fraction")
 title!("Contact allocation (total mean = $total_contacts)")
 ```
 
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-
 <div id="fig-allocation">
 
-![](index_files/figure-commonmark/fig-allocation-output-2.svg)
+![](index_files/figure-commonmark/fig-allocation-output-1.svg)
 
 Figure 6: Effect of redistributing fixed total contacts between a high-β
 (close) and low-β (casual) layer. The final epidemic size (1 − S(∞))
@@ -695,7 +622,7 @@ for (i, (name, pgf_l, β_l, γ_l)) in enumerate(layers_3)
     modified[i] = (name, pgf_l, β_l * 0.5, γ_l)
 
     (sys_int, u0_int, ts_int, p_int) = build_multiplex_sir(modified; tspan = (0.0, 40.0))
-    sol_int = solve(ODEProblem(sys_int, u0_int, ts_int, p_int), Tsit5())
+    sol_int = solve(ODEProblem(sys_int, merge(u0_int, p_int), ts_int), Tsit5())
 
     R_int = extract_R(sol_int, sys_int)
     interventions[String(name)] = R_int[end]
@@ -715,19 +642,9 @@ bar(bar_names, bar_vals,
     title = "50% β reduction — which layer to target?")
 ```
 
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-    ┌ Warning: `SciMLBase.ODEProblem(sys, u0, tspan, p; kw...)` is deprecated. Use
-    │ `SciMLBase.ODEProblem(sys, merge(u0, p), tspan)` instead.
-    └ @ ModelingToolkitBase ~/.julia/packages/ModelingToolkitBase/nrHl8/src/deprecations.jl:53
-
 <div id="fig-intervention">
 
-![](index_files/figure-commonmark/fig-intervention-output-2.svg)
+![](index_files/figure-commonmark/fig-intervention-output-1.svg)
 
 Figure 9: Effect of a 50% reduction in β on each layer. Targeting the
 layer with the highest R₀ contribution produces the largest reduction in
@@ -766,6 +683,13 @@ sampled as an independent Poisson(κᵢ) Erdős–Rényi graph; the per-layer
 transmission rate βᵢ enters as the layer’s `layer_rate` weight on a
 unit-rate infection transition.
 
+Note: the default initial conditions returned by `build_multiplex_sir`
+correspond to an infinitesimal seed (`θᵢ(0) = 1 - 10⁻⁶`). For a fair
+comparison with a finite-population SSA seeded at fraction `f`, we
+re-solve the multiplex ODE with matched ICs: each layer’s
+`θᵢ(0) = ψᵢ⁻¹((1 - f)^{1/n})` so that `S(0) = ∏ ψᵢ(θᵢ) = 1 - f`. For
+Poisson(κ) PGFs the inverse is `θ = 1 + log((1-f)^{1/n}) / κ`.
+
 ``` julia
 include("../_validation.jl")
 
@@ -773,7 +697,33 @@ const N_sim = 1000
 const seed_fraction_val = 0.01
 const tgrid_val = collect(0.0:0.5:40.0)
 
-# Build NO model: one infection transition with rate=1, layer_rates carry βᵢ.
+# --- Re-solve the EBCM with seed-fraction-matched ICs -------------------
+# For Poisson(κ) PGF ψ(x) = exp(κ(x-1)), the inverse is ψ⁻¹(y) = 1 + log(y)/κ.
+# We want S(0) = ∏ψᵢ(θᵢ) = 1 - f, so set θᵢ(0) = 1 + log((1-f)^{1/n}) / κᵢ.
+function poisson_θ0(κ, f, n)
+    1.0 + log((1 - f)^(1 / n)) / κ
+end
+const κ_hh, κ_cm = 3.0, 8.0
+θ0_hh = poisson_θ0(κ_hh, seed_fraction_val, 2)
+θ0_cm = poisson_θ0(κ_cm, seed_fraction_val, 2)
+
+(sys_v, u0_v_default, ts_v, p_v) = build_multiplex_sir(layers_2; tspan=(0.0, 40.0))
+u0_v = Dict(u0_v_default)
+for var in collect(keys(u0_v))
+    s = string(var)
+    if occursin("θ_household", s)
+        u0_v[var] = θ0_hh
+    elseif occursin("θ_community", s)
+        u0_v[var] = θ0_cm
+    end
+end
+sol_v = solve(ODEProblem(sys_v, merge(u0_v, p_v), ts_v), Tsit5(); saveat = 0.5)
+θ_v = extract_θ(sol_v, sys_v, layer_names_2)
+S_v = compute_S(θ_v, mean_degrees_2)
+R_v = extract_R(sol_v, sys_v)
+I_v = 1.0 .- S_v .- R_v
+
+# --- Gillespie SSA on MultiplexNetwork ----------------------------------
 no_model_mp = OutbreakModel(
     [:S, :I, :R], [false, true, false],
     [OutbreakTransition(:S, :I, 1.0, :infection; via=[:I]),
@@ -818,9 +768,9 @@ nothing
 ```
 
 ``` julia
-plt = plot(sol_2.t, S_2, color=:green, linewidth=2, label="S (EBCM)")
-plot!(plt, sol_2.t, I_2, color=:red,   linewidth=2, label="I (EBCM)")
-plot!(plt, sol_2.t, R_2, color=:blue,  linewidth=2, label="R (EBCM)")
+plt = plot(sol_v.t, S_v, color=:green, linewidth=2, label="S (EBCM)")
+plot!(plt, sol_v.t, I_v, color=:red,   linewidth=2, label="I (EBCM)")
+plot!(plt, sol_v.t, R_v, color=:blue,  linewidth=2, label="R (EBCM)")
 plot!(plt, tgrid_val, S_mean, ribbon = S_std, color=:green,
       fillalpha=0.2, linealpha=0.6, linewidth=1, label="S (SSA)")
 plot!(plt, tgrid_val, I_mean, ribbon = I_std, color=:red,
@@ -836,14 +786,14 @@ plt
 
 ![](index_files/figure-commonmark/fig-multiplex-validation-output-1.svg)
 
-Figure 10: Two-layer multiplex EBCM (lines) vs Gillespie SSA on a
-MultiplexNetwork host graph (mean ± 1σ ribbons across 5 graphs × 20
-sims). Layer weights βₕₕ=0.75, β𝚌ₘ=0.25; layers are Poisson(3) and
-Poisson(8) on N=1000.
+Figure 10: Two-layer multiplex EBCM (lines, IC matched to a 1% seed) vs
+Gillespie SSA on a MultiplexNetwork host graph (mean ± 1σ ribbons across
+5 graphs × 20 sims). Layers: Poisson(3) household with β=0.75 and
+Poisson(8) community with β=0.25; shared γ=0.25; N=1000.
 
 </div>
 
-The deterministic EBCM trajectories track the stochastic ribbon means
-closely across all three compartments, validating both the per-layer θ
-closure and the new `MultiplexNetwork` Direct SSA in
-`NetworkOutbreaks.jl`.
+With the IC matched, the deterministic EBCM trajectories track the
+stochastic ribbon means closely across all three compartments,
+validating both the per-layer θ closure and the new `MultiplexNetwork`
+Direct SSA in `NetworkOutbreaks.jl`.
