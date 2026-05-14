@@ -1,6 +1,6 @@
 # Multiplex Networks
 Simon Frost
-2026-05-13
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -760,15 +760,90 @@ allocating limited resources across contact settings.
 
 ## Simulation validation
 
-This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does
-not yet provide an out-of-the-box stochastic ground truth (multi-type
-host graphs with prescribed mixing matrices, time-varying networks via
-the EBCM rewiring schedule, multiplex layers, degree-correlated
-configuration models, clustered graphs with prescribed triangle counts,
-or final-size sweeps over $R_0$).
+We validate the two-layer ODE prediction against a stochastic Gillespie
+SSA on `MultiplexNetwork` from `NetworkOutbreaks.jl`. Each layer is
+sampled as an independent Poisson(κᵢ) Erdős–Rényi graph; the per-layer
+transmission rate βᵢ enters as the layer’s `layer_rate` weight on a
+unit-rate infection transition.
 
-A future revision will add the missing primitives to NetworkOutbreaks.jl
-and overlay the corresponding Gillespie SSA ribbon here. Until then, see
-[vignette 01](../01_sir_basics/index.html) for the validation pattern on
-a single-layer Poisson configuration-model network with the same
-canonical parameters.
+``` julia
+include("../_validation.jl")
+
+const N_sim = 1000
+const seed_fraction_val = 0.01
+const tgrid_val = collect(0.0:0.5:40.0)
+
+# Build NO model: one infection transition with rate=1, layer_rates carry βᵢ.
+no_model_mp = OutbreakModel(
+    [:S, :I, :R], [false, true, false],
+    [OutbreakTransition(:S, :I, 1.0, :infection; via=[:I]),
+     OutbreakTransition(:I, :R, 0.25, :spontaneous)];
+    name = :SIR_multiplex)
+
+builder = multiplex_graph_builder(N_sim, [
+    (0.75, poisson_layer(3.0)),  # household weight = β_hh
+    (0.25, poisson_layer(8.0)),  # community  weight = β_cm
+])
+
+n_graphs_val   = 5
+nsims_per_g    = 20
+nsamples       = n_graphs_val * nsims_per_g
+S_runs = Matrix{Float64}(undef, nsamples, length(tgrid_val))
+I_runs = similar(S_runs); R_runs = similar(S_runs)
+rng = StableRNG(20240501)
+row = 1
+for gi in 1:n_graphs_val
+    net = builder(rng)
+    spec = OutbreakSpec(model = no_model_mp, network = net,
+                        initial = SeedFraction(:I => seed_fraction_val),
+                        tspan = (0.0, 40.0))
+    ens = simulate_ensemble(spec; nsims = nsims_per_g,
+                            seed = 20240501 + 1000 * gi,
+                            algorithm = DirectSSA(),
+                            parallel = true)
+    for traj in ens.trajectories
+        for (j, t) in enumerate(tgrid_val)
+            st = state_at(traj, t)
+            S_runs[row, j] = st[no_model_mp.index_of[:S]] / N_sim
+            I_runs[row, j] = st[no_model_mp.index_of[:I]] / N_sim
+            R_runs[row, j] = st[no_model_mp.index_of[:R]] / N_sim
+        end
+        row += 1
+    end
+end
+S_mean = vec(mean(S_runs; dims=1)); S_std = vec(std(S_runs; dims=1))
+I_mean = vec(mean(I_runs; dims=1)); I_std = vec(std(I_runs; dims=1))
+R_mean = vec(mean(R_runs; dims=1)); R_std = vec(std(R_runs; dims=1))
+nothing
+```
+
+``` julia
+plt = plot(sol_2.t, S_2, color=:green, linewidth=2, label="S (EBCM)")
+plot!(plt, sol_2.t, I_2, color=:red,   linewidth=2, label="I (EBCM)")
+plot!(plt, sol_2.t, R_2, color=:blue,  linewidth=2, label="R (EBCM)")
+plot!(plt, tgrid_val, S_mean, ribbon = S_std, color=:green,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="S (SSA)")
+plot!(plt, tgrid_val, I_mean, ribbon = I_std, color=:red,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="I (SSA)")
+plot!(plt, tgrid_val, R_mean, ribbon = R_std, color=:blue,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="R (SSA)")
+xlabel!(plt, "Time"); ylabel!(plt, "Fraction of population")
+title!(plt, "Two-layer multiplex SIR: EBCM vs Gillespie")
+plt
+```
+
+<div id="fig-multiplex-validation">
+
+![](index_files/figure-commonmark/fig-multiplex-validation-output-1.svg)
+
+Figure 10: Two-layer multiplex EBCM (lines) vs Gillespie SSA on a
+MultiplexNetwork host graph (mean ± 1σ ribbons across 5 graphs × 20
+sims). Layer weights βₕₕ=0.75, β𝚌ₘ=0.25; layers are Poisson(3) and
+Poisson(8) on N=1000.
+
+</div>
+
+The deterministic EBCM trajectories track the stochastic ribbon means
+closely across all three compartments, validating both the per-layer θ
+closure and the new `MultiplexNetwork` Direct SSA in
+`NetworkOutbreaks.jl`.

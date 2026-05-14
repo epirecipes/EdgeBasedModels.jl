@@ -1,6 +1,6 @@
 # Counting Reinfections in SIS / SIRS Epidemics
 Simon Frost
-2026-05-13
+2026-05-14
 
 - [Motivation](#motivation)
 - [Setup](#setup)

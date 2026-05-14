@@ -1,6 +1,6 @@
 # Edge-Based vs Pairwise Closure Models
 
-2026-05-13
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -224,7 +224,7 @@ t_p_g, μ_p_g, σ_p_g = gillespie_ribbon(
 
 ``` julia
 plot(t_r_g, μ_r_g[:I], ribbon = σ_r_g[:I], label = "SSA (mean ± 1σ)",
-     color = :gray, fillalpha = 0.3)
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
 plot!(sol_r.t, I_r, label = "EBCM", lw = 3, color = :black)
 plot!(bern_r.t, bern_r.I, label = "Pairwise", lw = 2, ls = :dash, color = 1)
 xlabel!("time"); ylabel!("I(t)")
@@ -235,14 +235,14 @@ title!("Scenario A — 5-regular  (R₀=2, γ=$γ)")
 
 ![](index_files/figure-commonmark/fig-validation-regular-output-1.svg)
 
-Figure 1: Scenario A: SSA ribbon (gray) overlaid with EBCM and pairwise
+Figure 1: Scenario A: SSA ribbon (black) overlaid with EBCM and pairwise
 closures.
 
 </div>
 
 ``` julia
 plot(t_p_g, μ_p_g[:I], ribbon = σ_p_g[:I], label = "SSA (mean ± 1σ)",
-     color = :gray, fillalpha = 0.3)
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
 plot!(sol_p.t, I_p, label = "EBCM", lw = 3, color = :black)
 plot!(keel_p.t, keel_p.I, label = "Pairwise / Keeling", lw = 2, ls = :dot, color = 2)
 plot!(bern_p.t, bern_p.I, label = "Pairwise / Bernoulli", lw = 2, ls = :dash, color = 1)
@@ -254,7 +254,7 @@ title!("Scenario B — Poisson($κ)  (R₀=2, γ=$γ)")
 
 ![](index_files/figure-commonmark/fig-validation-poisson-output-1.svg)
 
-Figure 2: Scenario B: SSA ribbon (gray) overlaid with EBCM and pairwise
+Figure 2: Scenario B: SSA ribbon (black) overlaid with EBCM and pairwise
 closures on Poisson(5).
 
 </div>

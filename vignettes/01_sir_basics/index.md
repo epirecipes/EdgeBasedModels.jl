@@ -1,6 +1,6 @@
 # SIR Model on a Network
 Simon Frost
-2026-05-13
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -468,7 +468,7 @@ end
 
 ``` julia
 plot(tgrid, μI, ribbon = σI, label = "Gillespie SSA (mean ± 1σ)",
-     color = :gray, fillalpha = 0.3, linewidth = 1.5)
+     color = :red, fillalpha = 0.2, linealpha = 0.6, linewidth = 1)
 plot!(sol.t, I_vals, label = "EBCM compact",
       color = :red, linewidth = 2)
 xlabel!("Time")
@@ -481,8 +481,8 @@ title!("EBCM vs Gillespie SSA (Poisson κ=5, R₀=2, N=$N)")
 ![](index_files/figure-commonmark/fig-sir-validation-output-1.svg)
 
 Figure 4: EBCM prediction (red line) versus Gillespie SSA on Erdős–Rényi
-graphs (gray ribbon: mean ± 1σ across \$n_graphs × \$nsims_per_graph
-runs at N=1000).
+graphs (red ribbon: mean ± 1σ across \$n_graphs × \$nsims_per_graph runs
+at N=1000).
 
 </div>
 

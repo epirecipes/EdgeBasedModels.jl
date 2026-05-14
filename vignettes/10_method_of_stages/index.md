@@ -1,6 +1,6 @@
 # Method of Stages: Non-Exponential Distributions
 Simon Frost
-2026-05-13
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -584,7 +584,7 @@ t_g, μ_g, σ_g = gillespie_ribbon(
 
 ``` julia
 plot(t_g, μ_g[:I], ribbon = σ_g[:I], label = "SSA (mean ± 1σ)",
-     color = :gray, fillalpha = 0.3)
+     color = :red, fillalpha = 0.2, linealpha = 0.6)
 plot!(sol_exp.t, I_exp, label = "EBCM exponential",
       color = :red, linewidth = 2)
 xlabel!("Time"); ylabel!("Fraction infected")
@@ -595,7 +595,8 @@ title!("Method-of-stages reference: exponential SIR")
 
 ![](index_files/figure-commonmark/fig-stages-validation-output-1.svg)
 
-Figure 6: Exponential EBCM (red line) vs Gillespie SSA mean ± 1σ (gray).
+Figure 6: Exponential EBCM (red line) vs Gillespie SSA mean ± 1σ (red
+ribbon).
 
 </div>
 

@@ -1,6 +1,6 @@
 # Complex Disease Models
 Simon Frost
-2026-05-13
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -550,10 +550,10 @@ t_sis_g, μ_sis_g, σ_sis_g = gillespie_ribbon(
 EI_ssa = μ_seir[:E] .+ μ_seir[:I]
 σEI_ssa = sqrt.(σ_seir[:E].^2 .+ σ_seir[:I].^2)
 plot(t_sir, μ_sir[:I], ribbon = σ_sir[:I],
-     label = "SSA SIR I (mean ± 1σ)", color = :gray, fillalpha = 0.3)
+     label = "SSA SIR I (mean ± 1σ)", color = :red, fillalpha = 0.2, linealpha = 0.6)
 plot!(sol_sir.t, I_sir, label = "EBCM SIR I", color = :red, linewidth = 2)
 plot!(t_seir, EI_ssa, ribbon = σEI_ssa,
-     label = "SSA SEIR E+I (mean ± 1σ)", color = :lightgray, fillalpha = 0.3)
+     label = "SSA SEIR E+I (mean ± 1σ)", color = :orange, fillalpha = 0.2, linealpha = 0.6)
 plot!(sol_seir.t, EI_seir, label = "EBCM SEIR E+I", color = :orange, linewidth = 2)
 xlabel!("Time"); ylabel!("Fraction infected")
 title!("EBCM vs SSA on Poisson κ=5")
@@ -563,14 +563,14 @@ title!("EBCM vs SSA on Poisson κ=5")
 
 ![](index_files/figure-commonmark/fig-validation-sir-seir-output-1.svg)
 
-Figure 5: Gillespie SSA mean ± 1σ ribbon (gray) versus EBCM I/(E+I)
-curve (line) for SIR and SEIR.
+Figure 5: Gillespie SSA mean ± 1σ ribbons (matched line colors) versus
+EBCM I/(E+I) curve for SIR and SEIR.
 
 </div>
 
 ``` julia
 plot(t_sis_g, μ_sis_g[:I], ribbon = σ_sis_g[:I],
-     label = "SSA SIS (mean ± 1σ)", color = :gray, fillalpha = 0.3)
+     label = "SSA SIS (mean ± 1σ)", color = :red, fillalpha = 0.2, linealpha = 0.6)
 plot!(sol_sis.t, I_sis, label = "EBCM SIS", color = :red, linewidth = 2)
 xlabel!("Time"); ylabel!("Fraction infected")
 title!("SIS endemic equilibrium")
@@ -581,7 +581,7 @@ title!("SIS endemic equilibrium")
 ![](index_files/figure-commonmark/fig-validation-sis-output-1.svg)
 
 Figure 6: SIS on Poisson κ=5: EBCM endemic equilibrium versus SSA mean ±
-1σ.
+1σ (red ribbon).
 
 </div>
 
