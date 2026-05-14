@@ -572,7 +572,7 @@ for pa in p_assort_sweep
         x -> prog_corr, x -> Dict(:β => β_v, :γ => γ_v),
         builder, [pa];
         N = N_v, n_graphs = 3, nsims_per_graph = 12,
-        tspan = (0.0, 200.0), seed_fraction = 0.01, recovered = :R)
+        tspan = (0.0, 200.0), seed_fraction = 0.001, recovered = :R)
     push!(fs_means, sweep_pa.means[1])
     push!(fs_stds,  sweep_pa.stds[1])
     push!(fs_q025,  sweep_pa.q025[1])

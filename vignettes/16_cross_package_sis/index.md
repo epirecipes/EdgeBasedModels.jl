@@ -69,7 +69,7 @@ R0_target = 2.0
 κ_excess = k - 1
 T_val    = R0_target / κ_excess
 β_val    = T_val * γ_val / (1 - T_val)
-ε_val    = 0.01
+ε_val    = 0.01  # exception to canonical ε = 0.001: NBM pairwise reinfection-counting closure becomes numerically unstable at lower seed fractions in this configuration.
 tmax     = 120.0
 ensemble = 48
 save_dt  = 1.0

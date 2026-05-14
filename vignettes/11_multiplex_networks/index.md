@@ -694,7 +694,7 @@ Poisson(κ) PGFs the inverse is `θ = 1 + log((1-f)^{1/n}) / κ`.
 include("../_validation.jl")
 
 const N_sim = 1000
-const seed_fraction_val = 0.01
+const seed_fraction_val = 0.001
 const tgrid_val = collect(0.0:0.5:40.0)
 
 # --- Re-solve the EBCM with seed-fraction-matched ICs -------------------
