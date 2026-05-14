@@ -474,15 +474,69 @@ of the clustering effect.
 
 ## Simulation validation
 
-This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does
-not yet provide an out-of-the-box stochastic ground truth (multi-type
-host graphs with prescribed mixing matrices, time-varying networks via
-the EBCM rewiring schedule, multiplex layers, degree-correlated
-configuration models, clustered graphs with prescribed triangle counts,
-or final-size sweeps over $R_0$).
+We validate both the unclustered and clustered EBCMs against direct SSA
+on graphs sampled from the matching configuration models. The
+unclustered baseline uses an Erdős–Rényi graph at mean degree
+$\kappa = 5$. The clustered network uses the Newman–Miller doubly
+Poisson construction: each node draws Poisson($\kappa_s = 3$)
+single-edge stubs and Poisson($\kappa_t = 1$) triangle-corner stubs,
+single stubs are randomly paired, and triangle stubs are grouped in
+threes (3 edges per triangle) — yielding total mean degree
+$\kappa_s + 2\kappa_t = 5$.
 
-A future revision will add the missing primitives to NetworkOutbreaks.jl
-and overlay the corresponding Gillespie SSA ribbon here. Until then, see
-[vignette 01](../01_sir_basics/index.html) for the validation pattern on
-a single-layer Poisson configuration-model network with the same
-canonical parameters.
+``` julia
+include("../_validation.jl")
+
+prog_clust = DiseaseProgression(
+    [DiseaseStage(:I; transmission_rate = β_val), DiseaseStage(:R)],
+    [DiseaseTransition(:I, :R, γ_val)]; entry = :I)
+
+# Unclustered SSA ribbon
+tg_un, mean_un, std_un = gillespie_ribbon(
+    prog_clust, Dict(:β => β_val, :γ => γ_val),
+    poisson_graph_builder(2000, 5.0);
+    N = 2000, n_graphs = 3, nsims_per_graph = 12,
+    tspan = tspan, seed_fraction = 0.01,
+    tgrid = collect(0.0:0.5:40.0))
+
+# Clustered SSA ribbon
+tg_cl, mean_cl, std_cl = gillespie_ribbon(
+    prog_clust, Dict(:β => β_val, :γ => γ_val),
+    clustered_poisson_graph_builder(2000, 3.0, 1.0);
+    N = 2000, n_graphs = 3, nsims_per_graph = 12,
+    tspan = tspan, seed_fraction = 0.01,
+    tgrid = collect(0.0:0.5:40.0))
+```
+
+    ([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5  …  35.5, 36.0, 36.5, 37.0, 37.5, 38.0, 38.5, 39.0, 39.5, 40.0], Dict(:I => [0.01, 0.012958333333333334, 0.01688888888888889, 0.021208333333333333, 0.02666666666666667, 0.03422222222222222, 0.042916666666666665, 0.052055555555555556, 0.06268055555555556, 0.07454166666666667  …  0.0033333333333333335, 0.002861111111111111, 0.0025416666666666665, 0.0022916666666666667, 0.0020277777777777777, 0.0018888888888888887, 0.0017083333333333332, 0.0015833333333333333, 0.0013055555555555557, 0.0011805555555555556], :R => [0.0, 0.0015833333333333333, 0.0035277777777777777, 0.00588888888888889, 0.008833333333333334, 0.012166666666666666, 0.017, 0.02291666666666667, 0.029638888888888888, 0.03801388888888889  …  0.7666388888888889, 0.7671527777777778, 0.7675416666666667, 0.7678055555555555, 0.768125, 0.7682777777777778, 0.7684861111111111, 0.768625, 0.7689027777777778, 0.7690277777777779], :S => [0.99, 0.9854583333333333, 0.9795833333333334, 0.9729027777777778, 0.9645, 0.9536111111111111, 0.9400833333333334, 0.9250277777777778, 0.9076805555555555, 0.8874444444444445  …  0.23002777777777778, 0.2299861111111111, 0.22991666666666666, 0.22990277777777776, 0.22984722222222223, 0.22983333333333333, 0.22980555555555554, 0.22979166666666664, 0.22979166666666664, 0.22979166666666664]), Dict(:I => [0.0, 0.0021658881385176448, 0.0035538934607214565, 0.0055451072384323, 0.007146427679017579, 0.009989597764277774, 0.01390554873833772, 0.01707327810928017, 0.020602410669550913, 0.025339234118542053  …  0.002117950491799628, 0.0018845655471718943, 0.0018874586088176873, 0.0017903511227848976, 0.0015627103033075233, 0.001517098316387999, 0.00145098488719116, 0.0013496031162636558, 0.0012664786827926691, 0.0012314496554744956], :R => [0.0, 0.0009141741003300661, 0.0012702330744757291, 0.001474115284845752, 0.0022135943621178654, 0.002549509756796392, 0.003951491580945822, 0.005737719805935853, 0.007846392356737777, 0.010022464845900013  …  0.013501116943799824, 0.013367775455733859, 0.013385693322136351, 0.0133712259176069, 0.013341329447568986, 0.01330115163888582, 0.013239273885522311, 0.013211128966573164, 0.013172926480607567, 0.013157260051526383], :S => [0.0, 0.0018874586088176875, 0.0034361523332272184, 0.005749309827454378, 0.007913821543892143, 0.011244751862288667, 0.016374413839018134, 0.021368850642413544, 0.02717329381627109, 0.03402053534847483  …  0.01297907351109274, 0.012980472207518442, 0.012972773687336767, 0.012970747001533018, 0.012973500157983826, 0.012981305239238685, 0.012953365683855396, 0.01296885004264339, 0.01296885004264339, 0.01296885004264339]))
+
+``` julia
+plot(sol1.t, I1, label = "I (unclustered, EBM)", lw = 2, color = :red)
+plot!(tg_un, mean_un[:I], ribbon = std_un[:I],
+      label = "I (unclustered, SSA)",
+      color = :red, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(sol2.t, I2, label = "I (clustered, EBM)", lw = 2, color = :blue)
+plot!(tg_cl, mean_cl[:I], ribbon = std_cl[:I],
+      label = "I (clustered, SSA)",
+      color = :blue, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+xlabel!("Time")
+ylabel!("Fraction infected")
+title!("Clustered vs unclustered SIR: EBM vs SSA")
+```
+
+<div id="fig-clustered-validation">
+
+![](index_files/figure-commonmark/fig-clustered-validation-output-1.svg)
+
+Figure 5: EBM (lines) versus DirectSSA (ribbons = mean ± 1σ across 36
+trajectories on 3 graphs of N=2000). Both networks have mean degree 5;
+the clustered network is built via the Newman–Miller doubly Poisson
+construction with κ_s=3, κ_t=1.
+
+</div>
+
+The deterministic curves track the SSA ensemble means in both regimes.
+The clustered network shows the expected reduction in peak prevalence
+and a delayed/shrunk epidemic, and the SSA on the Newman–Miller graph
+reproduces this attenuation faithfully — confirming that the
+bivariate-PGF EBCM correctly captures the redundancy of triangle paths.

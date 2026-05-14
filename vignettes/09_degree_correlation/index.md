@@ -541,15 +541,94 @@ to less active ones.
 
 ## Simulation validation
 
-This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does
-not yet provide an out-of-the-box stochastic ground truth (multi-type
-host graphs with prescribed mixing matrices, time-varying networks via
-the EBCM rewiring schedule, multiplex layers, degree-correlated
-configuration models, clustered graphs with prescribed triangle counts,
-or final-size sweeps over $R_0$).
+We verify the prediction that **assortative rewiring reduces $R_0$**
+(and hence the epidemic final size) by direct stochastic simulation. We
+build configuration-model graphs with the bimodal degree distribution
+($p_3 = p_7 = 0.5$, $N = 2000$) and then apply Xulvi-Brunet–Sokolov
+rewiring with assortativity bias
+$p_{\text{ass}} \in \{0, 0.25, 0.5, 0.75, 1.0\}$, preserving the exact
+degree sequence while increasing the empirical assortativity
+coefficient. For each $p_{\text{ass}}$ we run a `DirectSSA` ensemble
+with $\beta = 0.75$, $\gamma = 0.25$ ($T = 0.75$) and report the
+empirical final size.
 
-A future revision will add the missing primitives to NetworkOutbreaks.jl
-and overlay the corresponding Gillespie SSA ribbon here. Until then, see
-[vignette 01](../01_sir_basics/index.html) for the validation pattern on
-a single-layer Poisson configuration-model network with the same
-canonical parameters.
+``` julia
+include("../_validation.jl")
+
+γ_v = 0.25
+β_v = 0.75
+T_v = β_v / (β_v + γ_v)
+
+prog_corr = DiseaseProgression(
+    [DiseaseStage(:I; transmission_rate = β_v), DiseaseStage(:R)],
+    [DiseaseTransition(:I, :R, γ_v)]; entry = :I)
+
+p_assort_sweep = [0.0, 0.25, 0.5, 0.75, 1.0]
+fs_means = Float64[]; fs_stds = Float64[]; fs_q025 = Float64[]; fs_q975 = Float64[]
+N_v = 2000
+for pa in p_assort_sweep
+    builder = correlated_bimodal_builder(N_v, 3, 7, 0.5, pa)
+    sweep_pa = gillespie_final_size_sweep(
+        x -> prog_corr, x -> Dict(:β => β_v, :γ => γ_v),
+        builder, [pa];
+        N = N_v, n_graphs = 3, nsims_per_graph = 12,
+        tspan = (0.0, 200.0), seed_fraction = 0.01, recovered = :R)
+    push!(fs_means, sweep_pa.means[1])
+    push!(fs_stds,  sweep_pa.stds[1])
+    push!(fs_q025,  sweep_pa.q025[1])
+    push!(fs_q975,  sweep_pa.q975[1])
+end
+
+R0_pred = [correlated_R0(assortative_correlated_pgf(probs, pa), T_v)
+           for pa in p_assort_sweep]
+```
+
+    5-element Vector{Float64}:
+     3.599999999999999
+     3.750000000000001
+     3.94434452114805
+     4.19248115565993
+     4.5
+
+``` julia
+p_top = plot(p_assort_sweep, R0_pred, lw = 2, marker = :circle,
+             color = :darkred, label = "Analytic R₀(r)",
+             ylabel = "R₀", title = "R₀ vs assortativity bias")
+hline!(p_top, [1.0], ls = :dash, color = :grey, label = "R₀ = 1")
+
+p_bot = plot(p_assort_sweep, fs_means,
+             ribbon = (fs_means .- fs_q025, fs_q975 .- fs_means),
+             lw = 2, marker = :square, color = :steelblue,
+             fillalpha = 0.25, linealpha = 0.6,
+             label = "SSA final size (95% band)",
+             xlabel = "Assortativity bias p_assort",
+             ylabel = "Final size R∞",
+             title = "Empirical final size vs assortativity")
+
+plot(p_top, p_bot, layout = (2, 1), size = (700, 500))
+```
+
+<div id="fig-assort-validation">
+
+![](index_files/figure-commonmark/fig-assort-validation-output-1.svg)
+
+Figure 7: Top: analytic R₀ from
+`correlated_R0(assortative_correlated_pgf(probs, r), T)` for the bimodal
+distribution at T=0.75. Bottom: empirical final size from DirectSSA on
+Xulvi-Brunet–Sokolov rewired bimodal configuration graphs (N=2000, 36
+trajectories per p_ass, ribbon = 95% empirical interval). At T=0.75 with
+the bimodal distribution, perfect assortativity moves the spectral
+radius from $\langle k^2 - k\rangle/\langle k\rangle = 4.8$ to
+$\max(k - 1) = 6$, so R₀ rises from 3.6 to 4.5; the empirical final size
+tracks this rise, confirming the spectral-radius prediction
+operationally.
+
+</div>
+
+The empirical SSA final size tracks the spectral-radius R₀ across the
+rewiring sweep: as Xulvi-Brunet–Sokolov rewiring drives the network from
+neutral toward perfect assortativity, the leading eigenvalue of the
+next-generation matrix grows (for this bimodal distribution at
+$T=0.75$), and the SSA final size grows correspondingly — confirming
+that `correlated_R0` operationally controls the epidemic size on real
+degree-correlated networks, not just in the analytic limit.

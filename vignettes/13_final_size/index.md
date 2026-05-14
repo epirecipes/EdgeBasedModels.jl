@@ -454,15 +454,86 @@ sensitivity analysis, and rapid model comparison.
 
 ## Simulation validation
 
-This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does
-not yet provide an out-of-the-box stochastic ground truth (multi-type
-host graphs with prescribed mixing matrices, time-varying networks via
-the EBCM rewiring schedule, multiplex layers, degree-correlated
-configuration models, clustered graphs with prescribed triangle counts,
-or final-size sweeps over $R_0$).
+We compare the analytic `final_size` curve against direct stochastic
+simulation. For each $R_0 \in \{0.5, 0.75, \ldots, 4.0\}$ we hold
+$\gamma = 0.25$, $\kappa = 5$ fixed and back out
+$\beta = R_0 \gamma /(\kappa - R_0)$. We then build an Erdős–Rényi graph
+($N=2000$, $p = \kappa/(N-1)$) for each replicate, run a `DirectSSA`
+trajectory to $t = 200$, and report the empirical final size as a 95%
+band across replicates and graphs.
 
-A future revision will add the missing primitives to NetworkOutbreaks.jl
-and overlay the corresponding Gillespie SSA ribbon here. Until then, see
-[vignette 01](../01_sir_basics/index.html) for the validation pattern on
-a single-layer Poisson configuration-model network with the same
-canonical parameters.
+``` julia
+include("../_validation.jl")
+
+R0_sweep = collect(0.5:0.25:4.0)
+γ_v = 0.25
+κ_v = 5.0
+N_v = 2000
+
+prog_factory = function (R0)
+    β_v = R0 * γ_v / κ_v
+    DiseaseProgression(
+        [DiseaseStage(:I; transmission_rate = β_v), DiseaseStage(:R)],
+        [DiseaseTransition(:I, :R, γ_v)]; entry = :I)
+end
+params_factory = function (R0)
+    β_v = R0 * γ_v / κ_v
+    Dict(:β => β_v, :γ => γ_v)
+end
+
+sweep = gillespie_final_size_sweep(
+    prog_factory, params_factory,
+    poisson_graph_builder(N_v, κ_v),
+    R0_sweep;
+    N = N_v, n_graphs = 3, nsims_per_graph = 12,
+    tspan = (0.0, 200.0), seed_fraction = 0.01, recovered = :R)
+```
+
+    (values = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0], means = [0.017652777777777778, 0.028847222222222215, 0.05423611111111111, 0.0964861111111111, 0.25834722222222223, 0.43127777777777776, 0.55125, 0.6285277777777778, 0.6879305555555555, 0.7289583333333334, 0.771388888888889, 0.7866805555555555, 0.8120277777777777, 0.8397777777777777, 0.8556944444444445], stds = [0.0031753952384915678, 0.012792195971676551, 0.02117831981434623, 0.06056879042061079, 0.0825964215278504, 0.04987189939441197, 0.03667881833273415, 0.03178790076303616, 0.02209562101987559, 0.023509686453520758, 0.02233546542772314, 0.015741280024997875, 0.014450380343212136, 0.012448433317630478, 0.010935706769097395], q025 = [0.012, 0.015, 0.0165, 0.026, 0.0345, 0.3045, 0.477, 0.5515, 0.647, 0.6715, 0.728, 0.755, 0.784, 0.817, 0.832], q975 = [0.023, 0.0785, 0.114, 0.2615, 0.3965, 0.525, 0.621, 0.681, 0.735, 0.7655, 0.823, 0.8135, 0.8445, 0.865, 0.8805], all = [[0.0165, 0.0195, 0.019, 0.0175, 0.023, 0.013, 0.023, 0.022, 0.0165, 0.0225  …  0.022, 0.019, 0.016, 0.013, 0.017, 0.013, 0.02, 0.018, 0.0145, 0.0165], [0.035, 0.0435, 0.0405, 0.031, 0.0245, 0.028, 0.031, 0.0265, 0.0395, 0.033  …  0.0265, 0.016, 0.032, 0.029, 0.0245, 0.0595, 0.017, 0.033, 0.022, 0.017], [0.0335, 0.055, 0.0715, 0.0235, 0.073, 0.0165, 0.055, 0.058, 0.0715, 0.0495  …  0.055, 0.069, 0.067, 0.036, 0.0495, 0.0965, 0.067, 0.067, 0.114, 0.045], [0.1015, 0.0605, 0.106, 0.2615, 0.2415, 0.191, 0.127, 0.195, 0.199, 0.0775  …  0.0535, 0.1375, 0.0545, 0.0785, 0.03, 0.1345, 0.151, 0.028, 0.077, 0.0455], [0.256, 0.184, 0.199, 0.276, 0.3045, 0.2575, 0.283, 0.289, 0.181, 0.3075  …  0.1215, 0.1385, 0.2155, 0.334, 0.185, 0.3695, 0.2675, 0.2245, 0.0345, 0.3965], [0.4455, 0.449, 0.458, 0.4235, 0.51, 0.433, 0.392, 0.3805, 0.446, 0.445  …  0.4335, 0.4625, 0.5015, 0.5085, 0.363, 0.42, 0.42, 0.4375, 0.383, 0.428], [0.5235, 0.492, 0.5905, 0.579, 0.5995, 0.513, 0.477, 0.5775, 0.4995, 0.5285  …  0.5815, 0.5765, 0.5555, 0.5215, 0.567, 0.521, 0.57, 0.574, 0.564, 0.515], [0.6075, 0.6565, 0.611, 0.641, 0.6425, 0.636, 0.6415, 0.576, 0.573, 0.6055  …  0.628, 0.5515, 0.631, 0.6355, 0.6335, 0.6125, 0.631, 0.5605, 0.596, 0.672], [0.6895, 0.698, 0.688, 0.6735, 0.647, 0.735, 0.697, 0.6865, 0.714, 0.7195  …  0.6735, 0.693, 0.6955, 0.6765, 0.6565, 0.726, 0.6985, 0.6745, 0.6625, 0.682], [0.7495, 0.7545, 0.7655, 0.744, 0.7285, 0.7175, 0.737, 0.719, 0.7135, 0.7325  …  0.6715, 0.744, 0.701, 0.7015, 0.703, 0.691, 0.714, 0.72, 0.734, 0.7375], [0.7635, 0.7585, 0.734, 0.787, 0.7735, 0.7765, 0.7945, 0.7815, 0.7825, 0.758  …  0.776, 0.7875, 0.787, 0.7785, 0.7645, 0.7425, 0.728, 0.7815, 0.8135, 0.748], [0.774, 0.781, 0.7765, 0.7875, 0.7915, 0.803, 0.768, 0.759, 0.7685, 0.795  …  0.81, 0.808, 0.79, 0.758, 0.773, 0.785, 0.773, 0.806, 0.793, 0.796], [0.808, 0.7995, 0.798, 0.8445, 0.819, 0.814, 0.8045, 0.844, 0.8295, 0.8135  …  0.828, 0.8165, 0.7885, 0.817, 0.816, 0.7925, 0.82, 0.8065, 0.784, 0.811], [0.8185, 0.8375, 0.8465, 0.8555, 0.8385, 0.836, 0.8445, 0.817, 0.8545, 0.842  …  0.851, 0.8595, 0.865, 0.8385, 0.8475, 0.8245, 0.841, 0.826, 0.8435, 0.8485], [0.8495, 0.859, 0.8395, 0.857, 0.8745, 0.8575, 0.866, 0.8495, 0.855, 0.8565  …  0.868, 0.8805, 0.8635, 0.854, 0.8515, 0.855, 0.832, 0.8485, 0.8605, 0.8475]])
+
+``` julia
+fs_curve = Float64[]
+for R0 in R0_sweep
+    β_v = R0 * γ_v / κ_v
+    prog = DiseaseProgression(
+        [DiseaseStage(:I; transmission_rate = β_v), DiseaseStage(:R)],
+        [DiseaseTransition(:I, :R, γ_v)]; entry = :I)
+    m = StaticConfigurationModel(poisson_pgf(κ_v), prog)
+    push!(fs_curve, EdgeBasedModels.final_size(m).R_infinity)
+end
+
+# Conditioned on a major outbreak (drop final sizes < 5%):
+ssa_major_mean = [(let v = filter(>=( 0.05), s); isempty(v) ? 0.0 : mean(v) end)
+                  for s in sweep.all]
+
+plot(R0_sweep, fs_curve, lw = 2, color = :black,
+     label = "Analytic R∞")
+plot!(sweep.values, sweep.means,
+      ribbon = (sweep.means .- sweep.q025, sweep.q975 .- sweep.means),
+      color = :steelblue, fillalpha = 0.25, linealpha = 0.6, lw = 1,
+      label = "SSA mean (95% band)")
+plot!(sweep.values, ssa_major_mean, lw = 1.5, ls = :dash,
+      color = :grey40, label = "SSA major-outbreak mean (R∞ ≥ 0.05)")
+vline!([1.0], ls = :dot, color = :red, label = "R₀ = 1")
+xlabel!("R₀")
+ylabel!("Final size R∞")
+title!("Analytic vs simulated final size on Poisson(κ=5) network")
+```
+
+<div id="fig-final-size-ssa-vs-ebm">
+
+![](index_files/figure-commonmark/fig-final-size-ssa-vs-ebm-output-1.svg)
+
+Figure 6: Analytic final size (line) versus DirectSSA on Erdős–Rényi
+graphs (N=2000, ribbon = 95% empirical interval across 36 trajectories
+per R₀). Major / minor outbreak bimodality near the threshold widens the
+band; subset-conditioned curve overlaid in grey.
+
+</div>
+
+The analytic curve and the major-outbreak conditional mean agree closely
+across the full sweep. The unconditioned mean (with 95% band) sags below
+the deterministic curve near the threshold because some trajectories die
+out stochastically — this is the regime in which `epidemic_probability`
+is materially less than 1 (cf. the previous figure). For $R_0 \gtrsim 2$
+the epidemic probability is essentially 1 and the two curves coincide.
