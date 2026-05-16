@@ -384,7 +384,8 @@ tgrid_v, mean_v, std_v = gillespie_multitype_ribbon(
     [:Young, :Old], sbm;
     β = β_val, γ = γ_val, n_graphs = 3, nsims_per_graph = 12,
     tspan = tspan, seed_fraction = ε,
-    tgrid = collect(0.0:1.0:40.0))
+    tgrid = collect(0.0:1.0:40.0),
+    major_outbreak_thresh = 0.2)
 ```
 
 ```{julia}
