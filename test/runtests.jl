@@ -1507,3 +1507,5 @@ import Catalyst
         end
     end
 end
+
+include("test_eon_crossval.jl")
