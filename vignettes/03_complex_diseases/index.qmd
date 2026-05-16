@@ -278,7 +278,7 @@ t_seir, μ_seir, σ_seir = gillespie_ribbon(
 t_sis_g, μ_sis_g, σ_sis_g = gillespie_ribbon(
     sis_model(), Dict(:β => β_val, :γ => γ_val), builder;
     N = 1000, n_graphs = 5, nsims_per_graph = 20,
-    tspan = (0.0, 80.0), seed_fraction = seed_fraction)
+    tspan = (0.0, 40.0), seed_fraction = seed_fraction)
 ```
 
 ```{julia}

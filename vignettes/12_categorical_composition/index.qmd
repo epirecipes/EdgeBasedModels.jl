@@ -224,7 +224,7 @@ println("γ     = ", ma.γ)
 The `compare_models` function solves both the EBCM and the mass-action approximation and returns the solutions for direct comparison:
 
 ```{julia}
-result = compare_models(sir_model; tspan = (0.0, 40.0))
+result = compare_models(sir_model; tspan = (0.0, 40.0), ε = 0.01)
 println("β_eff = ", result.β_eff)
 println("γ     = ", result.γ)
 ```
