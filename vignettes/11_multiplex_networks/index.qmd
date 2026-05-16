@@ -3,10 +3,6 @@ title: "Multiplex Networks"
 subtitle: "EdgeBasedModels.jl Vignette 11"
 author: "Simon Frost"
 date: today
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -83,25 +79,38 @@ end
 
 ## Two-Layer Model
 
-We start with two contact layers representing distinct social settings:
-
-- **Household**: dense contacts (Poisson mean degree 3), per-edge transmissibility $T = 0.75$ ($\beta = 0.75$), recovery rate $\gamma = 0.25$.
-- **Community**: more contacts (Poisson mean degree 8), per-edge transmissibility $T = 0.5$ ($\beta = 0.25$), same recovery rate.
+We start with two contact layers representing distinct social settings.
+We preserve the original transmissibility ratio between layers and scale
+both to achieve a total $R_0 = \sum_i T_i \kappa_i = 2$ with
+$\gamma = 0.25$:
 
 ```{julia}
 pgf_hh = poisson_pgf(3.0)
 pgf_cm = poisson_pgf(8.0)
 
+γ_mp = 0.25
+κ_hh, κ_cm = 3.0, 8.0
+# Preserve household/community T ratio from original design (0.75/0.5 = 1.5),
+# scale so R₀ = T_hh·κ_hh + T_cm·κ_cm = 2
+T_hh_orig, T_cm_orig = 0.75, 0.5
+R0_orig = T_hh_orig * κ_hh + T_cm_orig * κ_cm
+scale_2 = 2.0 / R0_orig
+T_hh = T_hh_orig * scale_2;  T_cm = T_cm_orig * scale_2
+β_hh = T_hh * γ_mp / (1 - T_hh)
+β_cm = T_cm * γ_mp / (1 - T_cm)
+
 layers_2 = [
-    (:household, pgf_hh, 0.75, 0.25),
-    (:community, pgf_cm, 0.25, 0.25),
+    (:household, pgf_hh, β_hh, γ_mp),
+    (:community, pgf_cm, β_cm, γ_mp),
 ]
+println("T_hh=$(round(T_hh;digits=3)), T_cm=$(round(T_cm;digits=3)), β_hh=$(round(β_hh;digits=4)), β_cm=$(round(β_cm;digits=4))")
+println("R₀ = $(round(T_hh*κ_hh + T_cm*κ_cm; digits=1))")
 
 (sys_2, u0_2, tspan_2, p_2) = build_multiplex_sir(layers_2; tspan = (0.0, 40.0))
 ```
 
 ```{julia}
-prob_2 = ODEProblem(sys_2, u0_2, tspan_2, p_2)
+prob_2 = ODEProblem(sys_2, merge(u0_2, p_2), tspan_2)
 sol_2 = solve(prob_2, Tsit5(); saveat = 0.5)
 ```
 
@@ -159,8 +168,8 @@ layers_cm_only = [
 (sys_hh, u0_hh, ts_hh, p_hh) = build_multiplex_sir(layers_hh_only; tspan = (0.0, 40.0))
 (sys_cm, u0_cm, ts_cm, p_cm) = build_multiplex_sir(layers_cm_only; tspan = (0.0, 40.0))
 
-sol_hh = solve(ODEProblem(sys_hh, u0_hh, ts_hh, p_hh), Tsit5(); saveat = 0.5)
-sol_cm = solve(ODEProblem(sys_cm, u0_cm, ts_cm, p_cm), Tsit5(); saveat = 0.5)
+sol_hh = solve(ODEProblem(sys_hh, merge(u0_hh, p_hh), ts_hh), Tsit5(); saveat = 0.5)
+sol_cm = solve(ODEProblem(sys_cm, merge(u0_cm, p_cm), ts_cm), Tsit5(); saveat = 0.5)
 ```
 
 ```{julia}
@@ -200,25 +209,30 @@ println("Sum of single layers: $(round(R0_hh + R0_cm; digits = 3))")
 
 Adding more layers is straightforward. In the compact multiplex implementation used here, each additional layer introduces one additional edge-survival equation $\theta_i$, together with the shared recovery equation $R$. So an $L$-layer model has $L + 1$ ODEs in total.
 
-Consider a population with household, school, and community contacts:
-
-- **Household**: Poisson(3), $T = 0.8$ ($\beta = 1.0$), $\gamma = 0.25$ — few but intense contacts.
-- **School**: Poisson(15), $T = 1/3$ ($\beta = 0.125$), $\gamma = 0.25$ — many contacts, low per-contact transmission.
-- **Community**: Poisson(5), $T = 0.6$ ($\beta = 0.375$), $\gamma = 0.25$ — moderate in both dimensions.
+Consider a population with household, school, and community contacts,
+again scaled so total $R_0 = 2$:
 
 ```{julia}
 pgf_school = poisson_pgf(15.0)
 pgf_cm3 = poisson_pgf(5.0)
 pgf_hh3 = poisson_pgf(3.0)
 
+κ_3 = [3.0, 15.0, 5.0]
+T_3_orig = [0.8, 1/3, 0.6]   # original design ratios
+R0_3_orig = sum(T_3_orig .* κ_3)
+scale_3 = 2.0 / R0_3_orig
+T_3 = T_3_orig .* scale_3
+β_3 = [t * γ_mp / (1 - t) for t in T_3]
+
 layers_3 = [
-    (:household, pgf_hh3,    1.0,   0.25),
-    (:school,    pgf_school, 0.125, 0.25),
-    (:community, pgf_cm3,    0.375, 0.25),
+    (:household, pgf_hh3,    β_3[1], γ_mp),
+    (:school,    pgf_school, β_3[2], γ_mp),
+    (:community, pgf_cm3,    β_3[3], γ_mp),
 ]
+println("Three-layer R₀ = $(round(sum(T_3 .* κ_3); digits=1))")
 
 (sys_3, u0_3, ts_3, p_3) = build_multiplex_sir(layers_3; tspan = (0.0, 40.0))
-sol_3 = solve(ODEProblem(sys_3, u0_3, ts_3, p_3), Tsit5(); saveat = 0.5)
+sol_3 = solve(ODEProblem(sys_3, merge(u0_3, p_3), ts_3), Tsit5(); saveat = 0.5)
 ```
 
 ```{julia}
@@ -255,20 +269,24 @@ Despite having the highest mean degree, the school layer has the lowest per-cont
 
 ## Varying Layer Structure
 
-How does the distribution of contacts across layers affect epidemic outcomes? We fix the **total mean contacts** at 10 and vary the allocation between a "close" layer ($T = 0.75$, $\beta = 0.75$) and a "casual" layer ($T = 4/9 \approx 0.44$, $\beta = 0.2$), both with $\gamma = 0.25$.
+How does the distribution of contacts across layers affect epidemic outcomes? We fix the **total mean contacts** at 10 and vary the allocation between a "close" layer and a "casual" layer, keeping the T ratio from the original design and scaling so that $R_0 = 2$ at equal allocation ($f = 0.5$).
 
 ```{julia}
 #| label: fig-allocation
-#| fig-cap: "Effect of redistributing fixed total contacts between a high-β (close) and low-β (casual) layer. The final epidemic size (1 − S(∞)) varies with the allocation."
+#| fig-cap: "Effect of redistributing fixed total contacts between a high-T (close) and low-T (casual) layer. The final epidemic size (1 − S(∞)) varies with the allocation."
 close_fracs = 0.05:0.05:0.95
 final_infected = Float64[]
 final_θ_close = Float64[]
 final_θ_casual = Float64[]
 
 total_contacts = 10.0
-β_close = 0.75
-β_casual = 0.2
-γ_val = 0.25
+T_close_orig, T_casual_orig = 0.75, 4/9
+R0_alloc_ref = T_close_orig * 5.0 + T_casual_orig * 5.0   # at f=0.5
+α_alloc = 2.0 / R0_alloc_ref
+T_close  = T_close_orig  * α_alloc
+T_casual = T_casual_orig * α_alloc
+β_close  = T_close  * γ_mp / (1 - T_close)
+β_casual = T_casual * γ_mp / (1 - T_casual)
 
 for f in close_fracs
     k_close = f * total_contacts
@@ -277,12 +295,12 @@ for f in close_fracs
     pgf_a = poisson_pgf(k_casual)
 
     layers_v = [
-        (:close,  pgf_c, β_close, γ_val),
-        (:casual, pgf_a, β_casual, γ_val),
+        (:close,  pgf_c, β_close, γ_mp),
+        (:casual, pgf_a, β_casual, γ_mp),
     ]
 
     (sys_v, u0_v, ts_v, p_v) = build_multiplex_sir(layers_v; tspan = (0.0, 80.0))
-    sol_v = solve(ODEProblem(sys_v, u0_v, ts_v, p_v), Tsit5())
+    sol_v = solve(ODEProblem(sys_v, merge(u0_v, p_v), ts_v), Tsit5())
 
     R_v = extract_R(sol_v, sys_v)
     θ_v = extract_θ(sol_v, sys_v, [:close, :casual])
@@ -358,7 +376,7 @@ for (i, (name, pgf_l, β_l, γ_l)) in enumerate(layers_3)
     modified[i] = (name, pgf_l, β_l * 0.5, γ_l)
 
     (sys_int, u0_int, ts_int, p_int) = build_multiplex_sir(modified; tspan = (0.0, 40.0))
-    sol_int = solve(ODEProblem(sys_int, u0_int, ts_int, p_int), Tsit5())
+    sol_int = solve(ODEProblem(sys_int, merge(u0_int, p_int), ts_int), Tsit5())
 
     R_int = extract_R(sol_int, sys_int)
     interventions[String(name)] = R_int[end]
@@ -389,3 +407,114 @@ The layer with the largest $R_0$ contribution is the most impactful intervention
 - `susceptible_fraction(pgfs, θ_values)` evaluates the product formula at any time point.
 - **Contact allocation matters**: redistributing fixed total contacts across layers with different transmission rates changes epidemic outcomes.
 - **Intervention targeting**: the per-layer $R_0$ decomposition identifies which layer to prioritise for control measures.
+
+## Simulation validation
+
+We validate the two-layer ODE prediction against a stochastic
+Gillespie SSA on `MultiplexNetwork` from `NetworkOutbreaks.jl`. Each
+layer is sampled as an independent Poisson(κᵢ) Erdős–Rényi graph; the
+per-layer transmission rate βᵢ enters as the layer's `layer_rate`
+weight on a unit-rate infection transition.
+
+Note: the default initial conditions returned by `build_multiplex_sir`
+correspond to an infinitesimal seed (`θᵢ(0) = 1 - 10⁻⁶`). For a fair
+comparison with a finite-population SSA seeded at fraction `f`, we
+re-solve the multiplex ODE with matched ICs: each layer's
+`θᵢ(0) = ψᵢ⁻¹((1 - f)^{1/n})` so that `S(0) = ∏ ψᵢ(θᵢ) = 1 - f`. For
+Poisson(κ) PGFs the inverse is `θ = 1 + log((1-f)^{1/n}) / κ`.
+
+```{julia}
+include("../_validation.jl")
+
+const N_sim = 1000
+const seed_fraction_val = 0.001
+const tgrid_val = collect(0.0:0.5:40.0)
+
+# For Poisson(κ) PGF ψ(x)=exp(κ(x-1)): ψ⁻¹(y) = 1 + log(y)/κ
+function poisson_θ0(κ, f, n)
+    1.0 + log((1 - f)^(1 / n)) / κ
+end
+θ0_hh = poisson_θ0(κ_hh, seed_fraction_val, 2)
+θ0_cm = poisson_θ0(κ_cm, seed_fraction_val, 2)
+
+(sys_v, u0_v_default, ts_v, p_v) = build_multiplex_sir(layers_2; tspan=(0.0, 40.0))
+u0_v = Dict(u0_v_default)
+for var in collect(keys(u0_v))
+    s = string(var)
+    if occursin("θ_household", s)
+        u0_v[var] = θ0_hh
+    elseif occursin("θ_community", s)
+        u0_v[var] = θ0_cm
+    end
+end
+sol_v = solve(ODEProblem(sys_v, merge(u0_v, p_v), ts_v), Tsit5(); saveat = 0.5)
+θ_v = extract_θ(sol_v, sys_v, layer_names_2)
+S_v = compute_S(θ_v, mean_degrees_2)
+R_v = extract_R(sol_v, sys_v)
+I_v = 1.0 .- S_v .- R_v
+
+# --- Gillespie SSA on MultiplexNetwork ----------------------------------
+no_model_mp = OutbreakModel(
+    [:S, :I, :R], [false, true, false],
+    [OutbreakTransition(:S, :I, 1.0, :infection; via=[:I]),
+     OutbreakTransition(:I, :R, γ_mp, :spontaneous)];
+    name = :SIR_multiplex)
+
+builder = multiplex_graph_builder(N_sim, [
+    (β_hh, poisson_layer(κ_hh)),   # household weight
+    (β_cm, poisson_layer(κ_cm)),   # community  weight
+])
+
+n_graphs_val   = 5
+nsims_per_g    = 20
+nsamples       = n_graphs_val * nsims_per_g
+S_runs = Matrix{Float64}(undef, nsamples, length(tgrid_val))
+I_runs = similar(S_runs); R_runs = similar(S_runs)
+rng = StableRNG(20240501)
+row = 1
+for gi in 1:n_graphs_val
+    net = builder(rng)
+    spec = OutbreakSpec(model = no_model_mp, network = net,
+                        initial = SeedFraction(:I => seed_fraction_val),
+                        tspan = (0.0, 40.0))
+    ens = simulate_ensemble(spec; nsims = nsims_per_g,
+                            seed = 20240501 + 1000 * gi,
+                            algorithm = DirectSSA(),
+                            parallel = true)
+    for traj in ens.trajectories
+        for (j, t) in enumerate(tgrid_val)
+            st = state_at(traj, t)
+            S_runs[row, j] = st[no_model_mp.index_of[:S]] / N_sim
+            I_runs[row, j] = st[no_model_mp.index_of[:I]] / N_sim
+            R_runs[row, j] = st[no_model_mp.index_of[:R]] / N_sim
+        end
+        row += 1
+    end
+end
+S_mean = vec(mean(S_runs; dims=1)); S_std = vec(std(S_runs; dims=1))
+I_mean = vec(mean(I_runs; dims=1)); I_std = vec(std(I_runs; dims=1))
+R_mean = vec(mean(R_runs; dims=1)); R_std = vec(std(R_runs; dims=1))
+nothing
+```
+
+```{julia}
+#| label: fig-multiplex-validation
+#| fig-cap: "Two-layer multiplex EBCM (lines, IC matched to seed fraction) vs Gillespie SSA on a MultiplexNetwork host graph (mean ± 1σ ribbons across 5 graphs × 20 sims). Layers: Poisson household and Poisson community, scaled for total R₀=2; shared γ=0.25; N=1000."
+plt = plot(sol_v.t, S_v, color=:green, linewidth=2, label="S (EBCM)")
+plot!(plt, sol_v.t, I_v, color=:red,   linewidth=2, label="I (EBCM)")
+plot!(plt, sol_v.t, R_v, color=:blue,  linewidth=2, label="R (EBCM)")
+plot!(plt, tgrid_val, S_mean, ribbon = S_std, color=:green,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="S (SSA)")
+plot!(plt, tgrid_val, I_mean, ribbon = I_std, color=:red,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="I (SSA)")
+plot!(plt, tgrid_val, R_mean, ribbon = R_std, color=:blue,
+      fillalpha=0.2, linealpha=0.6, linewidth=1, label="R (SSA)")
+xlabel!(plt, "Time"); ylabel!(plt, "Fraction of population")
+title!(plt, "Two-layer multiplex SIR: EBCM vs Gillespie")
+plt
+```
+
+With the IC matched, the deterministic EBCM trajectories track the stochastic
+ribbon means closely across all three compartments, validating both the
+per-layer θ closure and the new `MultiplexNetwork` Direct SSA in
+`NetworkOutbreaks.jl`.

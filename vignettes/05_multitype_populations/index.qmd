@@ -3,10 +3,6 @@ title: "Multi-type Populations"
 subtitle: "EdgeBasedModels.jl Vignette 05"
 author: "Simon Frost"
 date: today
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -144,24 +140,26 @@ We assign numeric parameter values representing a contact structure where Young 
 | $\kappa_{OY}$ | 2 | Old → Young contacts |
 | $\kappa_{OO}$ | 4 | Old → Old contacts |
 | $\gamma$ | 0.25 | Recovery rate |
-| $T$ | 0.75 | Edge transmissibility |
-| $\beta$ | 0.75 | Transmission rate ($\beta = T\gamma/(1-T)$) |
 
-**Canonical anchor.** This vignette uses $\gamma = 0.25$ and per-edge transmissibility
-$T = \beta/(\beta+\gamma) = 0.75$, giving $\beta = T\gamma/(1-T) = 0.75$.
-$R_0 = T\,\rho(M)$ where $M$ is the next-generation matrix derived from the contact
-structure; preserving $T$ preserves $R_0$.
+**Canonical anchor.** $R_0 = T\,\rho(M)$ where $M$ is the multitype contact
+matrix and $T = \beta/(\beta+\gamma)$ is the per-edge transmissibility. We
+choose $T = 2/\rho(M)$ so that $R_0 = 2$, then $\beta = T\gamma/(1-T)$.
 
 ```{julia}
+using LinearAlgebra
 κ_YY_val = 6.0
 κ_YO_val = 2.0
 κ_OY_val = 2.0
 κ_OO_val = 4.0
 γ_val = 0.25
-T_val = 0.75
+
+K_mat = [κ_YY_val κ_YO_val; κ_OY_val κ_OO_val]
+ρ_M = maximum(abs.(eigvals(K_mat)))
+T_val = 2.0 / ρ_M                       # R₀ = T·ρ(M) = 2
 β_val = T_val * γ_val / (1 - T_val)
-ε = 1e-2
+ε = 1e-3
 tspan = (0.0, 40.0)
+println("ρ(M) = $(round(ρ_M; digits=3)),  T = $(round(T_val; digits=4)),  β = $(round(β_val; digits=4)),  R₀ = $(round(T_val * ρ_M; digits=1))")
 ```
 
 Set up initial conditions and parameters:
@@ -362,3 +360,52 @@ Multi-type edge-based models capture the essential features of heterogeneous pop
 - **Type-specific dynamics**: Each population type experiences its own epidemic trajectory, determined by both its own contact structure and cross-group transmission.
 - **Contact matrices**: Assortative or disassortative mixing can be specified to modulate cross-group transmission rates.
 - **Automatic scaling**: The package generates $K^2(1+M) + K M$ equations for any number of types $K$ and disease stages $M$, handling all the symbolic algebra and bookkeeping automatically.
+
+## Simulation validation
+
+We validate the deterministic two-type EBCM against direct stochastic
+simulation on a stochastic block model whose within- and between-type mean
+degrees match $\kappa_{YY}, \kappa_{YO}, \kappa_{OY}, \kappa_{OO}$. Each
+node is assigned a type (1000 Young, 1000 Old). Within-type edges are
+sampled at probability $\kappa_{ll}/(N_l-1)$ and between-type edges at
+$\kappa_{lk}/N_k$, giving the prescribed mixing matrix in expectation. We
+then run an ensemble of `NetworkOutbreaks.jl` `DirectSSA` epidemics with
+the type-aware compartments $\{S_l, I_l, R_l\}$ for $l \in \{Y, O\}$.
+
+```{julia}
+include("../_validation.jl")
+
+sbm = sbm_typed_graph_builder(
+    [:Young => 1000, :Old => 1000],
+    Dict((:Young, :Young) => κ_YY_val, (:Young, :Old) => κ_YO_val,
+         (:Old,   :Young) => κ_OY_val, (:Old,   :Old) => κ_OO_val))
+
+tgrid_v, mean_v, std_v = gillespie_multitype_ribbon(
+    [:Young, :Old], sbm;
+    β = β_val, γ = γ_val, n_graphs = 3, nsims_per_graph = 12,
+    tspan = tspan, seed_fraction = ε,
+    tgrid = collect(0.0:1.0:40.0))
+```
+
+```{julia}
+#| label: fig-multitype-validation
+#| fig-cap: "EBM (lines) versus DirectSSA on a stochastic block model with prescribed mixing matrix (ribbons = mean ± 1σ across 36 simulations on 3 graphs, N=2000)."
+plot(sol.t, I_Young, label="I Young (EBM)", lw=2, color=:red)
+plot!(tgrid_v, mean_v[(:I, :Young)],
+      ribbon = std_v[(:I, :Young)],
+      label = "I Young (SSA mean ± 1σ)",
+      color = :red, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(sol.t, I_Old, label="I Old (EBM)", lw=2, color=:blue)
+plot!(tgrid_v, mean_v[(:I, :Old)],
+      ribbon = std_v[(:I, :Old)],
+      label = "I Old (SSA mean ± 1σ)",
+      color = :blue, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+xlabel!("Time")
+ylabel!("Prevalence")
+title!("Multi-type SIR: EBM vs SSA on SBM")
+```
+
+The deterministic curves track the SSA ensemble means closely across
+both populations, with the Young population peaking earlier and higher
+because of its larger total mean degree ($\kappa_{YY} + \kappa_{YO} = 8$
+vs. $\kappa_{OY} + \kappa_{OO} = 6$).
