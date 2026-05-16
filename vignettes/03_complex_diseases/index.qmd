@@ -196,7 +196,7 @@ end
 ```
 
 ```{julia}
-ic_multi = default_initial_conditions(model_multi)
+ic_multi = default_initial_conditions(model_multi; seed_fraction = 0.01)
 prob_multi = ODEProblem(
     model_multi.system,
     merge(ic_multi, Dict(β₁ => 0.8, β₂ => 0.15, γ₁ => 0.5, γ₂ => 0.05, κ => κ_val)),

@@ -121,7 +121,7 @@ Both models have the same mean infectious period ($1/\gamma$) and per-edge trans
 
 ```{julia}
 # Solve exponential SIR
-ic_exp = default_initial_conditions(model_exp)
+ic_exp = default_initial_conditions(model_exp; seed_fraction = 0.01)
 prob_exp = ODEProblem(
     model_exp.system,
     merge(ic_exp, Dict(β => β_val, γ => γ_val, κ => κ_val)),
@@ -136,7 +136,7 @@ R_exp = compartment(sol_exp, model_exp, :R)
 
 ```{julia}
 # Solve Erlang SIR
-ic_erlang = default_initial_conditions(model_erlang)
+ic_erlang = default_initial_conditions(model_erlang; seed_fraction = 0.01)
 prob_erlang = ODEProblem(
     model_erlang.system,
     merge(ic_erlang, Dict(β => β_val, γ => γ_val, κ => κ_val)),
@@ -191,7 +191,7 @@ for n in [1, 2, 5, 10, 20]
         )
     end
 
-    ic_n = default_initial_conditions(model_n)
+    ic_n = default_initial_conditions(model_n; seed_fraction = 0.01)
     prob_n = ODEProblem(
         model_n.system,
         merge(ic_n, Dict(β => β_val, γ => γ_val, κ => κ_val)),
@@ -253,7 +253,7 @@ for cv in [1.0, 0.5, 0.3, 0.2]
         StaticConfigurationModel(pgf, prog_cv);
         form = :expanded,
     )
-    ic_cv = default_initial_conditions(model_cv)
+    ic_cv = default_initial_conditions(model_cv; seed_fraction = 0.01)
     prob_cv = ODEProblem(
         model_cv.system,
         merge(ic_cv, Dict(β => β_val, γ => γ_val, κ => κ_val)),
@@ -311,7 +311,7 @@ println("Exponential SEIR: ", length(ModelingToolkit.equations(model_seir_exp.sy
 σ_val = 0.2  # mean latent period = 5 days
 
 # Solve exponential SEIR
-ic_seir_exp = default_initial_conditions(model_seir_exp)
+ic_seir_exp = default_initial_conditions(model_seir_exp; seed_fraction = 0.01)
 prob_seir_exp = ODEProblem(
     model_seir_exp.system,
     merge(ic_seir_exp, Dict(β => β_val, γ => γ_val, σ => σ_val, κ => κ_val)),
@@ -326,7 +326,7 @@ EI_se = 1.0 .- S_se .- R_se
 
 ```{julia}
 # Solve Erlang SEIR
-ic_seir_erl = default_initial_conditions(model_seir_erlang)
+ic_seir_erl = default_initial_conditions(model_seir_erlang; seed_fraction = 0.01)
 prob_seir_erl = ODEProblem(
     model_seir_erlang.system,
     merge(ic_seir_erl, Dict(β => β_val, γ => γ_val, σ => σ_val, κ => κ_val)),

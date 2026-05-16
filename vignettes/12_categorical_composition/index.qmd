@@ -71,7 +71,7 @@ Build the ODE system and solve:
 
 ```{julia}
 sys_tp = build_edge_system(tp.model)
-ic_tp = default_initial_conditions(sys_tp)
+ic_tp = default_initial_conditions(sys_tp; seed_fraction = 0.01)
 prob_tp = ODEProblem(sys_tp.system, ic_tp, (0.0, 80.0))
 sol_tp = solve(prob_tp; abstol = 1e-8, reltol = 1e-8)
 ```
@@ -80,11 +80,11 @@ We can also solve each population in isolation and confirm the tensor product do
 
 ```{julia}
 sys_a = build_edge_system(m1.model)
-ic_a = default_initial_conditions(sys_a)
+ic_a = default_initial_conditions(sys_a; seed_fraction = 0.01)
 sol_a = solve(ODEProblem(sys_a.system, ic_a, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
 
 sys_b = build_edge_system(m2.model)
-ic_b = default_initial_conditions(sys_b)
+ic_b = default_initial_conditions(sys_b; seed_fraction = 0.01)
 sol_b = solve(ODEProblem(sys_b.system, ic_b, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
 ```
 
@@ -175,7 +175,7 @@ println("Stratified ports: ", length(strat.ports))
 
 ```{julia}
 sys_strat = build_edge_system(strat.model)
-ic_strat = default_initial_conditions(sys_strat)
+ic_strat = default_initial_conditions(sys_strat; seed_fraction = 0.01)
 prob_strat = ODEProblem(sys_strat.system, ic_strat, (0.0, 80.0))
 sol_strat = solve(prob_strat; abstol = 1e-8, reltol = 1e-8)
 ```
@@ -285,7 +285,7 @@ println("Observables: ", keys(sys_single.observables))
 ```
 
 ```{julia}
-ic_single = default_initial_conditions(sys_single)
+ic_single = default_initial_conditions(sys_single; seed_fraction = 0.01)
 sol_single = solve(ODEProblem(sys_single.system, ic_single, (0.0, 80.0));
                    abstol = 1e-8, reltol = 1e-8)
 println("Final S = ", compartment(sol_single, sys_single, :S)[end])

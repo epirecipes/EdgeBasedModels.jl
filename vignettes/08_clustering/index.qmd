@@ -116,12 +116,12 @@ tspan = (0.0, 40.0)
 params = Dict(β => β_val, γ => γ_val)
 
 # Unclustered
-ic1 = merge(default_initial_conditions(model_unclustered), params)
+ic1 = merge(default_initial_conditions(model_unclustered; seed_fraction = 0.01), params)
 prob1 = ODEProblem(model_unclustered.system, ic1, tspan)
 sol1 = solve(prob1, Tsit5(); saveat = 0.5)
 
 # Clustered
-ic2 = merge(default_initial_conditions(model_clustered), params)
+ic2 = merge(default_initial_conditions(model_clustered; seed_fraction = 0.01), params)
 prob2 = ODEProblem(model_clustered.system, ic2, tspan)
 sol2 = solve(prob2, Tsit5(); saveat = 0.5)
 ```
@@ -167,7 +167,7 @@ for frac in fracs
     κ_t_i = 5.0 * frac / 2  # each triangle stub contributes 2 neighbours
     cpgf_i = clustered_poisson_pgf(κ_s_i, κ_t_i)
     model_i = build_clustered_sir(cpgf_i, β, γ)
-    ic_i = merge(default_initial_conditions(model_i), params)
+    ic_i = merge(default_initial_conditions(model_i; seed_fraction = 0.01), params)
     prob_i = ODEProblem(model_i.system, ic_i, tspan)
     sol_i = solve(prob_i, Tsit5(); saveat = 0.5)
 
@@ -251,7 +251,7 @@ println("SEIR clustered variables: ", keys(model_seir.variables))
 
 ```{julia}
 params_seir = Dict(β => β_val, γ => γ_val, σ => 0.2)
-ic_seir = merge(default_initial_conditions(model_seir), params_seir)
+ic_seir = merge(default_initial_conditions(model_seir; seed_fraction = 0.01), params_seir)
 prob_seir = ODEProblem(model_seir.system, ic_seir, tspan)
 sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
 
