@@ -33,7 +33,7 @@ An `OpenEBCM` wraps an edge-based compartmental model together with named **port
 
 ```{julia}
 pgf_a = poisson_pgf(5.0)
-m_sir = open_sir(pgf_a, 0.3, 0.1; name = :pop_a)
+m_sir = open_sir(pgf_a, 1/6, 0.25; name = :pop_a)
 ```
 
 Each port has a name and a type (`:susceptible`, `:infectious`, or `:recovered`):
@@ -47,7 +47,7 @@ end
 An SEIR model has four ports (S, E, I, R), where the exposed and recovered stages are both non-infectious:
 
 ```{julia}
-m_seir = open_seir(pgf_a, 0.2, 0.3, 0.1; name = :seir)
+m_seir = open_seir(pgf_a, 0.25, 1/6, 0.25; name = :seir)
 println("SEIR ports: ", length(m_seir.ports))
 for p in m_seir.ports
     println("  Port $(p.name) — type $(p.type)")
@@ -60,8 +60,8 @@ The tensor product $m_1 \otimes m_2$ places two open systems side by side with *
 
 ```{julia}
 pgf_b = poisson_pgf(3.0)
-m1 = open_sir(pgf_a, 0.3, 0.1; name = :pop_a)
-m2 = open_sir(pgf_b, 0.2, 0.1; name = :pop_b)
+m1 = open_sir(pgf_a, 1/6, 0.25; name = :pop_a)
+m2 = open_sir(pgf_b, 1/6, 0.25; name = :pop_b)
 
 tp = tensor(m1, m2)
 println("Tensor product ports: ", length(tp.ports))
@@ -72,7 +72,7 @@ Build the ODE system and solve:
 ```{julia}
 sys_tp = build_edge_system(tp.model)
 ic_tp = default_initial_conditions(sys_tp; seed_fraction = 0.01)
-prob_tp = ODEProblem(sys_tp.system, ic_tp, (0.0, 80.0))
+prob_tp = ODEProblem(sys_tp.system, ic_tp, (0.0, 40.0))
 sol_tp = solve(prob_tp; abstol = 1e-8, reltol = 1e-8)
 ```
 
@@ -81,11 +81,11 @@ We can also solve each population in isolation and confirm the tensor product do
 ```{julia}
 sys_a = build_edge_system(m1.model)
 ic_a = default_initial_conditions(sys_a; seed_fraction = 0.01)
-sol_a = solve(ODEProblem(sys_a.system, ic_a, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
+sol_a = solve(ODEProblem(sys_a.system, ic_a, (0.0, 40.0)); abstol = 1e-8, reltol = 1e-8)
 
 sys_b = build_edge_system(m2.model)
 ic_b = default_initial_conditions(sys_b; seed_fraction = 0.01)
-sol_b = solve(ODEProblem(sys_b.system, ic_b, (0.0, 80.0)); abstol = 1e-8, reltol = 1e-8)
+sol_b = solve(ODEProblem(sys_b.system, ic_b, (0.0, 40.0)); abstol = 1e-8, reltol = 1e-8)
 ```
 
 ```{julia}
@@ -134,8 +134,8 @@ The solid (tensor) and dashed (standalone) curves overlap perfectly — the tens
 The `compose` combinator records port wiring at the categorical level, but `build_edge_system` does not yet emit a coupled ODE system from a `ComposedModel` whose wiring is non-empty: it raises an `ArgumentError` because injecting cross-system transmission pressure requires extra closure assumptions that have not been formalised in the package. The wiring metadata is still useful for bookkeeping and for downstream tools.
 
 ```{julia}
-m_city  = open_sir(pgf_a, 0.3, 0.1; name = :city)
-m_rural = open_sir(pgf_b, 0.2, 0.1; name = :rural)
+m_city  = open_sir(pgf_a, 1/6, 0.25; name = :city)
+m_rural = open_sir(pgf_b, 1/6, 0.25; name = :rural)
 
 # Wire city's infectious port (I) to rural's susceptible port (S)
 cp = EdgeBasedModels.compose(m_city, m_rural, [:I => :S])
@@ -164,7 +164,7 @@ To couple two populations dynamically, use `stratify` (below) or build a `MultiT
 
 ```{julia}
 pgf_base = poisson_pgf(5.0)
-base = open_sir(pgf_base, 0.3, 0.1; name = :base)
+base = open_sir(pgf_base, 1/6, 0.25; name = :base)
 
 # Two age groups with assortative mixing
 mixing = [0.7 0.3;
@@ -176,7 +176,7 @@ println("Stratified ports: ", length(strat.ports))
 ```{julia}
 sys_strat = build_edge_system(strat.model)
 ic_strat = default_initial_conditions(sys_strat; seed_fraction = 0.01)
-prob_strat = ODEProblem(sys_strat.system, ic_strat, (0.0, 80.0))
+prob_strat = ODEProblem(sys_strat.system, ic_strat, (0.0, 40.0))
 sol_strat = solve(prob_strat; abstol = 1e-8, reltol = 1e-8)
 ```
 
@@ -210,21 +210,21 @@ A **natural transformation** relates the EBCM network model to a simpler mass-ac
 ```{julia}
 pgf_poisson = poisson_pgf(5.0)
 prog_sir = DiseaseProgression(
-    [DiseaseStage(:I; transmission_rate = 0.3),
+    [DiseaseStage(:I; transmission_rate = 1/6),
      DiseaseStage(:R; transmission_rate = 0)],
-    [DiseaseTransition(:I, :R, 0.1)]; entry = :I,
+    [DiseaseTransition(:I, :R, 0.25)]; entry = :I,
 )
 sir_model = StaticConfigurationModel(pgf_poisson, prog_sir)
 
 ma = to_mass_action(sir_model)
-println("β_eff = ", ma.β_eff, "  (expected: 0.3 × 5 = 1.5)")
+println("β_eff = ", ma.β_eff, "  (expected: (1/6) × 5 ≈ 0.833)")
 println("γ     = ", ma.γ)
 ```
 
 The `compare_models` function solves both the EBCM and the mass-action approximation and returns the solutions for direct comparison:
 
 ```{julia}
-result = compare_models(sir_model; tspan = (0.0, 80.0))
+result = compare_models(sir_model; tspan = (0.0, 40.0))
 println("β_eff = ", result.β_eff)
 println("γ     = ", result.γ)
 ```
@@ -286,7 +286,7 @@ println("Observables: ", keys(sys_single.observables))
 
 ```{julia}
 ic_single = default_initial_conditions(sys_single; seed_fraction = 0.01)
-sol_single = solve(ODEProblem(sys_single.system, ic_single, (0.0, 80.0));
+sol_single = solve(ODEProblem(sys_single.system, ic_single, (0.0, 40.0));
                    abstol = 1e-8, reltol = 1e-8)
 println("Final S = ", compartment(sol_single, sys_single, :S)[end])
 ```
@@ -296,11 +296,11 @@ println("Final S = ", compartment(sol_single, sys_single, :S)[end])
 `verify_functoriality` checks the functor equation by solving both paths — compose-then-map vs map-then-combine — and comparing the trajectories:
 
 ```{julia}
-m_fa = open_sir(pgf_a, 0.3, 0.1; name = :fa)
-m_fb = open_sir(pgf_b, 0.2, 0.1; name = :fb)
+m_fa = open_sir(pgf_a, 1/6, 0.25; name = :fa)
+m_fb = open_sir(pgf_b, 1/6, 0.25; name = :fb)
 
 vf = verify_functoriality(m_fa, m_fb, Pair{Symbol,Symbol}[];
-                           tspan = (0.0, 80.0), atol = 1e-4)
+                           tspan = (0.0, 40.0), atol = 1e-4)
 println("Is functorial: ", vf.is_functorial)
 println("Max trajectory difference: ", vf.max_difference)
 println("Composed retcode: ", vf.composed_retcode)
@@ -348,17 +348,14 @@ section against Gillespie SSA via `NetworkOutbreaks.jl`.
 ```{julia}
 include("../_validation.jl")
 
-# Note: the SIR progression in this vignette uses β=0.3, γ=0.1, κ=5 (R₀≈3 on
-# Poisson). We validate at those parameters, not the canonical (γ=0.25, R₀=2)
-# anchor used elsewhere.
 import EdgeBasedModels: sir_model as ebm_sir_model
 prog_for_no = ebm_sir_model()  # avoids local `sir_model` rebinding above
 
 t_g, μ_g, σ_g = gillespie_ribbon(
-    prog_for_no, Dict(:β => 0.3, :γ => 0.1),
+    prog_for_no, Dict(:β => 1/6, :γ => 0.25),
     poisson_graph_builder(1000, 5.0);
     N = 1000, n_graphs = 5, nsims_per_graph = 20,
-    tspan = (0.0, 80.0), seed_fraction = 0.01)
+    tspan = (0.0, 40.0), seed_fraction = 0.01)
 ```
 
 ```{julia}
