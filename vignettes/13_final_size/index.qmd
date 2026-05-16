@@ -3,10 +3,6 @@ title: "Final Size and Equilibrium Analysis"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 13"
-format:
-  html:
-    code-fold: false
-    toc: true
 engine: julia
 julia:
   project: ".."
@@ -338,3 +334,78 @@ EdgeBasedModels.jl provides efficient analytic tools for epidemic equilibrium an
 - The **contour plot** of final size in the $(\kappa, T)$ plane provides a clear picture of the epidemic threshold and its dependence on network connectivity.
 
 These analytic results complement the ODE simulations in earlier vignettes and are particularly valuable for parameter space exploration, sensitivity analysis, and rapid model comparison.
+
+## Simulation validation
+
+We compare the analytic `final_size` curve against direct stochastic
+simulation. For each $R_0 \in \{0.5, 0.75, \ldots, 4.0\}$ we hold
+$\gamma = 0.25$, $\kappa = 5$ fixed and back out
+$\beta = R_0 \gamma /(\kappa - R_0)$. We then build an Erdős–Rényi graph
+($N=2000$, $p = \kappa/(N-1)$) for each replicate, run a `DirectSSA`
+trajectory to $t = 200$, and report the empirical final size as a 95%
+band across replicates and graphs.
+
+```{julia}
+include("../_validation.jl")
+
+R0_sweep = collect(0.5:0.25:4.0)
+γ_v = 0.25
+κ_v = 5.0
+N_v = 2000
+
+prog_factory = function (R0)
+    β_v = R0 * γ_v / κ_v
+    DiseaseProgression(
+        [DiseaseStage(:I; transmission_rate = β_v), DiseaseStage(:R)],
+        [DiseaseTransition(:I, :R, γ_v)]; entry = :I)
+end
+params_factory = function (R0)
+    β_v = R0 * γ_v / κ_v
+    Dict(:β => β_v, :γ => γ_v)
+end
+
+sweep = gillespie_final_size_sweep(
+    prog_factory, params_factory,
+    poisson_graph_builder(N_v, κ_v),
+    R0_sweep;
+    N = N_v, n_graphs = 3, nsims_per_graph = 12,
+    tspan = (0.0, 200.0), seed_fraction = 0.01, recovered = :R)
+```
+
+```{julia}
+#| label: fig-final-size-ssa-vs-ebm
+#| fig-cap: "Analytic final size (line) versus DirectSSA on Erdős–Rényi graphs (N=2000, ribbon = 95% empirical interval across 36 trajectories per R₀). Major / minor outbreak bimodality near the threshold widens the band; subset-conditioned curve overlaid in grey."
+fs_curve = Float64[]
+for R0 in R0_sweep
+    β_v = R0 * γ_v / κ_v
+    prog = DiseaseProgression(
+        [DiseaseStage(:I; transmission_rate = β_v), DiseaseStage(:R)],
+        [DiseaseTransition(:I, :R, γ_v)]; entry = :I)
+    m = StaticConfigurationModel(poisson_pgf(κ_v), prog)
+    push!(fs_curve, EdgeBasedModels.final_size(m).R_infinity)
+end
+
+# Conditioned on a major outbreak (drop final sizes < 5%):
+ssa_major_mean = [(let v = filter(>=( 0.05), s); isempty(v) ? 0.0 : mean(v) end)
+                  for s in sweep.all]
+
+plot(R0_sweep, fs_curve, lw = 2, color = :black,
+     label = "Analytic R∞")
+plot!(sweep.values, sweep.means,
+      ribbon = (sweep.means .- sweep.q025, sweep.q975 .- sweep.means),
+      color = :steelblue, fillalpha = 0.25, linealpha = 0.6, lw = 1,
+      label = "SSA mean (95% band)")
+plot!(sweep.values, ssa_major_mean, lw = 1.5, ls = :dash,
+      color = :grey40, label = "SSA major-outbreak mean (R∞ ≥ 0.05)")
+vline!([1.0], ls = :dot, color = :red, label = "R₀ = 1")
+xlabel!("R₀")
+ylabel!("Final size R∞")
+title!("Analytic vs simulated final size on Poisson(κ=5) network")
+```
+
+The analytic curve and the major-outbreak conditional mean agree closely
+across the full sweep. The unconditioned mean (with 95% band) sags below
+the deterministic curve near the threshold because some trajectories die
+out stochastically — this is the regime in which `epidemic_probability`
+is materially less than 1 (cf. the previous figure). For $R_0 \gtrsim 2$
+the epidemic probability is essentially 1 and the two curves coincide.

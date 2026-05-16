@@ -3,10 +3,6 @@ title: "Effect of Network Structure"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 02"
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -218,6 +214,48 @@ $$
 For fixed mean degree $\langle k \rangle$, increasing the variance increases the excess degree ratio and therefore $R_0$. Intuitively, high-degree nodes act as superspreaders: they are more likely to be reached by the epidemic (since they have more edges) and can transmit to many contacts.
 
 This is a key result from network epidemiology: **heterogeneity in the number of contacts always makes epidemics worse**, even when the average number of contacts is the same.
+
+## Simulation validation
+
+We validate both ODE predictions against Gillespie SSA on host graphs drawn
+from the matching degree distributions, using `NetworkOutbreaks.jl`.
+
+```{julia}
+include("../_validation.jl")
+
+prog = sir_model()
+params = Dict(:β => β_val, :γ => γ_val)
+
+t_pois, μ_pois, σ_pois = gillespie_ribbon(
+    prog, params, poisson_graph_builder(1000, 5.0);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+
+t_het, μ_het, σ_het = gillespie_ribbon(
+    prog, params, configuration_graph_builder(1000, probs);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+```
+
+```{julia}
+#| label: fig-net-validation
+#| fig-cap: "Gillespie SSA mean ± 1σ ribbon (gray) on each network type, overlaid with the EBCM I-trajectory (line)."
+plot(t_pois, μ_pois[:I], ribbon = σ_pois[:I],
+     label = "SSA Poisson (mean ± 1σ)", color = :blue, fillalpha = 0.2,
+     linealpha = 0.6)
+plot!(sol_pois.t, I_pois, label = "EBCM Poisson", color = :blue, linewidth = 2)
+plot!(t_het, μ_het[:I], ribbon = σ_het[:I],
+     label = "SSA Heterogeneous (mean ± 1σ)", color = :red, fillalpha = 0.2,
+     linealpha = 0.6)
+plot!(sol_het.t, I_het, label = "EBCM Heterogeneous", color = :red, linewidth = 2)
+xlabel!("Time")
+ylabel!("Fraction infected")
+title!("EBCM vs Gillespie SSA on matched-mean networks")
+```
+
+The deterministic EBCM curves track the SSA ensemble means closely on both
+networks, with the heterogeneous-degree variant reaching a higher peak
+exactly as predicted by the excess degree ratio.
 
 ## Summary
 

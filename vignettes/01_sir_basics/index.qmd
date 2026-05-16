@@ -3,10 +3,6 @@ title: "SIR Model on a Network"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 01"
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -196,9 +192,77 @@ end
 p
 ```
 
+## Simulation validation
+
+To check that the deterministic EBCM is consistent with stochastic dynamics on
+a finite network, we simulate the same SIR process with the Gillespie SSA
+provided by [`NetworkOutbreaks.jl`](https://github.com/sdwfrost/NetworkOutbreaks.jl)
+on Erdős–Rényi graphs with the same mean degree $\kappa = 5$, and overlay the
+ensemble mean and $\pm 1\sigma$ band on the EBCM prediction.
+
+To reduce conditioning on a single graph realisation, we average across
+several independent host graphs as well as across stochastic epidemic
+realisations on each.
+
+```{julia}
+using NetworkOutbreaks
+using Graphs
+using StableRNGs
+using Statistics
+
+N = 1000
+n_graphs = 5
+nsims_per_graph = 20
+rng_host = StableRNG(20240501)
+
+prog = sir_model()
+no_model = OutbreakModel(prog, Dict(:β => β_val, :γ => γ_val))
+
+tgrid = collect(0.0:0.5:40.0)
+I_idx = no_model.index_of[:I]
+
+I_runs = Matrix{Float64}(undef, n_graphs * nsims_per_graph, length(tgrid))
+row = 1
+for gi in 1:n_graphs
+    g = erdos_renyi(N, κ_val / (N - 1); rng = rng_host)
+    spec = OutbreakSpec(model = no_model, network = g,
+                        initial = SeedFraction(:I => seed_fraction),
+                        tspan   = (0.0, 40.0))
+    ens = simulate_ensemble(spec; nsims = nsims_per_graph,
+                            seed = 20240501 + 1000 * gi,
+                            parallel = true)
+    for traj in ens.trajectories
+        for (j, t) in enumerate(tgrid)
+            I_runs[row, j] = Float64(state_at(traj, t)[I_idx])
+        end
+        row += 1
+    end
+end
+
+μI = vec(mean(I_runs; dims = 1)) ./ N
+σI = vec(std(I_runs;  dims = 1)) ./ N
+```
+
+```{julia}
+#| label: fig-sir-validation
+#| fig-cap: "EBCM prediction (red line) versus Gillespie SSA on Erdős–Rényi graphs (red ribbon: mean ± 1σ across $n_graphs × $nsims_per_graph runs at N=1000)."
+plot(tgrid, μI, ribbon = σI, label = "Gillespie SSA (mean ± 1σ)",
+     color = :red, fillalpha = 0.2, linealpha = 0.6, linewidth = 1)
+plot!(sol.t, I_vals, label = "EBCM compact",
+      color = :red, linewidth = 2)
+xlabel!("Time")
+ylabel!("Fraction infected")
+title!("EBCM vs Gillespie SSA (Poisson κ=5, R₀=2, N=$N)")
+```
+
+The deterministic EBCM curve sits inside the stochastic ribbon throughout the
+epidemic, confirming that the configuration-model closure correctly predicts
+the mean prevalence on this network ensemble.
+
 ## Summary
 
 - The **compact** formulation produces 2 ODEs and is the most efficient for SIR on static networks.
 - The **expanded** formulation produces $1 + 2M$ ODEs (where $M$ is the number of non-susceptible stages, so 5 ODEs for SIR) but generalises to arbitrary disease progression graphs (SEIR, multi-stage, etc.).
 - Both formulations give identical results for SIR.
 - The PGF encodes the network's degree distribution — we used a Poisson PGF here, but the package supports arbitrary degree distributions via `polynomial_pgf`.
+- The EBCM ODE prediction agrees with Gillespie SSA on finite Erdős–Rényi graphs with matching mean degree.

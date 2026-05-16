@@ -3,10 +3,6 @@ title: "Complex Disease Models"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 03"
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -256,9 +252,65 @@ end
 p
 ```
 
-## Summary
+## Simulation validation
 
-- **SEIR**: 5 ODEs — the exposed period delays but doesn't change the final epidemic size.
+We compare each ODE prediction (SIR, SEIR, SIS) against Gillespie SSA on a
+Poisson network with the same mean degree $\kappa = 5$ via `NetworkOutbreaks.jl`.
+
+```{julia}
+include("../_validation.jl")
+
+builder = poisson_graph_builder(1000, κ_val)
+
+# SIR ribbon (epidemic, t ∈ [0,40])
+t_sir, μ_sir, σ_sir = gillespie_ribbon(
+    sir_model(), Dict(:β => β_val, :γ => γ_val), builder;
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = (0.0, 40.0), seed_fraction = seed_fraction)
+
+# SEIR ribbon
+t_seir, μ_seir, σ_seir = gillespie_ribbon(
+    seir_model(), Dict(:β => β_val, :γ => γ_val, :σ => σ_val), builder;
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = (0.0, 40.0), seed_fraction = seed_fraction, infected = :E)
+
+# SIS ribbon (endemic, longer horizon)
+t_sis_g, μ_sis_g, σ_sis_g = gillespie_ribbon(
+    sis_model(), Dict(:β => β_val, :γ => γ_val), builder;
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = (0.0, 80.0), seed_fraction = seed_fraction)
+```
+
+```{julia}
+#| label: fig-validation-sir-seir
+#| fig-cap: "Gillespie SSA mean ± 1σ ribbons (matched line colors) versus EBCM I/(E+I) curve for SIR and SEIR."
+EI_ssa = μ_seir[:E] .+ μ_seir[:I]
+σEI_ssa = sqrt.(σ_seir[:E].^2 .+ σ_seir[:I].^2)
+plot(t_sir, μ_sir[:I], ribbon = σ_sir[:I],
+     label = "SSA SIR I (mean ± 1σ)", color = :red, fillalpha = 0.2, linealpha = 0.6)
+plot!(sol_sir.t, I_sir, label = "EBCM SIR I", color = :red, linewidth = 2)
+plot!(t_seir, EI_ssa, ribbon = σEI_ssa,
+     label = "SSA SEIR E+I (mean ± 1σ)", color = :orange, fillalpha = 0.2, linealpha = 0.6)
+plot!(sol_seir.t, EI_seir, label = "EBCM SEIR E+I", color = :orange, linewidth = 2)
+xlabel!("Time"); ylabel!("Fraction infected")
+title!("EBCM vs SSA on Poisson κ=5")
+```
+
+```{julia}
+#| label: fig-validation-sis
+#| fig-cap: "SIS on Poisson κ=5: EBCM endemic equilibrium versus SSA mean ± 1σ (red ribbon)."
+plot(t_sis_g, μ_sis_g[:I], ribbon = σ_sis_g[:I],
+     label = "SSA SIS (mean ± 1σ)", color = :red, fillalpha = 0.2, linealpha = 0.6)
+plot!(sol_sis.t, I_sis, label = "EBCM SIS", color = :red, linewidth = 2)
+xlabel!("Time"); ylabel!("Fraction infected")
+title!("SIS endemic equilibrium")
+```
+
+The deterministic EBCM curves track the SSA ensemble means well across SIR,
+SEIR, and SIS, confirming that the configuration-model closure recovers the
+correct large-network limit.
+
+## Summary
 - **SIS**: 1 ODE — produces endemic equilibria.
 - **Multi-stage**: arbitrary disease graphs via `DiseaseProgression` with per-stage transmission rates.
 - The package automates all the bookkeeping for edge-level variables, regardless of disease complexity.

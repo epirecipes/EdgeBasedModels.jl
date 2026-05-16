@@ -3,10 +3,6 @@ title: "Categorical Composition"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 12"
-format:
-  html:
-    code-fold: false
-    toc: true
 engine: julia
 julia:
   project: ".."
@@ -344,9 +340,43 @@ title!("Functoriality: F(m₁⊗m₂) ≅ F(m₁)⊗F(m₂)")
 
 The solid (composed) and dashed (individual) curves coincide, confirming that the EBCM functor preserves the tensor product.
 
-## Summary
+## Simulation validation
 
-| Concept | Implementation | Epidemiological meaning |
+We validate the EBCM SIR prediction (Poisson κ=5) used in the natural-transformation
+section against Gillespie SSA via `NetworkOutbreaks.jl`.
+
+```{julia}
+include("../_validation.jl")
+
+# Note: the SIR progression in this vignette uses β=0.3, γ=0.1, κ=5 (R₀≈3 on
+# Poisson). We validate at those parameters, not the canonical (γ=0.25, R₀=2)
+# anchor used elsewhere.
+import EdgeBasedModels: sir_model as ebm_sir_model
+prog_for_no = ebm_sir_model()  # avoids local `sir_model` rebinding above
+
+t_g, μ_g, σ_g = gillespie_ribbon(
+    prog_for_no, Dict(:β => 0.3, :γ => 0.1),
+    poisson_graph_builder(1000, 5.0);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = (0.0, 80.0), seed_fraction = 0.01)
+```
+
+```{julia}
+#| label: fig-categorical-validation
+#| fig-cap: "EBCM (red) and mass-action approximation (red dashed) versus Gillespie SSA mean ± 1σ (red ribbon)."
+plot(t_g, μ_g[:I], ribbon = σ_g[:I], label = "SSA (mean ± 1σ)",
+     color = :red, fillalpha = 0.2, linealpha = 0.6)
+plot!(result.ebcm.t, I_ebcm, label = "EBCM", lw = 3, color = :red)
+plot!(result.mass_action.t, I_ma, label = "Mass-action", lw = 2,
+      ls = :dash, color = :red)
+xlabel!("Time"); ylabel!("Fraction infected")
+title!("EBCM, mass-action and SSA on Poisson(5)")
+```
+
+The EBCM tracks the SSA mean closely; the mass-action curve diverges in the
+expected direction because it ignores the depletion of susceptible neighbours.
+
+## Summary
 |---------|---------------|------------------------|
 | **Open system** | `OpenEBCM`, `Port` | A model with named boundary interfaces |
 | **Tensor product** | `tensor(m1, m2)` | Independent parallel populations |

@@ -3,10 +3,6 @@ title: "Catalyst.jl Integration"
 subtitle: "EdgeBasedModels.jl Vignette 04"
 author: "Simon Frost"
 date: today
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -287,6 +283,32 @@ T = 1 - \frac{\gamma_1}{\beta_1 + \gamma_1} \cdot \frac{\gamma_2}{\beta_2 + \gam
 $$
 
 and $R_0 = T \cdot \psi''(1) / \psi'(1)$, where the excess degree ratio $\psi''(1)/\psi'(1) = \kappa$ for a Poisson distribution.
+
+## Simulation validation
+
+We verify the ODE prediction against Gillespie SSA on Erdős–Rényi networks with
+mean degree $\kappa = 10$, using `NetworkOutbreaks.jl`.
+
+```{julia}
+include("../_validation.jl")
+
+t_g, μ_g, σ_g = gillespie_ribbon(
+    sir_model(), Dict(:β => β_val, :γ => γ_val),
+    poisson_graph_builder(1000, κ_val);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = ε)
+```
+
+```{julia}
+#| label: fig-sir-validation-04
+#| fig-cap: "Catalyst-defined EBCM (red line) vs Gillespie SSA mean ± 1σ (red ribbon) on Poisson κ=10."
+plot(t_g, μ_g[:I], ribbon = σ_g[:I], label = "SSA (mean ± 1σ)",
+     color = :red, fillalpha = 0.2, linealpha = 0.6)
+plot!(sol.t, I_vals, label = "EBCM Catalyst",
+      color = :red, linewidth = 2)
+xlabel!("Time"); ylabel!("Fraction infected")
+title!("Catalyst-defined EBCM vs SSA")
+```
 
 ## Benefits of the Catalyst adapter
 

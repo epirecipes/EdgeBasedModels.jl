@@ -12,6 +12,7 @@
     network](#side-by-side-trajectories--regular-network)
   - [Side-by-side trajectories — Poisson
     network](#side-by-side-trajectories--poisson-network)
+  - [Simulation validation](#simulation-validation)
   - [Quantitative agreement at the
     peak](#quantitative-agreement-at-the-peak)
   - [Sweep over mean degree (Poisson
@@ -21,7 +22,7 @@
 
 # Edge-Based vs Pairwise Closure Models
 
-2026-05-08
+2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -33,6 +34,7 @@
   network](#side-by-side-trajectories--regular-network)
 - [Side-by-side trajectories — Poisson
   network](#side-by-side-trajectories--poisson-network)
+- [Simulation validation](#simulation-validation)
 - [Quantitative agreement at the
   peak](#quantitative-agreement-at-the-peak)
 - [Sweep over mean degree (Poisson
@@ -97,7 +99,7 @@ T_poisson = R0_target / κ
 β_poisson = T_poisson * γ / (1 - T_poisson)
 β = β_regular
 seed_fraction = 0.01
-tspan = (0.0, 120.0)
+tspan = (0.0, 40.0)
 saveat = 1.0;
 ```
 
@@ -182,7 +184,7 @@ keel_p   = run_pairwise(pois_net, NBM.KeelingClosure())
 "Keeling=$(round(keel_p.R[end]+keel_p.I[end]; digits=4))"
 ```
 
-    "EBCM (Poisson) attack rate = 0.8002;   pairwise (Poisson) Bernoulli=0.8002, Keeling=0.8002"
+    "EBCM (Poisson) attack rate = 0.8;   pairwise (Poisson) Bernoulli=0.8, Keeling=0.8"
 
 ## Side-by-side trajectories — regular network
 
@@ -215,6 +217,75 @@ and lower than on the regular network. The Keeling closure on
 `HeterogeneousNetwork` tracks the EBCM closely; the Bernoulli
 (mean-field) closure ignores degree correlations and over-predicts the
 peak.](index_files/figure-commonmark/cell-8-output-1.svg)
+
+## Simulation validation
+
+We add Gillespie SSA ground truth from `NetworkOutbreaks.jl` for both
+scenarios — this gives a direct visual check of which approximation
+matches the stochastic dynamics best.
+
+``` julia
+include("../_validation.jl")
+
+# Regular k=5
+t_r_g, μ_r_g, σ_r_g = gillespie_ribbon(
+    EdgeBasedModels.sir_model(), Dict(:β => β_regular, :γ => γ),
+    regular_graph_builder(1000, κ);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+
+# Poisson κ=5
+t_p_g, μ_p_g, σ_p_g = gillespie_ribbon(
+    EdgeBasedModels.sir_model(), Dict(:β => β_poisson, :γ => γ),
+    poisson_graph_builder(1000, Float64(κ));
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+```
+
+    ([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5  …  35.5, 36.0, 36.5, 37.0, 37.5, 38.0, 38.5, 39.0, 39.5, 40.0], Dict(:I => [0.01, 0.01311, 0.01668, 0.02134, 0.02621, 0.03251, 0.03976, 0.04803, 0.057229999999999996, 0.06829  …  0.00431, 0.0038900000000000002, 0.00346, 0.00317, 0.00294, 0.00265, 0.00235, 0.00212, 0.0019199999999999998, 0.0018], :R => [0.0, 0.00156, 0.00354, 0.005900000000000001, 0.00895, 0.01238, 0.016309999999999998, 0.021670000000000002, 0.02816, 0.03582  …  0.80265, 0.80315, 0.80363, 0.80396, 0.80426, 0.80464, 0.80498, 0.80526, 0.80549, 0.80567], :S => [0.99, 0.98533, 0.97978, 0.97276, 0.96484, 0.95511, 0.9439299999999999, 0.9302999999999999, 0.91461, 0.89589  …  0.19304, 0.19296000000000002, 0.19291, 0.19287, 0.1928, 0.19271000000000002, 0.19266999999999998, 0.19262, 0.19259, 0.19253]), Dict(:I => [0.0, 0.0027703152283894456, 0.00512644165483272, 0.0075654985081465495, 0.009203968182421661, 0.012363595142533778, 0.015003110788544266, 0.017516776950896953, 0.02104821545255972, 0.025202330740379444  …  0.003794453687670834, 0.003592627130244621, 0.003355742853826869, 0.003159257680359279, 0.0028562177434467073, 0.0026376259604179485, 0.0023066657908563763, 0.002279819237916848, 0.0020581446975272647, 0.0019847906537954927], :R => [0.0, 0.0011310136688793462, 0.001816979400382443, 0.002435013948480158, 0.003465194909031202, 0.004451262447187019, 0.005311879197239015, 0.0070195326328637, 0.008905474425738066, 0.011385246522752085  …  0.020014325677454946, 0.019989580619245953, 0.019931019932646586, 0.019842266895583164, 0.019723656513502417, 0.019668731273241546, 0.01963041342695388, 0.01958850415293355, 0.019591017834660347, 0.01954794933573144], :S => [0.0, 0.002570441930324768, 0.005072365216433936, 0.008117968596971422, 0.010417273921693523, 0.014843217680513584, 0.018551187715522843, 0.02279442604203621, 0.028067701341325735, 0.0347071136422166  …  0.019745819145767892, 0.019753490933007364, 0.019720826810785852, 0.01968625372839093, 0.01969617714023191, 0.019706582502793172, 0.019719781894833373, 0.019737560972200016, 0.019750000639304426, 0.019756321070032806]))
+
+``` julia
+plot(t_r_g, μ_r_g[:I], ribbon = σ_r_g[:I], label = "SSA (mean ± 1σ)",
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
+plot!(sol_r.t, I_r, label = "EBCM", lw = 3, color = :black)
+plot!(bern_r.t, bern_r.I, label = "Pairwise", lw = 2, ls = :dash, color = 1)
+xlabel!("time"); ylabel!("I(t)")
+title!("Scenario A — 5-regular  (R₀=2, γ=$γ)")
+```
+
+<div id="fig-validation-regular">
+
+![](index_files/figure-commonmark/fig-validation-regular-output-1.svg)
+
+Figure 1: Figure 1: Scenario A: SSA ribbon (black) overlaid with EBCM
+and pairwise closures.
+
+</div>
+
+``` julia
+plot(t_p_g, μ_p_g[:I], ribbon = σ_p_g[:I], label = "SSA (mean ± 1σ)",
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
+plot!(sol_p.t, I_p, label = "EBCM", lw = 3, color = :black)
+plot!(keel_p.t, keel_p.I, label = "Pairwise / Keeling", lw = 2, ls = :dot, color = 2)
+plot!(bern_p.t, bern_p.I, label = "Pairwise / Bernoulli", lw = 2, ls = :dash, color = 1)
+xlabel!("time"); ylabel!("I(t)")
+title!("Scenario B — Poisson($κ)  (R₀=2, γ=$γ)")
+```
+
+<div id="fig-validation-poisson">
+
+![](index_files/figure-commonmark/fig-validation-poisson-output-1.svg)
+
+Figure 2: Figure 2: Scenario B: SSA ribbon (black) overlaid with EBCM
+and pairwise closures on Poisson(5).
+
+</div>
+
+The SSA mean coincides with the EBCM and the heterogeneity-aware
+pairwise closures, while the Bernoulli mean-field closure visibly
+over-predicts the peak on the heterogeneous network — the same
+stochastic check used in the EdgeBasedModels validation pilot now
+applies across the package suite.
 
 ## Quantitative agreement at the peak
 
@@ -251,16 +322,16 @@ end
 
     Scenario A — 5-regular network
       Method       t_peak    I_peak    R(∞)
-      EBCM         9.0    0.3426    0.9532
-      Bernoulli    9.0    0.3426    0.9532
-      Keeling      9.0    0.3426    0.9532
-      Barnard      9.0    0.3426    0.9532
+      EBCM         9.0    0.3426    0.9527
+      Bernoulli    9.0    0.3426    0.9527
+      Keeling      9.0    0.3426    0.9527
+      Barnard      9.0    0.3426    0.9527
 
     Scenario B — Poisson(5) network
       Method       t_peak    I_peak    R(∞)
-      EBCM         11.0    0.2318    0.8002
-      Bernoulli    11.0    0.2317    0.8002
-      Keeling      11.0    0.2317    0.8002
+      EBCM         11.0    0.2318    0.7985
+      Bernoulli    11.0    0.2317    0.7985
+      Keeling      11.0    0.2317    0.7985
 
 ## Sweep over mean degree (Poisson networks)
 
@@ -307,7 +378,7 @@ title!(plt3, "SIR final size: EBCM vs pairwise closures")
 pair-closure on `HeterogeneousNetwork` tracks the EBCM closely; the
 Bernoulli (mean-field) closure systematically over-predicts because it
 ignores the correlation between an infected node and its
-neighbours.](index_files/figure-commonmark/cell-10-output-1.svg)
+neighbours.](index_files/figure-commonmark/cell-13-output-1.svg)
 
 ## Discussion
 

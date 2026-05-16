@@ -427,7 +427,7 @@ Poisson(κ) PGFs the inverse is `θ = 1 + log((1-f)^{1/n}) / κ`.
 include("../_validation.jl")
 
 const N_sim = 1000
-const seed_fraction_val = 0.001
+const seed_fraction_val = 0.01
 const tgrid_val = collect(0.0:0.5:40.0)
 
 # For Poisson(κ) PGF ψ(x)=exp(κ(x-1)): ψ⁻¹(y) = 1 + log(y)/κ

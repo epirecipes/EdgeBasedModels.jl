@@ -3,10 +3,6 @@ title: "Symbolic Analysis"
 subtitle: "EdgeBasedModels.jl Vignette 07"
 author: "Simon Frost"
 date: today
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -417,3 +413,17 @@ The symbolic nature of EdgeBasedModels.jl enables powerful analytical workflows:
 - **PGF analysis**: Symbolic derivatives of the degree distribution's PGF reveal how network structure affects epidemic thresholds.
 
 These capabilities complement the numerical simulation workflow shown in earlier vignettes, providing analytical insight that guides parameter choices and model validation.
+
+## Simulation validation
+
+This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does not
+yet provide an out-of-the-box stochastic ground truth (multi-type host graphs
+with prescribed mixing matrices, time-varying networks via the EBCM rewiring
+schedule, multiplex layers, degree-correlated configuration models, clustered
+graphs with prescribed triangle counts, or final-size sweeps over $R_0$).
+
+A future revision will add the missing primitives to NetworkOutbreaks.jl and
+overlay the corresponding Gillespie SSA ribbon here. Until then, see
+[vignette 01](../01_sir_basics/index.html) for the validation pattern on a
+single-layer Poisson configuration-model network with the same canonical
+parameters.

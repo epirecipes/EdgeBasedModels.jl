@@ -168,6 +168,58 @@ xlabel!(plt2, "time"); ylabel!(plt2, "I(t)")
 title!(plt2, "Scenario B — Poisson($κ)  (R₀=2, γ=$γ)")
 ```
 
+## Simulation validation
+
+We add Gillespie SSA ground truth from `NetworkOutbreaks.jl` for both
+scenarios — this gives a direct visual check of which approximation matches
+the stochastic dynamics best.
+
+```{julia}
+include("../_validation.jl")
+
+# Regular k=5
+t_r_g, μ_r_g, σ_r_g = gillespie_ribbon(
+    EdgeBasedModels.sir_model(), Dict(:β => β_regular, :γ => γ),
+    regular_graph_builder(1000, κ);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+
+# Poisson κ=5
+t_p_g, μ_p_g, σ_p_g = gillespie_ribbon(
+    EdgeBasedModels.sir_model(), Dict(:β => β_poisson, :γ => γ),
+    poisson_graph_builder(1000, Float64(κ));
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = seed_fraction)
+```
+
+```{julia}
+#| label: fig-validation-regular
+#| fig-cap: "Scenario A: SSA ribbon (black) overlaid with EBCM and pairwise closures."
+plot(t_r_g, μ_r_g[:I], ribbon = σ_r_g[:I], label = "SSA (mean ± 1σ)",
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
+plot!(sol_r.t, I_r, label = "EBCM", lw = 3, color = :black)
+plot!(bern_r.t, bern_r.I, label = "Pairwise", lw = 2, ls = :dash, color = 1)
+xlabel!("time"); ylabel!("I(t)")
+title!("Scenario A — 5-regular  (R₀=2, γ=$γ)")
+```
+
+```{julia}
+#| label: fig-validation-poisson
+#| fig-cap: "Scenario B: SSA ribbon (black) overlaid with EBCM and pairwise closures on Poisson(5)."
+plot(t_p_g, μ_p_g[:I], ribbon = σ_p_g[:I], label = "SSA (mean ± 1σ)",
+     color = :black, fillalpha = 0.15, linealpha = 0.4)
+plot!(sol_p.t, I_p, label = "EBCM", lw = 3, color = :black)
+plot!(keel_p.t, keel_p.I, label = "Pairwise / Keeling", lw = 2, ls = :dot, color = 2)
+plot!(bern_p.t, bern_p.I, label = "Pairwise / Bernoulli", lw = 2, ls = :dash, color = 1)
+xlabel!("time"); ylabel!("I(t)")
+title!("Scenario B — Poisson($κ)  (R₀=2, γ=$γ)")
+```
+
+The SSA mean coincides with the EBCM and the heterogeneity-aware pairwise
+closures, while the Bernoulli mean-field closure visibly over-predicts the
+peak on the heterogeneous network — the same stochastic check used in the
+EdgeBasedModels validation pilot now applies across the package suite.
+
 ## Quantitative agreement at the peak
 
 ```{julia}

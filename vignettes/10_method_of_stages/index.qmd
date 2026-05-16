@@ -3,10 +3,6 @@ title: "Method of Stages: Non-Exponential Distributions"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 10"
-format:
-  html:
-    toc: true
-    code-fold: false
 engine: julia
 julia:
   project: ".."
@@ -358,6 +354,34 @@ title!("Exponential vs Erlang SEIR (nE=$n_E, nI=$n_I)")
 ```
 
 The Erlang SEIR produces a sharper epidemic curve with a higher, earlier peak. As with SIR, the final epidemic size is the same for both models since it depends only on $R_0$ and the degree distribution.
+
+## Simulation validation
+
+We validate the exponential SIR ODE against Gillespie SSA on Erdős–Rényi
+networks (`NetworkOutbreaks.jl`). Erlang dynamics involve sub-stages that
+require a custom multi-stage model in NO; here we focus on the exponential
+case, which is the canonical reference.
+
+```{julia}
+include("../_validation.jl")
+
+t_g, μ_g, σ_g = gillespie_ribbon(
+    sir_model(), Dict(:β => β_val, :γ => γ_val),
+    poisson_graph_builder(1000, κ_val);
+    N = 1000, n_graphs = 5, nsims_per_graph = 20,
+    tspan = tspan, seed_fraction = 0.01)
+```
+
+```{julia}
+#| label: fig-stages-validation
+#| fig-cap: "Exponential EBCM (red line) vs Gillespie SSA mean ± 1σ (red ribbon)."
+plot(t_g, μ_g[:I], ribbon = σ_g[:I], label = "SSA (mean ± 1σ)",
+     color = :red, fillalpha = 0.2, linealpha = 0.6)
+plot!(sol_exp.t, I_exp, label = "EBCM exponential",
+      color = :red, linewidth = 2)
+xlabel!("Time"); ylabel!("Fraction infected")
+title!("Method-of-stages reference: exponential SIR")
+```
 
 ## Summary
 

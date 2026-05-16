@@ -3,10 +3,6 @@ title: "Clustering and Triangle Motifs"
 author: "Simon Frost"
 date: today
 subtitle: "EdgeBasedModels.jl Vignette 08"
-format:
-  html:
-    code-fold: false
-    toc: true
 engine: julia
 julia:
   project: ".."
@@ -284,3 +280,95 @@ The latent period further delays and flattens the epidemic curve on top of the c
 - The clustered EBCM uses a **bivariate PGF** $g(x, y)$ and tracks separate survival probabilities for single-edge ($\theta_2$) and triangle-edge ($\theta_3$) partners.
 - Increasing clustering **reduces $R_0$** and lowers epidemic peak prevalence while keeping the mean degree fixed.
 - The `EdgeBasedModels.jl` package provides `clustered_poisson_pgf`, `build_clustered_sir`, and `build_clustered_seir` for modelling clustered networks with arbitrary disease progressions.
+
+## Simulation validation
+
+We validate both the unclustered and clustered EBCMs against direct
+SSA on graphs sampled from the matching configuration models. The
+unclustered baseline uses an Erdős–Rényi graph at mean degree
+$\kappa = 5$. The clustered network uses the Newman–Miller doubly Poisson
+construction: each node draws Poisson($\kappa_s = 3$) single-edge stubs
+and Poisson($\kappa_t = 1$) triangle-corner stubs, single stubs are
+randomly paired, and triangle stubs are grouped in threes (3 edges per
+triangle) — yielding total mean degree $\kappa_s + 2\kappa_t = 5$.
+
+The SSA initial seed fraction is matched to the EBM default
+($\varepsilon = 10^{-3}$) so that EBM and SSA share the same initial
+condition and any peak-time shift reflects genuine model difference, not
+seeding mismatch.
+
+```{julia}
+include("../_validation.jl")
+
+prog_clust = DiseaseProgression(
+    [DiseaseStage(:I; transmission_rate = β_val), DiseaseStage(:R)],
+    [DiseaseTransition(:I, :R, γ_val)]; entry = :I)
+
+N_sim = 3000
+n_g, n_s = 4, 25  # 100 SSA trajectories per treatment
+tg = collect(0.0:0.5:40.0)
+comps_view = [:S, :I, :R]
+seed_frac = 1e-3  # match EBM default ε
+
+# Unclustered SSA features and ribbon
+F_un = ssa_feature_matrix(poisson_graph_builder(N_sim, 5.0),
+    prog_clust, Dict(:β => β_val, :γ => γ_val), comps_view, tg;
+    N = N_sim, n_graphs = n_g, nsims_per_graph = n_s,
+    tspan = tspan, seed_fraction = seed_frac, base_seed = 20240801)
+
+# Clustered SSA features and ribbon
+F_cl = ssa_feature_matrix(clustered_poisson_graph_builder(N_sim, 3.0, 1.0),
+    prog_clust, Dict(:β => β_val, :γ => γ_val), comps_view, tg;
+    N = N_sim, n_graphs = n_g, nsims_per_graph = n_s,
+    tspan = tspan, seed_fraction = seed_frac, base_seed = 20240802)
+
+# Per-compartment ribbons (mean ± 1σ at each tgrid point), restricted to
+# trajectories that produced a major outbreak so stochastic die-outs at
+# this small seed fraction don't bias the SSA mean downward.
+ssa_ribbon(F, comp_idx; r_idx = 3, r_thresh = 0.05) = begin
+    nT = length(tg)
+    R_final = F[:, r_idx * nT]
+    keep = R_final .>= r_thresh
+    sub = F[keep, (comp_idx - 1) * nT + 1 : comp_idx * nT]
+    vec(mean(sub; dims = 1)), vec(std(sub; dims = 1))
+end
+mu_un_S, sd_un_S = ssa_ribbon(F_un, 1)
+mu_un_I, sd_un_I = ssa_ribbon(F_un, 2)
+mu_un_R, sd_un_R = ssa_ribbon(F_un, 3)
+mu_cl_S, sd_cl_S = ssa_ribbon(F_cl, 1)
+mu_cl_I, sd_cl_I = ssa_ribbon(F_cl, 2)
+mu_cl_R, sd_cl_R = ssa_ribbon(F_cl, 3)
+```
+
+```{julia}
+#| label: fig-clustered-validation
+#| fig-cap: "Two-panel comparison of EBM (lines) versus DirectSSA (ribbons = mean ± 1σ across 100 trajectories on 4 graphs of N=3000). Top: unclustered Erdős–Rényi network at mean degree 5. Bottom: Newman–Miller doubly Poisson clustered network with κ_s=3, κ_t=1 (same total mean degree)."
+p_un = plot(sol1.t, S1, label = "S (EBM)", lw = 2, color = :blue)
+plot!(p_un, sol1.t, I1, label = "I (EBM)", lw = 2, color = :red)
+plot!(p_un, sol1.t, R1, label = "R (EBM)", lw = 2, color = :green)
+plot!(p_un, tg, mu_un_S, ribbon = sd_un_S,
+      label = "S (SSA)", color = :blue, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(p_un, tg, mu_un_I, ribbon = sd_un_I,
+      label = "I (SSA)", color = :red, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(p_un, tg, mu_un_R, ribbon = sd_un_R,
+      label = "R (SSA)", color = :green, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+ylabel!(p_un, "Fraction of population")
+title!(p_un, "Unclustered (ER, κ=5)")
+
+p_cl = plot(sol2.t, S2, label = "S (EBM)", lw = 2, color = :blue)
+plot!(p_cl, sol2.t, I2, label = "I (EBM)", lw = 2, color = :red)
+plot!(p_cl, sol2.t, R2, label = "R (EBM)", lw = 2, color = :green)
+plot!(p_cl, tg, mu_cl_S, ribbon = sd_cl_S,
+      label = "S (SSA)", color = :blue, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(p_cl, tg, mu_cl_I, ribbon = sd_cl_I,
+      label = "I (SSA)", color = :red, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+plot!(p_cl, tg, mu_cl_R, ribbon = sd_cl_R,
+      label = "R (SSA)", color = :green, fillalpha = 0.2, linealpha = 0.6, lw = 1)
+xlabel!(p_cl, "Time")
+ylabel!(p_cl, "Fraction of population")
+title!(p_cl, "Clustered (Newman–Miller, κ_s=3, κ_t=1)")
+
+plot(p_un, p_cl, layout = (2, 1), size = (700, 600))
+```
+
+

@@ -157,7 +157,7 @@ K_mat = [κ_YY_val κ_YO_val; κ_OY_val κ_OO_val]
 ρ_M = maximum(abs.(eigvals(K_mat)))
 T_val = 2.0 / ρ_M                       # R₀ = T·ρ(M) = 2
 β_val = T_val * γ_val / (1 - T_val)
-ε = 1e-3
+ε = 0.01
 tspan = (0.0, 40.0)
 println("ρ(M) = $(round(ρ_M; digits=3)),  T = $(round(T_val; digits=4)),  β = $(round(β_val; digits=4)),  R₀ = $(round(T_val * ρ_M; digits=1))")
 ```

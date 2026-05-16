@@ -12,10 +12,11 @@
   - [Clustering coefficient and $R_0$](#clustering-coefficient-and-r_0)
   - [SEIR with clustering](#seir-with-clustering)
   - [Summary](#summary)
+  - [Simulation validation](#simulation-validation)
 
 # Clustering and Triangle Motifs
 
-Simon Frost 2026-03-30
+Simon Frost 2026-05-14
 
 - [Introduction](#introduction)
 - [Setup](#setup)
@@ -28,6 +29,7 @@ Simon Frost 2026-03-30
 - [Clustering coefficient and $R_0$](#clustering-coefficient-and-r_0)
 - [SEIR with clustering](#seir-with-clustering)
 - [Summary](#summary)
+- [Simulation validation](#simulation-validation)
 
 ## Introduction
 
@@ -130,8 +132,15 @@ comparable mean degrees.
 ``` julia
 @parameters β γ
 
+# Universal anchors: γ=0.25, R₀=2, β derived per scenario (see plan.md)
+γ_val = 0.25
+R0_target = 2.0
+κ_total = 5.0
+T_unclustered = R0_target / κ_total
+β_val = T_unclustered * γ_val / (1 - T_unclustered)
+
 # Unclustered: all edges are single-stubs, mean degree 5
-pgf_unclustered = poisson_pgf(5.0)
+pgf_unclustered = poisson_pgf(κ_total)
 model_unclustered = build_sir(pgf_unclustered, β, γ; form = :expanded)
 
 # Clustered: κ_s=3, κ_t=1 → total mean degree = 3 + 2(1) = 5
@@ -140,18 +149,19 @@ model_clustered = build_clustered_sir(cpgf, β, γ)
 ```
 
     EdgeModelSystem(Model clustered_sir:
-    Equations (7):
-      7 standard: see equations(clustered_sir)
-    Unknowns (7): see unknowns(clustered_sir)
-      R(t)
+    Equations (8):
+      8 standard: see equations(clustered_sir)
+    Unknowns (8): see unknowns(clustered_sir)
+      pop_R(t)
+      pop_I(t)
       φ3_R(t)
       φ3_I(t)
-      φ2_R(t)
       ⋮
-    Parameters (2): see parameters(clustered_sir)
+    Parameters (3): see parameters(clustered_sir)
+      ρ
       β
       γ
-    Observed (4): see observed(clustered_sir), Dict{Symbol, Any}(:θ₃ => θ₃(t), :R => R(t), :φ3_I => φ3_I(t), :φ2_I => φ2_I(t), :φ3_R => φ3_R(t), :φ2_R => φ2_R(t), :θ₂ => θ₂(t)), Dict{Symbol, Any}(:I => I(t), :φ2_S => φ2_S(t), :edge_hazard3 => φ3_I(t)*β, :edge_hazard2 => φ2_I(t)*β, :S => S(t), :φ3_S => φ3_S(t)))
+    Observed (4): see observed(clustered_sir), Dict{Symbol, Any}(:θ₃ => θ₃(t), :φ3_I => φ3_I(t), :φ3_R => φ3_R(t), :φ2_I => φ2_I(t), :pop_I => pop_I(t), :R => pop_R(t), :pop_R => pop_R(t), :φ2_R => φ2_R(t), :θ₂ => θ₂(t)), Dict{Symbol, Any}(:I => I(t), :φ2_S => φ2_S(t), :edge_hazard3 => φ3_I(t)*β, :edge_hazard2 => φ2_I(t)*β, :S => S(t), :φ3_S => φ3_S(t)), Dict{Symbol, Any}(:seed_groups => Any[(entry = pop_I(t), susceptible_expr = exp(-1 + 3.0(-1 + θ₂(t)) + θ₃(t)^2))], :rho_param => ρ, :edge_seed_groups => Any[(entry = φ2_I(t), theta = θ₂(t), phi_S_expr = (exp(-1 + 3.0(-1 + θ₂(t)) + θ₃(t)^2) - exp(-1 + 3.0(-1 + θ₂(t)) + θ₃(t)^2)*ρ) / exp(0.0)), (entry = φ3_I(t), theta = θ₃(t), phi_S_expr = (θ₃(t)*exp(-1 + 3.0(-1 + θ₂(t)) + θ₃(t)^2)*(1 - ρ)) / exp(0.0))]))
 
 The clustered model tracks more state variables due to the separate
 single-edge and triangle-edge dynamics:
@@ -161,17 +171,18 @@ println("Unclustered variables: ", keys(model_unclustered.variables))
 println("Clustered variables:   ", keys(model_clustered.variables))
 ```
 
-    Unclustered variables: [:R, :φ_I, :φ_R, :θ]
-    Clustered variables:   [:θ₃, :R, :φ3_I, :φ2_I, :φ3_R, :φ2_R, :θ₂]
+    Unclustered variables: [:R, :φ_I, :pop_I, :pop_R, :φ_R, :θ]
+    Clustered variables:   [:θ₃, :φ3_I, :φ3_R, :φ2_I, :pop_I, :R, :pop_R, :φ2_R, :θ₂]
 
 ## Comparing clustered vs unclustered epidemics
 
-We now solve both models with $\beta = 0.5$ and $\gamma = 0.1$, and
-compare the epidemic curves.
+We now solve both models with the unclustered Poisson baseline anchored
+at $R_0 = 2$ ($\beta = 1/6$, $\gamma = 0.25$), and compare the epidemic
+curves.
 
 ``` julia
-tspan = (0.0, 80.0)
-params = Dict(β => 0.5, γ => 0.1)
+tspan = (0.0, 40.0)
+params = Dict(β => β_val, γ => γ_val)
 
 # Unclustered
 ic1 = merge(default_initial_conditions(model_unclustered), params)
@@ -186,7 +197,7 @@ sol2 = solve(prob2, Tsit5(); saveat = 0.5)
 
     retcode: Success
     Interpolation: 1st order linear
-    t: 161-element Vector{Float64}:
+    t: 81-element Vector{Float64}:
       0.0
       0.5
       1.0
@@ -198,82 +209,70 @@ sol2 = solve(prob2, Tsit5(); saveat = 0.5)
       4.0
       4.5
       ⋮
-     76.0
-     76.5
-     77.0
-     77.5
-     78.0
-     78.5
-     79.0
-     79.5
-     80.0
-    u: 161-element Vector{Vector{Float64}}:
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0002431957560684242, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0004745306730125682, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0006945833236978189, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0009039045332629401, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0011030165387228002, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.00129241706385169, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0014725804157114946, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0016439575443004536, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.001806978287275114, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
+     36.0
+     36.5
+     37.0
+     37.5
+     38.0
+     38.5
+     39.0
+     39.5
+     40.0
+    u: 81-element Vector{Vector{Float64}}:
+     [0.0, 0.001, 0.0, 0.0010000000000000009, 0.0, 0.0010000000000000009, 1.0, 1.0]
+     [0.000144623672614379, 0.001326107805807947, 0.00014461643846619562, 0.001325973247055298, 0.00013925055241075892, 0.001238647224404395, 0.9999035890410225, 0.9999071662983928]
+     [0.00033497795415506396, 0.0017352069162356533, 0.0003349379878670594, 0.0017347846265559207, 0.00031264810372536516, 0.0015491046975151096, 0.9997767080080886, 0.9997915679308498]
+     [0.0005828644053464031, 0.0022510324558243327, 0.0005827405493116342, 0.002250055298484182, 0.0005302916488085122, 0.0019500774464898828, 0.9996115063004589, 0.9996464722341276]
+     [0.0009034147604395979, 0.0029034455012692355, 0.0009031116558782131, 0.002901456725756914, 0.0008049188765299209, 0.002465328800825632, 0.9993979255627479, 0.9994633874156467]
+     [0.0013159697685541298, 0.0037299981287621455, 0.0013153165442927257, 0.0037262259677345697, 0.0011526283367719805, 0.003124920669362975, 0.9991231223038047, 0.9992315811088187]
+     [0.001845104935954855, 0.004777700564948291, 0.0018438057262388148, 0.004770859951768346, 0.0015937170953358993, 0.00396661034200998, 0.9987707961825074, 0.9989375219364427]
+     [0.0025220405153348123, 0.00610529737504897, 0.0025195880956793057, 0.0060932557069970986, 0.002153822733974818, 0.005037633333759084, 0.9983202746028803, 0.9985641181773501]
+     [0.0033860764081957277, 0.007785467336545977, 0.0033816217012115767, 0.007764739705640867, 0.0028650798927143833, 0.006396410590217731, 0.9977455855325255, 0.9980899467381904]
+     [0.004486804708450796, 0.009907869260592578, 0.004478935779073265, 0.009872758398233766, 0.003767889207824383, 0.008114858622669401, 0.997014042813951, 0.9974880738614504]
      ⋮
-     [0.004984008157522823, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984128806400702, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0049842434089595235, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984352369595421, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984456088802677, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984554963173728, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.0049846493853991595, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984739744267712, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
-     [0.004984826424666275, 0.0, 0.0, 0.0, 0.0, 0.999, 0.999]
+     [0.7684924194637379, 0.007192733932296931, 0.5103843458746748, 0.0013664247117114415, 0.46449153199027526, 0.0015326000789094595, 0.6597437694168831, 0.6903389786731499]
+     [0.7693445792642608, 0.006452802328367567, 0.5105445393464301, 0.0011974197922827636, 0.4646713106641779, 0.00134519715233194, 0.6596369737690463, 0.6902191262238815]
+     [0.7701087548816637, 0.005786927653077036, 0.5106847513725135, 0.0010495222828236022, 0.4648289390852569, 0.0011807840593127791, 0.6595434990849907, 0.6901140406098287]
+     [0.7707938267003962, 0.005187961768522474, 0.5108074749911291, 0.0009201003717910553, 0.46496713884520846, 0.0010365570602379932, 0.6594616833392469, 0.6900219074365277]
+     [0.7714078772463105, 0.004649395858668374, 0.5109149871101936, 0.0008067432479673713, 0.4650883861784953, 0.0009099628074868937, 0.659390008593204, 0.6899410758810032]
+     [0.7719581911297007, 0.004165360386799442, 0.5110093483369407, 0.0007072612939204892, 0.465194911812177, 0.0007986984962052435, 0.6593271011087058, 0.689870058791882]
+     [0.7724512024872386, 0.003730549318561273, 0.5110921803987606, 0.0006199402285695773, 0.4652885065500611, 0.0007009075556981971, 0.6592718797341591, 0.6898076622999593]
+     [0.7728926785078177, 0.0033401151108894125, 0.511164784159956, 0.0005434150928230247, 0.46537063744677826, 0.000615064540743387, 0.6592234772266955, 0.6897529083688145]
+     [0.7732878931740367, 0.0029896659767265237, 0.5112284260589087, 0.00047634766958477864, 0.4654427075922083, 0.0005397131637494885, 0.6591810492940604, 0.6897048616051945]
 
 Extract the epidemic compartments using the PGFs:
 
 ``` julia
-# Unclustered: S = ψ(θ)
-ψ(x) = exp(5.0 * (x - 1))
-θ_idx1 = findfirst(v -> startswith(string(v), "θ"),
-                   string.(ModelingToolkit.unknowns(model_unclustered.system)))
-R_idx1 = findfirst(v -> startswith(string(v), "R"),
-                   string.(ModelingToolkit.unknowns(model_unclustered.system)))
-S1 = ψ.(sol1[θ_idx1, :])
-R1 = sol1[R_idx1, :]
-I1 = 1.0 .- S1 .- R1
+S1 = compartment(sol1, model_unclustered, :S)
+I1 = compartment(sol1, model_unclustered, :I)
+R1 = compartment(sol1, model_unclustered, :R)
 
-# Clustered: S = g(θ₂, θ₃²)
-g_clust(θ2, θ3) = exp(3.0 * (θ2 - 1) + 1.0 * (θ3^2 - 1))
-vars2 = string.(ModelingToolkit.unknowns(model_clustered.system))
-θ2_idx = findfirst(v -> startswith(v, "θ₂"), vars2)
-θ3_idx = findfirst(v -> startswith(v, "θ₃"), vars2)
-R_idx2 = findfirst(v -> startswith(v, "R"), vars2)
-S2 = g_clust.(sol2[θ2_idx, :], sol2[θ3_idx, :])
-R2 = sol2[R_idx2, :]
-I2 = 1.0 .- S2 .- R2
+S2 = compartment(sol2, model_clustered, :S)
+I2 = compartment(sol2, model_clustered, :I)
+R2 = compartment(sol2, model_clustered, :R)
 ```
 
-    161-element Vector{Float64}:
-     0.004986525794341001
-     0.004743330038272577
-     0.004511995121328433
-     0.004291942470643182
-     0.004082621261078061
-     0.0038835092556182014
-     0.003694108730489311
-     0.0035139453786295067
-     0.003342568250040548
-     0.003179547507065887
+    81-element Vector{Float64}:
+     0.0
+     0.000144623672614379
+     0.00033497795415506396
+     0.0005828644053464031
+     0.0009034147604395979
+     0.0013159697685541298
+     0.001845104935954855
+     0.0025220405153348123
+     0.0033860764081957277
+     0.004486804708450796
      ⋮
-     2.5176368181785425e-6
-     2.3969879402990085e-6
-     2.28238538147775e-6
-     2.1734247455801325e-6
-     2.0697055383243207e-6
-     1.970831167273472e-6
-     1.876408941841809e-6
-     1.7860500732894136e-6
-     1.6993696747265655e-6
+     0.7684924194637379
+     0.7693445792642608
+     0.7701087548816637
+     0.7707938267003962
+     0.7714078772463105
+     0.7719581911297007
+     0.7724512024872386
+     0.7728926785078177
+     0.7732878931740367
 
 ``` julia
 plot(sol1.t, S1, label = "S (unclustered)", linewidth = 2, color = :blue)
@@ -284,7 +283,7 @@ plot!(sol2.t, I2, label = "I (clustered)", linewidth = 2, color = :red, linestyl
 plot!(sol2.t, R2, label = "R (clustered)", linewidth = 2, color = :green, linestyle = :dash)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Clustered vs Unclustered SIR (β=0.5, γ=0.1)")
+title!("Clustered vs Unclustered SIR (R₀=2 unclustered baseline)")
 ```
 
 <div id="fig-clustered-vs-unclustered">
@@ -319,15 +318,9 @@ for frac in fracs
     prob_i = ODEProblem(model_i.system, ic_i, tspan)
     sol_i = solve(prob_i, Tsit5(); saveat = 0.5)
 
-    vars_i = string.(ModelingToolkit.unknowns(model_i.system))
-    θ2_i = findfirst(v -> startswith(v, "θ₂"), vars_i)
-    θ3_i = findfirst(v -> startswith(v, "θ₃"), vars_i)
-    R_i = findfirst(v -> startswith(v, "R"), vars_i)
-
-    g_i(θ2, θ3) = exp(κ_s_i * (θ2 - 1) + κ_t_i * (θ3^2 - 1))
-    S_i = g_i.(sol_i[θ2_i, :], sol_i[θ3_i, :])
-    R_i_vals = sol_i[R_i, :]
-    I_i = 1.0 .- S_i .- R_i_vals
+    S_i = compartment(sol_i, model_i, :S)
+    I_i = compartment(sol_i, model_i, :I)
+    R_i_vals = compartment(sol_i, model_i, :R)
     C_i = 2κ_t_i / (2κ_t_i + κ_s_i)
 
     push!(results, (frac = frac, C = C_i, t = sol_i.t, I = I_i, S = S_i, R = R_i_vals))
@@ -379,9 +372,9 @@ for frac in fracs_fine
     push!(C_vals, C_i)
 
     prog = DiseaseProgression(
-        [DiseaseStage(:I; transmission_rate = 0.5),
+        [DiseaseStage(:I; transmission_rate = β_val),
          DiseaseStage(:R; transmission_rate = 0)],
-        [DiseaseTransition(:I, :R, 0.1)]; entry = :I)
+        [DiseaseTransition(:I, :R, γ_val)]; entry = :I)
     cm = ClusteredConfigurationModel(cpgf_i, prog)
     R0_i = basic_reproduction_number(cm)
     push!(R0_vals, Float64(Symbolics.value(R0_i)))
@@ -393,7 +386,7 @@ plot(C_vals, R0_vals, linewidth = 2, color = :darkred, marker = :circle, markers
      label = "R₀")
 xlabel!("Clustering coefficient C")
 ylabel!("R₀")
-title!("R₀ vs Clustering (total mean degree = 5, β=0.5, γ=0.1)")
+title!("R₀ vs Clustering (total mean degree = 5, anchored β, γ)")
 hline!([1.0], linestyle = :dash, color = :gray, label = "R₀ = 1")
 ```
 
@@ -424,46 +417,40 @@ model_seir = build_clustered_seir(cpgf_seir, σ, β, γ)
 println("SEIR clustered variables: ", keys(model_seir.variables))
 ```
 
-    SEIR clustered variables: [:θ₃, :R, :φ2_E, :φ2_I, :φ3_I, :φ3_R, :φ3_E, :φ2_R, :θ₂]
+    SEIR clustered variables: [:θ₃, :φ3_I, :φ3_R, :φ2_I, :pop_I, :R, :θ₂, :φ2_E, :φ3_E, :pop_R, :φ2_R, :pop_E]
 
 ``` julia
-params_seir = Dict(β => 0.5, γ => 0.1, σ => 0.2)
+params_seir = Dict(β => β_val, γ => γ_val, σ => 0.2)
 ic_seir = merge(default_initial_conditions(model_seir), params_seir)
 prob_seir = ODEProblem(model_seir.system, ic_seir, tspan)
 sol_seir = solve(prob_seir, Tsit5(); saveat = 0.5)
 
-vars_seir = string.(ModelingToolkit.unknowns(model_seir.system))
-θ2_seir = findfirst(v -> startswith(v, "θ₂"), vars_seir)
-θ3_seir = findfirst(v -> startswith(v, "θ₃"), vars_seir)
-R_seir = findfirst(v -> startswith(v, "R"), vars_seir)
-
-g_seir(θ2, θ3) = exp(3.0 * (θ2 - 1) + 1.0 * (θ3^2 - 1))
-S_seir = g_seir.(sol_seir[θ2_seir, :], sol_seir[θ3_seir, :])
-R_seir_vals = sol_seir[R_seir, :]
+S_seir = compartment(sol_seir, model_seir, :S)
+R_seir_vals = compartment(sol_seir, model_seir, :R)
 I_seir = 1.0 .- S_seir .- R_seir_vals
 ```
 
-    161-element Vector{Float64}:
-     0.004986525794341001
-     0.004743330035562729
-     0.004511995119063036
-     0.004291942496184397
-     0.004082621223812449
-     0.0038835090851018763
-     0.0036941085498487683
-     0.003513945319605133
-     0.0033425683276788873
-     0.003179547837786834
+    81-element Vector{Float64}:
+     0.0010000000000000009
+     0.0010130454905676778
+     0.00104717512584005
+     0.0010968014650383033
+     0.0011582546048606796
+     0.0012291684860312529
+     0.0013080987956067896
+     0.0013942005315523895
+     0.0014870910042569122
+     0.0015866444132882913
      ⋮
-     2.532387244169425e-6
-     2.4093739113108595e-6
-     2.292451321591303e-6
-     2.1812850676235576e-6
-     2.07555045214549e-6
-     1.9749324880269717e-6
-     1.8791258982655407e-6
-     1.7878351159864025e-6
-     1.7007742844450321e-6
+     0.07593289690599012
+     0.07978103926137754
+     0.08374450570741221
+     0.08781939417069416
+     0.09200168706017353
+     0.09628717125938369
+     0.10066838862572111
+     0.10513033548489154
+     0.10966182705534845
 
 ``` julia
 plot(sol_seir.t, S_seir, label = "S", linewidth = 2, color = :blue)
@@ -471,7 +458,7 @@ plot!(sol_seir.t, I_seir, label = "E + I", linewidth = 2, color = :red)
 plot!(sol_seir.t, R_seir_vals, label = "R", linewidth = 2, color = :green)
 xlabel!("Time")
 ylabel!("Fraction of population")
-title!("Clustered SEIR (κ_s=3, κ_t=1, σ=0.2, β=0.5, γ=0.1)")
+title!("Clustered SEIR (κ_s=3, κ_t=1, σ=0.2, anchored β, γ)")
 ```
 
 <div id="fig-seir-clustered">
@@ -500,3 +487,18 @@ of the clustering effect.
 - The `EdgeBasedModels.jl` package provides `clustered_poisson_pgf`,
   `build_clustered_sir`, and `build_clustered_seir` for modelling
   clustered networks with arbitrary disease progressions.
+
+## Simulation validation
+
+This vignette focuses on a scenario for which `NetworkOutbreaks.jl` does
+not yet provide an out-of-the-box stochastic ground truth (multi-type
+host graphs with prescribed mixing matrices, time-varying networks via
+the EBCM rewiring schedule, multiplex layers, degree-correlated
+configuration models, clustered graphs with prescribed triangle counts,
+or final-size sweeps over $R_0$).
+
+A future revision will add the missing primitives to NetworkOutbreaks.jl
+and overlay the corresponding Gillespie SSA ribbon here. Until then, see
+[vignette 01](../01_sir_basics/index.html) for the validation pattern on
+a single-layer Poisson configuration-model network with the same
+canonical parameters.
