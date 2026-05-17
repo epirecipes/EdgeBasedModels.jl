@@ -10,6 +10,8 @@ import EBCMCategory.Obstructions
 import EBCMCategory.Hierarchy
 -- Dynamic network limits
 import EBCMCategory.DynamicLimits
+-- Volz-Meyers equation-level properties (conservation, IC, limits)
+import EBCMCategory.VolzMeyersEquations
 -- EBCM ↔ DSA survival analysis bridge
 import EBCMCategory.SurvivalBridge
 -- Exact pairwise closure characterization
