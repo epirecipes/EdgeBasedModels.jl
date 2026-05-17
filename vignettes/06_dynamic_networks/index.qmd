@@ -273,18 +273,34 @@ t_st, μ_st, σ_st = gillespie_ribbon(prog_no, Dict(:β => β_val, :γ => γ_val
     tgrid = collect(0.0:0.5:40.0))
 
 η₁_val = 0.05; η₂_val = 0.03
-function dynamic_poisson_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
+
+# Random-reconnection edge dynamics (matches EBCM assumption):
+# when an edge breaks, both endpoints get dormant stubs; when a dormant
+# stub activates, it connects to a random OTHER node's dormant stub.
+function dynamic_rewiring_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
     return function (rng)
         g = erdos_renyi(N, κ / (N - 1); rng = rng)
         local_rng = StableRNG(rng_seed + hash(rng))
         updates = NamedTuple{(:t,:src,:dst,:action),Tuple{Float64,Int,Int,Symbol}}[]
-        for e in edges(g)
+        all_edges = collect(edges(g))
+        n = nv(g)
+        for e in all_edges
             s, d = src(e), dst(e)
             t_now = 0.0; active = true
             while t_now < tmax
                 dt = active ? randexp(local_rng)/η₂ : randexp(local_rng)/η₁
                 t_now += dt; t_now >= tmax && break
-                push!(updates, (t=t_now, src=s, dst=d, action=active ? :remove : :add))
+                if active
+                    push!(updates, (t=t_now, src=s, dst=d, action=:remove))
+                else
+                    # Reconnect src to a random node (random reconnection)
+                    new_dst = rand(local_rng, 1:n)
+                    while new_dst == s
+                        new_dst = rand(local_rng, 1:n)
+                    end
+                    d = new_dst
+                    push!(updates, (t=t_now, src=s, dst=d, action=:add))
+                end
                 active = !active
             end
         end
@@ -293,7 +309,7 @@ function dynamic_poisson_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
     end
 end
 
-dyn_builder = dynamic_poisson_builder(N_v, κ_val, η₁_val, η₂_val, 40.0)
+dyn_builder = dynamic_rewiring_builder(N_v, κ_val, η₁_val, η₂_val, 40.0)
 no_model = OutbreakModel([:S,:I,:R], [false,true,false],
     [OutbreakTransition(:S,:I,β_val,:infection;via=[:I]),
      OutbreakTransition(:I,:R,γ_val,:spontaneous)]; name=:SIR_dyn)
