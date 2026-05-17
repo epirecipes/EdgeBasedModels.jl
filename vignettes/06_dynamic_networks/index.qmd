@@ -335,23 +335,27 @@ end
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "Left: static EBCM (line) vs SSA (ribbon). Right: dynamic EBCM (line) vs dynamic SSA (ribbon, η₁=0.05, η₂=0.03). Edge turnover modestly reduces the epidemic; both EBCM and SSA agree."
+#| fig-cap: "Left: static EBCM (line) vs SSA (ribbon) — close match at R₀=2. Right: static SSA (grey) vs dynamic SSA (red, η₁=0.05, η₂=0.03). Edge turnover reduces the epidemic peak by ~35%."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
-_, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
 p1 = plot(sol_static.t, I_st_ebcm, label="EBCM", lw=2, color=:blue,
-    ylabel="Fraction infected", title="Static", ylims=(0,0.3))
+    ylabel="Fraction infected", title="Static: EBCM vs SSA", ylims=(0,0.3))
 plot!(p1, t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA",
     color=:blue, fillalpha=0.2, linealpha=0.4, lw=1)
 
-p2 = plot(sol_dyn.t, I_dy_ebcm, label="EBCM", lw=2, color=:red,
-    title="Dynamic (η₁=0.05, η₂=0.03)", ylims=(0,0.3))
-plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA",
+p2 = plot(t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA (static)",
+    color=:grey, fillalpha=0.15, linealpha=0.3, lw=1,
+    title="Dynamic SSA (η₁=0.05, η₂=0.03)", ylims=(0,0.3))
+plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA (dynamic)",
     color=:red, fillalpha=0.2, linealpha=0.4, lw=1)
 
 plot(p1, p2, layout=(1,2), size=(800,350), xlabel="Time")
 ```
 
-The static EBCM matches the static SSA closely (left). The dynamic EBCM
-tracks the dynamic SSA (right), confirming that edge turnover modestly
-reduces the epidemic peak and final size.
+The static EBCM matches the static SSA closely (left). Edge dynamics
+reduce the epidemic peak by ~35% (right). The `DynamicConfigurationModel`
+ODE currently over-predicts the dynamic epidemic because the algebraic
+$\varphi_S$ closure does not correctly account for edge-state turnover;
+a corrected formulation following Kiss–Miller–Simon Ch. 10 is in
+progress. The SSA on `TimeVaryingNetwork` provides the dynamic ground
+truth.
