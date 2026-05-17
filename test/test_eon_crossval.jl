@@ -14,7 +14,7 @@ using OrdinaryDiffEq
 const ref = JSON3.read(read(joinpath(@__DIR__, "eon_reference.json"), String))
 
 @testset "EoN cross-validation" begin
-    @testset "EBCM on Poisson(5)" begin
+    @testset "EBCM SIR on Poisson(5)" begin
         @parameters β γ κ
         pgf = poisson_pgf(κ)
         model = build_sir(pgf, β, γ; form = :compact)
@@ -37,5 +37,20 @@ const ref = JSON3.read(read(joinpath(@__DIR__, "eon_reference.json"), String))
         fs_model = StaticConfigurationModel(pgf_num, prog)
         fs = final_size(fs_model)
         @test isapprox(fs.R_infinity, ref.attack_rate_poisson5.attack_rate; atol=0.005)
+    end
+
+    @testset "EBCM SIS with reinfection counting on Poisson(5)" begin
+        pgf_num = poisson_pgf(5.0)
+        @parameters β_r γ_r
+        sys = build_sis_reinfection(pgf_num, β_r, γ_r, 1)
+        ic = default_initial_conditions(sys; seed_fraction = 0.01)
+        sol = solve(ODEProblem(sys.system,
+            merge(ic, Dict(β_r => 1/6, γ_r => 0.25)), (0.0, 120.0)),
+            Tsit5(); maxiters = 100000)
+        totals = reinfection_totals(sys, sol)
+        I_end = totals[:I][end]
+
+        # Reinfection counting (L=1) matches EoN compact pairwise to <1%
+        @test isapprox(I_end, ref.ebcm_sis_poisson5.endemic_I_compact; rtol=0.01)
     end
 end
