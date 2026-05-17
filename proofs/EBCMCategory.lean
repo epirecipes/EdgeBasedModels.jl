@@ -12,6 +12,8 @@ import EBCMCategory.Hierarchy
 import EBCMCategory.DynamicLimits
 -- Volz-Meyers equation-level properties (conservation, IC, limits)
 import EBCMCategory.VolzMeyersEquations
+-- SEIR equation-level properties (I_pop correctness, conservation)
+import EBCMCategory.SEIREquations
 -- EBCM ↔ DSA survival analysis bridge
 import EBCMCategory.SurvivalBridge
 -- Exact pairwise closure characterization
