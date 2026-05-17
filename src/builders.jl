@@ -743,7 +743,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * ψ_θ_plus_D)
+    push!(eqs, S_pop ~ q * ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)

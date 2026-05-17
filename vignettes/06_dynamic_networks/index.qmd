@@ -46,16 +46,16 @@ We also define a helper function to extract population-level trajectories from a
 ```{julia}
 function extract_SIR(sol, result, κ_val; seed_fraction = 0.01)
     ψ(x) = exp(κ_val * (x - 1))
-    θ_vals = compartment(sol, result, :θ)
     R = compartment(sol, result, :R)
-    q = 1 - seed_fraction
     if haskey(result.variables, :φ_D)
-        φ_D = compartment(sol, result, :φ_D)
-        S = q .* ψ.(θ_vals .+ φ_D)
+        # Dynamic model: use tracked pop_I directly (PGF formula doesn't hold)
+        I = compartment(sol, result, :pop_I)
+        S = 1.0 .- I .- R
     else
-        S = q .* ψ.(θ_vals)
+        θ_vals = compartment(sol, result, :θ)
+        S = (1 - seed_fraction) .* ψ.(θ_vals)
+        I = 1.0 .- S .- R
     end
-    I = 1.0 .- S .- R
     return S, I, R
 end
 ```
