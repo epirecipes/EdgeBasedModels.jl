@@ -255,11 +255,19 @@ The dynamic framework is fully composable — any disease progression supported 
 
 ## Simulation validation
 
-We validate both the static and dynamic EBCM against Gillespie SSA.
-The static case uses a standard `gillespie_ribbon`; the dynamic case
-uses `TimeVaryingNetwork` from `NetworkOutbreaks.jl` where each edge
-independently toggles between active and dormant: active edges break
-at rate $\eta_2$ and dormant edges reform at rate $\eta_1$.
+We validate the **static** EBCM against Gillespie SSA. The static case
+matches well ($R_0 = 2$ on Poisson $\kappa = 5$). We also show the SSA
+on a dynamic `TimeVaryingNetwork` (edges independently toggle between
+active and dormant at rates $\eta_1 = 0.05$, $\eta_2 = 0.03$) to
+confirm the qualitative effect: edge turnover reduces the epidemic.
+
+::: {.callout-warning}
+The current `DynamicConfigurationModel` ODE under-predicts the dynamic
+epidemic because the incidence formula uses $\psi'(\theta)$ where
+$\theta$ is reduced by edge breaking, not just transmission. A corrected
+formulation is in progress; the SSA on `TimeVaryingNetwork` provides the
+ground truth for the dynamic case.
+:::
 
 ```{julia}
 include("../_validation.jl")
@@ -267,42 +275,27 @@ using NetworkOutbreaks
 
 N_v = 1000
 prog_no = EdgeBasedModels.sir_model()
-params_no = Dict(:β => β_val, :γ => γ_val)
 
-# --- Static baseline ---
-t_st, μ_st, σ_st = gillespie_ribbon(prog_no, params_no,
+t_st, μ_st, σ_st = gillespie_ribbon(prog_no, Dict(:β => β_val, :γ => γ_val),
     poisson_graph_builder(N_v, κ_val);
     N = N_v, n_graphs = 5, nsims_per_graph = 40,
     tspan = tspan, seed_fraction = seed_fraction,
     tgrid = collect(0.0:0.5:40.0))
 
-# --- Dynamic: pre-generate edge break/reform schedule ---
 η₁_val = 0.05; η₂_val = 0.03
 function dynamic_poisson_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
     return function (rng)
         g = erdos_renyi(N, κ / (N - 1); rng = rng)
         local_rng = StableRNG(rng_seed + hash(rng))
-        updates = NamedTuple{(:t, :src, :dst, :action),
-                              Tuple{Float64, Int, Int, Symbol}}[]
-        # For each initial edge, schedule break/reform toggling
+        updates = NamedTuple{(:t,:src,:dst,:action),Tuple{Float64,Int,Int,Symbol}}[]
         for e in edges(g)
             s, d = src(e), dst(e)
-            t_now = 0.0
-            active = true
+            t_now = 0.0; active = true
             while t_now < tmax
-                if active
-                    dt = randexp(local_rng) / η₂
-                    t_now += dt
-                    t_now >= tmax && break
-                    push!(updates, (t = t_now, src = s, dst = d, action = :remove))
-                    active = false
-                else
-                    dt = randexp(local_rng) / η₁
-                    t_now += dt
-                    t_now >= tmax && break
-                    push!(updates, (t = t_now, src = s, dst = d, action = :add))
-                    active = true
-                end
+                dt = active ? randexp(local_rng)/η₂ : randexp(local_rng)/η₁
+                t_now += dt; t_now >= tmax && break
+                push!(updates, (t=t_now, src=s, dst=d, action=active ? :remove : :add))
+                active = !active
             end
         end
         sort!(updates; by = u -> u.t)
@@ -311,59 +304,49 @@ function dynamic_poisson_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
 end
 
 dyn_builder = dynamic_poisson_builder(N_v, κ_val, η₁_val, η₂_val, 40.0)
+no_model = OutbreakModel([:S,:I,:R], [false,true,false],
+    [OutbreakTransition(:S,:I,β_val,:infection;via=[:I]),
+     OutbreakTransition(:I,:R,γ_val,:spontaneous)]; name=:SIR_dyn)
 
-# Run SSA ensemble on dynamic networks
-no_model = OutbreakModel(
-    [:S, :I, :R], [false, true, false],
-    [OutbreakTransition(:S, :I, β_val, :infection; via = [:I]),
-     OutbreakTransition(:I, :R, γ_val, :spontaneous)];
-    name = :SIR_dynamic)
-
-n_dyn_runs = 5
-nsims_dyn = 40
 tgrid_dyn = collect(0.0:0.5:40.0)
-I_dyn_runs = Matrix{Float64}(undef, n_dyn_runs * nsims_dyn, length(tgrid_dyn))
-row = 1
-rng_outer = StableRNG(20240601)
-for gi in 1:n_dyn_runs
+I_dyn_runs = Matrix{Float64}(undef, 200, length(tgrid_dyn))
+row = 1; rng_outer = StableRNG(20240601)
+for gi in 1:5
     net = dyn_builder(rng_outer)
-    spec = OutbreakSpec(model = no_model, network = net,
-                        initial = SeedFraction(:I => seed_fraction),
-                        tspan = (0.0, 40.0))
-    ens = simulate_ensemble(spec; nsims = nsims_dyn,
-                            seed = 20240601 + 1000 * gi, parallel = false)
+    spec = OutbreakSpec(model=no_model, network=net,
+        initial=SeedFraction(:I=>seed_fraction), tspan=(0.0,40.0))
+    ens = simulate_ensemble(spec; nsims=40, seed=20240601+1000*gi, parallel=false)
     for traj in ens.trajectories
-        for (j, t) in enumerate(tgrid_dyn)
-            st = state_at(traj, t)
-            I_dyn_runs[row, j] = Float64(st[no_model.index_of[:I]]) / N_v
+        for (j,t) in enumerate(tgrid_dyn)
+            I_dyn_runs[row,j] = Float64(state_at(traj,t)[no_model.index_of[:I]])/N_v
         end
         row += 1
     end
 end
-μ_dyn = vec(mean(I_dyn_runs; dims = 1))
-σ_dyn = vec(std(I_dyn_runs; dims = 1))
+μ_dyn = vec(mean(I_dyn_runs; dims=1))
+σ_dyn = vec(std(I_dyn_runs; dims=1))
 ```
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "EBCM (lines) vs SSA ribbons (mean ± 1σ). Left: static network (Poisson κ=5, R₀=2). Right: dynamic network with edge turnover (η₁=0.05, η₂=0.03). Edge dynamics reduce the epidemic peak, and the dynamic EBCM tracks the dynamic SSA."
+#| fig-cap: "Left: static EBCM (line) matches SSA (ribbon). Right: SSA on static (grey) vs dynamic network (red, η₁=0.05, η₂=0.03). Edge turnover modestly reduces peak and final size."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
-_, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
-p1 = plot(sol_static.t, I_st_ebcm, label = "EBCM", lw = 2, color = :blue,
-          ylabel = "Fraction infected", title = "Static", ylims = (0, 0.3))
-plot!(p1, t_st, μ_st[:I], ribbon = σ_st[:I],
-      label = "SSA", color = :blue, fillalpha = 0.2, linealpha = 0.4, lw = 1)
+p1 = plot(sol_static.t, I_st_ebcm, label="EBCM", lw=2, color=:blue,
+    ylabel="Fraction infected", title="Static: EBCM vs SSA", ylims=(0,0.3))
+plot!(p1, t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA",
+    color=:blue, fillalpha=0.2, linealpha=0.4, lw=1)
 
-p2 = plot(sol_dyn.t, I_dy_ebcm, label = "EBCM", lw = 2, color = :red,
-          title = "Dynamic (η₁=0.05, η₂=0.03)", ylims = (0, 0.3))
-plot!(p2, tgrid_dyn, μ_dyn, ribbon = σ_dyn,
-      label = "SSA", color = :red, fillalpha = 0.2, linealpha = 0.4, lw = 1)
+p2 = plot(t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA (static)",
+    color=:grey, fillalpha=0.15, linealpha=0.3, lw=1,
+    title="Dynamic SSA effect", ylims=(0,0.3))
+plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA (dynamic)",
+    color=:red, fillalpha=0.2, linealpha=0.4, lw=1)
 
-plot(p1, p2, layout = (1, 2), size = (800, 350), xlabel = "Time")
+plot(p1, p2, layout=(1,2), size=(800,350), xlabel="Time")
 ```
 
-The static EBCM matches the static SSA closely (left). The dynamic EBCM
-captures the reduced epidemic driven by edge turnover: breaking contacts
-slows transmission, and the SSA on `TimeVaryingNetwork` confirms this
-effect (right).
+The static EBCM tracks the static SSA (left). The dynamic SSA shows a
+modest reduction from edge turnover (right). The `DynamicConfigurationModel`
+ODE is not shown pending a fix to the incidence formula; the SSA on
+`TimeVaryingNetwork` provides the dynamic ground truth.
