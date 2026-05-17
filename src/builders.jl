@@ -677,27 +677,30 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
         pop[stage.name] = only(@variables $(Symbol("pop_", stage.name))(t))
     end
 
-    # PGF evaluations — note: S uses (θ + φ_D) because a node is susceptible
-    # if NONE of its stubs have transmitted, whether active or dormant.
-    ψ_θ = _eval_pgf(model.pgf, θ)
-    ψ_θ_plus_D = _eval_pgf(model.pgf, θ + phi_D)
-    ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
+    # PGF evaluations.
+    # In the dynamic model, S = ψ(α) where α = θ + φ_D is the total
+    # "not-yet-transmitted" probability per stub (active + dormant).
+    # All PGF derivatives used in incidence/excess-hazard must evaluate
+    # at α, not θ, because a susceptible node's degree structure depends
+    # on all non-transmitted stubs regardless of their active/dormant state.
+    α = θ + phi_D
+    ψ_α = _eval_pgf(model.pgf, α)
+    ψ_prime_α = _eval_pgf_deriv(model.pgf, 1, α)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
-    ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
+    ψ_double_α = _eval_pgf_deriv(model.pgf, 2, α)
 
-    # φ_S algebraic: with explicit seed ρ, φ_S = (1-ρ)·ψ'(θ)/ψ'(1)
-    phi_S_expr = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
+    # φ_S algebraic: (1-ρ)·ψ'(α)/ψ'(1)
+    phi_S_expr = Symbolics.simplify(q * ψ_prime_α / ψ_prime_1)
 
-    # Edge hazard (from active edges only)
+    # Edge hazard (from active edges only — dormant can't transmit)
     edge_hazard = Symbolics.simplify(sum(
         stage.transmission_rate * phi[stage.name] for stage in prog.stages
     ))
 
-    # Excess hazard through active edges (kept as observable; replaced in inflow
-    # by pre-cancelled `entry_inflow_expanded` for numerical robustness on
-    # polynomial PGFs — see `build_sir_expanded` for rationale).
-    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
-    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
+    # Excess hazard uses ψ''(α)/ψ'(α) for the susceptible node's
+    # excess degree, but only active-infected stubs contribute.
+    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_α / ψ_prime_α)
+    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_α / ψ_prime_1)
 
     # Edge formation and breaking rates
     η₁ = model.η₁
@@ -715,8 +718,8 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     # φ_D ODE
     push!(eqs, D(phi_D) ~ Symbolics.simplify(η₂ * active_phi_sum - η₁ * phi_D))
 
-    # Population incidence (1-ρ factor on susceptible side)
-    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
+    # Population incidence: uses ψ'(α) for the susceptible node's edge count
+    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_α)
 
     # φ ODEs for each disease stage
     for stage in prog.stages
@@ -743,7 +746,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_α)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -764,7 +767,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
         :excess_hazard => excess_hazard,
     )
 
-    metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
+    metadata = _default_seed_metadata(pop[prog.entry], ψ_α)
     metadata[:rho_param] = ρ
     metadata[:edge_seed_groups] = Any[
         (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),

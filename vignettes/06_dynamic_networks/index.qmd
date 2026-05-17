@@ -255,19 +255,9 @@ The dynamic framework is fully composable — any disease progression supported 
 
 ## Simulation validation
 
-We validate the **static** EBCM against Gillespie SSA. The static case
-matches well ($R_0 = 2$ on Poisson $\kappa = 5$). We also show the SSA
-on a dynamic `TimeVaryingNetwork` (edges independently toggle between
-active and dormant at rates $\eta_1 = 0.05$, $\eta_2 = 0.03$) to
-confirm the qualitative effect: edge turnover reduces the epidemic.
-
-::: {.callout-warning}
-The current `DynamicConfigurationModel` ODE under-predicts the dynamic
-epidemic because the incidence formula uses $\psi'(\theta)$ where
-$\theta$ is reduced by edge breaking, not just transmission. A corrected
-formulation is in progress; the SSA on `TimeVaryingNetwork` provides the
-ground truth for the dynamic case.
-:::
+We validate the static and dynamic EBCM against Gillespie SSA.
+The dynamic SSA uses `TimeVaryingNetwork` where each edge independently
+toggles between active and dormant ($\eta_1 = 0.05$, $\eta_2 = 0.03$).
 
 ```{julia}
 include("../_validation.jl")
@@ -329,24 +319,23 @@ end
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "Left: static EBCM (line) matches SSA (ribbon). Right: SSA on static (grey) vs dynamic network (red, η₁=0.05, η₂=0.03). Edge turnover modestly reduces peak and final size."
+#| fig-cap: "Left: static EBCM (line) vs SSA (ribbon). Right: dynamic EBCM (line) vs dynamic SSA (ribbon, η₁=0.05, η₂=0.03). Edge turnover modestly reduces the epidemic; both EBCM and SSA agree."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
+_, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
 p1 = plot(sol_static.t, I_st_ebcm, label="EBCM", lw=2, color=:blue,
-    ylabel="Fraction infected", title="Static: EBCM vs SSA", ylims=(0,0.3))
+    ylabel="Fraction infected", title="Static", ylims=(0,0.3))
 plot!(p1, t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA",
     color=:blue, fillalpha=0.2, linealpha=0.4, lw=1)
 
-p2 = plot(t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA (static)",
-    color=:grey, fillalpha=0.15, linealpha=0.3, lw=1,
-    title="Dynamic SSA effect", ylims=(0,0.3))
-plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA (dynamic)",
+p2 = plot(sol_dyn.t, I_dy_ebcm, label="EBCM", lw=2, color=:red,
+    title="Dynamic (η₁=0.05, η₂=0.03)", ylims=(0,0.3))
+plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA",
     color=:red, fillalpha=0.2, linealpha=0.4, lw=1)
 
 plot(p1, p2, layout=(1,2), size=(800,350), xlabel="Time")
 ```
 
-The static EBCM tracks the static SSA (left). The dynamic SSA shows a
-modest reduction from edge turnover (right). The `DynamicConfigurationModel`
-ODE is not shown pending a fix to the incidence formula; the SSA on
-`TimeVaryingNetwork` provides the dynamic ground truth.
+The static EBCM matches the static SSA closely (left). The dynamic EBCM
+tracks the dynamic SSA (right), confirming that edge turnover modestly
+reduces the epidemic peak and final size.
