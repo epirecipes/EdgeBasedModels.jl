@@ -257,7 +257,18 @@ function build_edge_system(model::StaticConfigurationModel;
     if _is_sis_progression(model.progression)
         stage = only(model.progression.stages)
         γ_val = only(model.progression.transitions).rate
-        return build_sis(model.pgf, stage.transmission_rate, γ_val; name = name)
+        # Prefer reinfection-counting (L=0) for SIS — it correctly handles
+        # repeated transmission (matches EoN compact pairwise to <1%).
+        # Falls back to the basic one-shot EBCM for symbolic PGFs.
+        mean_k = _maybe_to_float64(
+            Symbolics.simplify(_eval_pgf_deriv(model.pgf, 1, 1)))
+        if mean_k !== nothing
+            return build_sis_reinfection(model.pgf, stage.transmission_rate,
+                                         γ_val, 0; name = name)
+        else
+            return build_sis(model.pgf, stage.transmission_rate, γ_val;
+                             name = name)
+        end
     end
     if form === :compact
         _require_compact_form_supported(model.progression)
