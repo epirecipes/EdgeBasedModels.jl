@@ -440,8 +440,8 @@ import Catalyst
     @testset "Dynamic network SEIR" begin
         @parameters σ β γ κ η₁ η₂
 
-        # SEIR is not yet supported by the Volz-Meyers dynamic model
-        @test_throws ArgumentError DynamicConfigurationModel(
+        # SEIR works with VM since only the I stage has nonzero transmission
+        model = DynamicConfigurationModel(
             poisson_pgf(κ),
             DiseaseProgression(
                 [DiseaseStage(:E; transmission_rate = 0), DiseaseStage(:I; transmission_rate = β), DiseaseStage(:R; transmission_rate = 0)],
@@ -450,7 +450,10 @@ import Catalyst
             ),
             η₁,
             η₂,
-        ) |> build_edge_system
+        )
+        result = build_edge_system(model)
+        @test haskey(result.variables, :θ)
+        @test haskey(result.variables, :P₁)
     end
 
     @testset "Method of Stages" begin

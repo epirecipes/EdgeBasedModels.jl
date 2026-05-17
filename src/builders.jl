@@ -383,7 +383,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
 
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
+    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
     # Population incidence: -dS/dt = (1-ρ)·ψ'(θ)·edge_hazard
     incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
 
@@ -667,7 +667,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     # Currently restricted to canonical SIR: S → I → R
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
+    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
     length(infected) == 1 && length(recovered) == 1 ||
         throw(ArgumentError(
             "DynamicConfigurationModel currently requires canonical SIR"))
@@ -807,7 +807,7 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
     q = Dict{Symbol, Any}(j => 1 - rho[j] for j in types)
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
+    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
 
     # --- Create symbolic variables ---
     # θ_{jl}(t) for each type pair: prob edge from l to j hasn't transmitted
@@ -1082,7 +1082,7 @@ function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Sym
 
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
+    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
 
     ρ = _seed_parameter()
     q = 1 - ρ
