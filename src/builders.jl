@@ -564,16 +564,19 @@ function default_initial_conditions(model::EdgeModelSystem; ε = 1e-3, seed_frac
     end
     for group in get(model.metadata, :edge_seed_groups, Any[])
         # With θ(0)=1 and the (1-ρ) factor inside φ_S, φ_entry(0) reduces to ρ.
-        # We compute it from the symbolic phi_S_expr for robustness across
-        # multivariate (multi-type / clustered) cases.
-        phi_S_subst = Symbolics.simplify(Symbolics.substitute(group.phi_S_expr, ic))
-        phi_S_numeric = _maybe_to_float64(phi_S_subst)
-        θ_val = haskey(group, :theta) ? get(ic, group.theta, nothing) : nothing
-        if phi_S_numeric !== nothing && θ_val !== nothing
-            ic[group.entry] = max(0.0, θ_val - phi_S_numeric)
-        elseif phi_S_numeric !== nothing
-            ic[group.entry] = max(0.0, 1.0 - phi_S_numeric)
+        if haskey(group, :phi_S_expr)
+            phi_S_subst = Symbolics.simplify(Symbolics.substitute(group.phi_S_expr, ic))
+            phi_S_numeric = _maybe_to_float64(phi_S_subst)
+            θ_val = haskey(group, :theta) ? get(ic, group.theta, nothing) : nothing
+            if phi_S_numeric !== nothing && θ_val !== nothing
+                ic[group.entry] = max(0.0, θ_val - phi_S_numeric)
+            elseif phi_S_numeric !== nothing
+                ic[group.entry] = max(0.0, 1.0 - phi_S_numeric)
+            else
+                ic[group.entry] = Float64(seed_fraction)
+            end
         else
+            # Dynamic model: φ_I(0) = ε (entry stage gets the seed fraction)
             ic[group.entry] = Float64(seed_fraction)
         end
     end
@@ -678,29 +681,28 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     end
 
     # PGF evaluations.
-    # In the dynamic model, S = ψ(α) where α = θ + φ_D is the total
-    # "not-yet-transmitted" probability per stub (active + dormant).
-    # All PGF derivatives used in incidence/excess-hazard must evaluate
-    # at α, not θ, because a susceptible node's degree structure depends
-    # on all non-transmitted stubs regardless of their active/dormant state.
-    α = θ + phi_D
-    ψ_α = _eval_pgf(model.pgf, α)
-    ψ_prime_α = _eval_pgf_deriv(model.pgf, 1, α)
+    # Per Volz & Meyers (2007/2008) and KMS Ch. 10: θ represents the
+    # probability that a random stub has NOT transmitted, and only
+    # decreases from actual transmission events (not edge breaking).
+    # S = ψ(θ) as in the static model; edge dynamics enter only through
+    # the φ variables (partner composition of active edges).
+    ψ_θ = _eval_pgf(model.pgf, θ)
+    ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
-    ψ_double_α = _eval_pgf_deriv(model.pgf, 2, α)
+    ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
 
-    # φ_S algebraic: (1-ρ)·ψ'(α)/ψ'(1)
-    phi_S_expr = Symbolics.simplify(q * ψ_prime_α / ψ_prime_1)
+    # φ_S: tracked as an ODE (not algebraic) in the dynamic model because
+    # edge breaking/forming perturbs the PGF structure.
+    # φ_S = θ - φ_I - φ_R - φ_D (derived from partition of stubs)
 
     # Edge hazard (from active edges only — dormant can't transmit)
     edge_hazard = Symbolics.simplify(sum(
         stage.transmission_rate * phi[stage.name] for stage in prog.stages
     ))
 
-    # Excess hazard uses ψ''(α)/ψ'(α) for the susceptible node's
-    # excess degree, but only active-infected stubs contribute.
-    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_α / ψ_prime_α)
-    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_α / ψ_prime_1)
+    # Excess hazard and entry inflow use the PGF at θ (standard formulas)
+    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
+    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
 
     # Edge formation and breaking rates
     η₁ = model.η₁
@@ -708,18 +710,21 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
 
     eqs = Equation[]
 
-    # φ_S algebraic
-    push!(eqs, phi_S ~ phi_S_expr)
+    # φ_S is now an ODE: no longer algebraic in the dynamic model.
+    # dφ_S/dt = -entry_inflow + η₁·φ_D·S - η₂·φ_S
+    S_frac = q * ψ_θ
+    push!(eqs, D(phi_S) ~ Symbolics.simplify(
+        -entry_inflow_expanded + η₁ * phi_D * S_frac - η₂ * phi_S))
 
-    # θ ODE: active edges that transmit OR break
+    # θ ODE: ONLY transmission (per Volz-Meyers / KMS Ch. 10)
+    push!(eqs, D(θ) ~ Symbolics.simplify(-edge_hazard))
+
+    # φ_D ODE: active stubs break, dormant reform
     active_phi_sum = phi_S + sum(phi[s.name] for s in prog.stages)
-    push!(eqs, D(θ) ~ Symbolics.simplify(-edge_hazard - η₂ * active_phi_sum + η₁ * phi_D))
-
-    # φ_D ODE
     push!(eqs, D(phi_D) ~ Symbolics.simplify(η₂ * active_phi_sum - η₁ * phi_D))
 
-    # Population incidence: uses ψ'(α) for the susceptible node's edge count
-    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_α)
+    # Population incidence uses ψ'(θ) (standard)
+    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
 
     # φ ODEs for each disease stage
     for stage in prog.stages
@@ -746,13 +751,13 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * ψ_α)
+    push!(eqs, S_pop ~ S_frac)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
     simplified = mtkcompile(sys)
 
-    variables = Dict{Symbol, Any}(:θ => θ, :φ_D => phi_D)
+    variables = Dict{Symbol, Any}(:θ => θ, :φ_D => phi_D, :φ_S => phi_S)
     merge!(variables, Dict(Symbol("φ_", k) => v for (k, v) in phi))
     merge!(variables, Dict(Symbol("pop_", k) => v for (k, v) in pop))
     if length(recovered) == 1
@@ -762,15 +767,19 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     observables = Dict{Symbol, Any}(
         :S => S_pop,
         :I => I_pop,
-        :φ_S => phi_S,
         :edge_hazard => edge_hazard,
         :excess_hazard => excess_hazard,
     )
 
-    metadata = _default_seed_metadata(pop[prog.entry], ψ_α)
+    metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
     metadata[:rho_param] = ρ
+    # For the dynamic model, φ_S is an ODE variable; set IC explicitly.
+    # At t=0: φ_S(0) = 1-ε (all active stubs → susceptible), φ_I(0) = ε.
+    metadata[:seed_fraction_assignments] = Any[
+        (var = phi_S, value = sf -> 1.0 - sf),
+    ]
     metadata[:edge_seed_groups] = Any[
-        (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),
+        (; entry = phi[prog.entry], theta = θ),
     ]
     return EdgeModelSystem(simplified, variables, observables, metadata)
 end
