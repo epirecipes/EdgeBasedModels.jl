@@ -408,7 +408,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * ψ_θ)
+    push!(eqs, S_pop ~ ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -653,133 +653,96 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     t = t_nounits
     D = D_nounits
 
+    # Currently restricted to canonical SIR: S → I → R
     incoming, outgoing = _transition_maps(prog)
     recovered = _recovered_stages(prog, outgoing)
     infected = [stage.name for stage in prog.stages if !(stage.name in recovered)]
+    length(infected) == 1 && length(recovered) == 1 ||
+        throw(ArgumentError(
+            "DynamicConfigurationModel currently requires canonical SIR"))
+
+    β_sym = prog.stages[findfirst(
+        s -> !_is_zero_rate(s.transmission_rate), prog.stages)].transmission_rate
+    γ_sym = prog.transitions[1].rate
 
     θ = only(@variables θ(t))
-    ρ = _seed_parameter()
-    q = 1 - ρ
 
-    # φ variables for each non-susceptible stage
-    phi = Dict{Symbol, Any}()
-    for stage in prog.stages
-        vname = Symbol("φ_", stage.name)
-        phi[stage.name] = only(@variables $(vname)(t))
-    end
+    # Volz-Meyers (2007) Table 4 variables:
+    #   P₁  = frac of a susceptible ego's stubs pointing to infected
+    #   P_S = frac pointing to susceptible
+    #   M₁  = population-level frac of ALL stubs pointing to infected
+    P₁  = only(@variables P₁(t))
+    P_S = only(@variables P_S(t))
+    M₁  = only(@variables M₁(t))
 
-    # φ_S (active susceptible), φ_D (dormant)
-    phi_S = only(@variables φ_S(t))
-    phi_D = only(@variables φ_D(t))
-
-    # Population-level
+    pop_I = only(@variables pop_I(t))
+    pop_R = only(@variables pop_R(t))
     S_pop = only(@variables S(t))
     I_pop = only(@variables I(t))
-    pop = Dict{Symbol, Any}()
-    for stage in prog.stages
-        pop[stage.name] = only(@variables $(Symbol("pop_", stage.name))(t))
-    end
 
-    # PGF evaluations.
-    # Per Volz & Meyers (2007/2008) and KMS Ch. 10: θ represents the
-    # probability that a random stub has NOT transmitted, and only
-    # decreases from actual transmission events (not edge breaking).
-    # S = ψ(θ) as in the static model; edge dynamics enter only through
-    # the φ variables (partner composition of active edges).
-    ψ_θ = _eval_pgf(model.pgf, θ)
-    ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
-    ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
+    # PGF at θ (standard — θ only changes from transmission)
+    ψ_θ        = _eval_pgf(model.pgf, θ)
+    ψ_prime_θ  = _eval_pgf_deriv(model.pgf, 1, θ)
+    ψ_prime_1  = _eval_pgf_deriv(model.pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
 
-    # φ_S: tracked as an ODE (not algebraic) in the dynamic model because
-    # edge breaking/forming perturbs the PGF structure.
-    # φ_S = θ - φ_I - φ_R - φ_D (derived from partition of stubs)
+    # Effective edge-swap rate.  For the dormant-edge API (η₁, η₂) the
+    # swap rate equals the breaking rate η₂ (edges break then reconnect
+    # to a random partner).  In the fast-reform limit η₁ ≫ η₂ this is
+    # exact; for finite η₁ it is a first-order approximation.
+    ρ_swap = model.η₂
 
-    # Edge hazard (from active edges only — dormant can't transmit)
-    edge_hazard = Symbolics.simplify(sum(
-        stage.transmission_rate * phi[stage.name] for stage in prog.stages
-    ))
-
-    # Excess hazard and entry inflow use the PGF at θ (standard formulas)
-    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
-    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
-
-    # Edge formation and breaking rates
-    η₁ = model.η₁
-    η₂ = model.η₂
+    # Excess-degree ratio: θ·g″(θ)/g′(θ)
+    excess_ratio = Symbolics.simplify(θ * ψ_double_θ / ψ_prime_θ)
 
     eqs = Equation[]
 
-    # φ_S is now an ODE: no longer algebraic in the dynamic model.
-    # dφ_S/dt = -entry_inflow + η₁·φ_D·S - η₂·φ_S
-    S_frac = q * ψ_θ
-    push!(eqs, D(phi_S) ~ Symbolics.simplify(
-        -entry_inflow_expanded + η₁ * phi_D * S_frac - η₂ * phi_S))
+    # θ̇ = −β P₁ θ   (only transmission)
+    push!(eqs, D(θ) ~ Symbolics.simplify(-β_sym * P₁ * θ))
 
-    # θ ODE: ONLY transmission (per Volz-Meyers / KMS Ch. 10)
-    push!(eqs, D(θ) ~ Symbolics.simplify(-edge_hazard))
+    # Ṗ_S = β P_S P₁ (1 − excess_ratio) + ρ (g′(θ)/g′(1) − P_S)
+    push!(eqs, D(P_S) ~ Symbolics.simplify(
+        β_sym * P_S * P₁ * (1 - excess_ratio) +
+        ρ_swap * (ψ_prime_θ / ψ_prime_1 - P_S)))
 
-    # φ_D ODE: active stubs break, dormant reform
-    active_phi_sum = phi_S + sum(phi[s.name] for s in prog.stages)
-    push!(eqs, D(phi_D) ~ Symbolics.simplify(η₂ * active_phi_sum - η₁ * phi_D))
+    # Ṗ₁ = β P₁ P_S excess_ratio − P₁(1−P₁)β − P₁ γ + ρ(M₁ − P₁)
+    push!(eqs, D(P₁) ~ Symbolics.simplify(
+        β_sym * P₁ * P_S * excess_ratio -
+        P₁ * (1 - P₁) * β_sym -
+        P₁ * γ_sym +
+        ρ_swap * (M₁ - P₁)))
 
-    # Population incidence uses ψ'(θ) (standard)
-    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
+    # Ṁ₁ = −γ M₁ + β P₁ (θ² g″(θ) + θ g′(θ)) / g′(1)
+    push!(eqs, D(M₁) ~ Symbolics.simplify(
+        -γ_sym * M₁ +
+        β_sym * P₁ * (θ^2 * ψ_double_θ + θ * ψ_prime_θ) / ψ_prime_1))
 
-    # φ ODEs for each disease stage
-    for stage in prog.stages
-        φ_var = phi[stage.name]
+    # Population compartments
+    incidence = Symbolics.simplify(β_sym * P₁ * θ * ψ_prime_θ)
+    push!(eqs, D(pop_I) ~ Symbolics.simplify(incidence - γ_sym * pop_I))
+    push!(eqs, D(pop_R) ~ Symbolics.simplify(γ_sym * pop_I))
 
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            push!(inflow_terms, entry_inflow_expanded)
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * phi[tr.source])
-        end
-        push!(inflow_terms, η₁ * phi_D * pop[stage.name])
-        inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
-
-        outflow_terms = Any[stage.transmission_rate * φ_var]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * φ_var)
-        end
-        push!(outflow_terms, η₂ * φ_var)
-        outflow = foldl(+, outflow_terms)
-
-        push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-
-    append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ S_frac)
-    push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
+    # Observables
+    push!(eqs, S_pop ~ ψ_θ)
+    push!(eqs, I_pop ~ pop_I)
 
     sys = System(eqs, t; name = name)
     simplified = mtkcompile(sys)
 
-    variables = Dict{Symbol, Any}(:θ => θ, :φ_D => phi_D, :φ_S => phi_S)
-    merge!(variables, Dict(Symbol("φ_", k) => v for (k, v) in phi))
-    merge!(variables, Dict(Symbol("pop_", k) => v for (k, v) in pop))
-    if length(recovered) == 1
-        variables[:R] = pop[only(recovered)]
-    end
+    variables = Dict{Symbol, Any}(
+        :θ => θ, :P₁ => P₁, :P_S => P_S, :M₁ => M₁,
+        :pop_I => pop_I, :R => pop_R)
 
-    observables = Dict{Symbol, Any}(
-        :S => S_pop,
-        :I => I_pop,
-        :edge_hazard => edge_hazard,
-        :excess_hazard => excess_hazard,
-    )
+    observables = Dict{Symbol, Any}(:S => S_pop, :I => I_pop)
 
-    metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
-    metadata[:rho_param] = ρ
-    # For the dynamic model, φ_S is an ODE variable; set IC explicitly.
-    # At t=0: φ_S(0) = 1-ε (all active stubs → susceptible), φ_I(0) = ε.
+    metadata = _default_seed_metadata(pop_I, ψ_θ)
+    # Volz-Meyers ICs (eq 2.19–2.21)
     metadata[:seed_fraction_assignments] = Any[
-        (var = phi_S, value = sf -> 1.0 - sf),
-    ]
-    metadata[:edge_seed_groups] = Any[
-        (; entry = phi[prog.entry], theta = θ),
+        (var = θ,     value = sf -> 1.0 - sf),
+        (var = P₁,    value = sf -> sf / (1.0 - sf)),
+        (var = P_S,   value = sf -> (1.0 - 2sf) / (1.0 - sf)),
+        (var = M₁,    value = sf -> sf),
+        (var = pop_I,  value = sf -> sf),
     ]
     return EdgeModelSystem(simplified, variables, observables, metadata)
 end

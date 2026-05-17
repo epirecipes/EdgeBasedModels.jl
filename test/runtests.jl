@@ -422,27 +422,26 @@ import Catalyst
         result = build_edge_system(model)
         eqs = ModelingToolkit.equations(result.system)
 
-        # Dynamic systems now include explicit stage-population dynamics.
-        @test length(eqs) >= 6  # φ_S is now an ODE in dynamic models
+        # Volz-Meyers formulation: θ, P₁, P_S, M₁, pop_I, pop_R + 2 observables
+        @test length(eqs) >= 6
         @test haskey(result.variables, :θ)
-        @test haskey(result.variables, :φ_D)
-        @test haskey(result.variables, :φ_I)
-        @test haskey(result.variables, :φ_R)
+        @test haskey(result.variables, :P₁)
+        @test haskey(result.variables, :P_S)
+        @test haskey(result.variables, :M₁)
         @test haskey(result.variables, :R)
         @test haskey(result.observables, :S)
         @test haskey(result.observables, :I)
-        @test haskey(result.variables, :φ_S)  # φ_S is ODE variable in dynamic model
 
-        # Verify η₁ and η₂ appear in the equations
+        # Verify η₂ (swap rate) appears in the equations
         eq_strs = join(string.(eqs), " ")
-        @test occursin("η₁", eq_strs)
         @test occursin("η₂", eq_strs)
     end
 
     @testset "Dynamic network SEIR" begin
         @parameters σ β γ κ η₁ η₂
 
-        model = DynamicConfigurationModel(
+        # SEIR is not yet supported by the Volz-Meyers dynamic model
+        @test_throws ArgumentError DynamicConfigurationModel(
             poisson_pgf(κ),
             DiseaseProgression(
                 [DiseaseStage(:E; transmission_rate = 0), DiseaseStage(:I; transmission_rate = β), DiseaseStage(:R; transmission_rate = 0)],
@@ -451,13 +450,7 @@ import Catalyst
             ),
             η₁,
             η₂,
-        )
-        result = build_edge_system(model)
-        eqs = ModelingToolkit.equations(result.system)
-
-        @test length(eqs) >= 8
-        @test haskey(result.variables, :φ_D)
-        @test haskey(result.variables, :φ_E)
+        ) |> build_edge_system
     end
 
     @testset "Method of Stages" begin

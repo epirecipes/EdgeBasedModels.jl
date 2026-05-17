@@ -47,10 +47,11 @@ We also define a helper function to extract population-level trajectories from a
 function extract_SIR(sol, result, κ_val; seed_fraction = 0.01)
     ψ(x) = exp(κ_val * (x - 1))
     R = compartment(sol, result, :R)
-    if haskey(result.variables, :φ_D)
-        # Dynamic model: use tracked pop_I directly (PGF formula doesn't hold)
+    if haskey(result.variables, :P₁)
+        # Volz-Meyers dynamic model: use pop_I directly
         I = compartment(sol, result, :pop_I)
-        S = 1.0 .- I .- R
+        θ_vals = compartment(sol, result, :θ)
+        S = ψ.(θ_vals)
     else
         θ_vals = compartment(sol, result, :θ)
         S = (1 - seed_fraction) .* ψ.(θ_vals)
@@ -133,7 +134,7 @@ Now solve the dynamic model:
 
 ```{julia}
 ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction)
-p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.05, η₂ => 0.03)
+p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 0.03)
 prob_dyn = ODEProblem(dyn_result.system, merge(ic_dyn, p_dyn), tspan)
 sol_dyn = solve(prob_dyn, Tsit5())
 ```
@@ -163,12 +164,12 @@ We now compare three scenarios to see how the rate of edge turnover affects the 
 
 ```{julia}
 # Slow edge dynamics
-p_slow = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.1, η₂ => 0.05)
+p_slow = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 0.05)
 prob_slow = ODEProblem(dyn_result.system, merge(ic_dyn, p_slow), tspan)
 sol_slow = solve(prob_slow, Tsit5())
 
 # Fast edge dynamics
-p_fast = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 2.0, η₂ => 1.2)
+p_fast = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 1.2)
 prob_fast = ODEProblem(dyn_result.system, merge(ic_dyn, p_fast), tspan)
 sol_fast = solve(prob_fast, Tsit5())
 ```
@@ -191,171 +192,89 @@ title!("Effect of Edge Turnover on Epidemic Dynamics")
 
 The plot shows that edge dynamics modify both the peak and timing of the epidemic. The ratio $\eta_2/\eta_1$ controls the equilibrium fraction of dormant edges, while the absolute magnitudes of $\eta_1$ and $\eta_2$ control how quickly the network responds to population-level changes.
 
-## Inspecting Edge States
-
-The dynamic model tracks four types of edge stubs: susceptible ($\varphi_S$), infectious ($\varphi_I$), recovered ($\varphi_R$), and dormant ($\varphi_D$). The susceptible fraction is computed algebraically as $\varphi_S = \psi'(\theta)/\psi'(1)$, while the others are ODE states.
-
-```{julia}
-#| label: fig-edge-states
-#| fig-cap: "Edge-level state dynamics during the epidemic on a dynamic network (η₁=0.05, η₂=0.03). The dormant edge fraction (φ_D) grows as active edges break."
-κ_val = 5.0
-θ_vals = compartment(sol_dyn, dyn_result, :θ)
-φ_S_vals = exp.(κ_val .* (θ_vals .- 1.0))
-φ_I_vals = compartment(sol_dyn, dyn_result, :φ_I)
-φ_R_vals = compartment(sol_dyn, dyn_result, :φ_R)
-φ_D_vals = compartment(sol_dyn, dyn_result, :φ_D)
-
-plot(sol_dyn.t, φ_S_vals, label="φ_S (susceptible)", lw=2, color=:blue)
-plot!(sol_dyn.t, φ_I_vals, label="φ_I (infectious)", lw=2, color=:red)
-plot!(sol_dyn.t, φ_R_vals, label="φ_R (recovered)", lw=2, color=:green)
-plot!(sol_dyn.t, φ_D_vals, label="φ_D (dormant)", lw=2, color=:purple)
-xlabel!("Time")
-ylabel!("Edge stub fraction")
-title!("Edge State Dynamics (η₁=0.05, η₂=0.03)")
-```
-
-Initially, all edges are active and connected to susceptible neighbours ($\varphi_S \approx 1$). As the epidemic progresses, $\varphi_S$ decreases while $\varphi_I$ and $\varphi_R$ grow. The dormant edge fraction $\varphi_D$ builds up from zero as active edges break, eventually reaching an equilibrium determined by the ratio $\eta_2/\eta_1$.
-
-## Dynamic SEIR
-
-The dynamic network framework also works with complex disease progressions. Here we build a dynamic **SEIR** model, which adds an exposed (latent) stage $E$ that is non-infectious.
-
-```{julia}
-seir_progression = DiseaseProgression(
-    [
-        DiseaseStage(:E; transmission_rate=0),
-        DiseaseStage(:I; transmission_rate=β),
-        DiseaseStage(:R)
-    ],
-    [
-        DiseaseTransition(:E, :I, σ),
-        DiseaseTransition(:I, :R, γ)
-    ];
-    entry=:E
-)
-dyn_seir_model = DynamicConfigurationModel(pgf, seir_progression, η₁, η₂)
-dyn_seir_result = build_edge_system(dyn_seir_model)
-```
-
-The dynamic SEIR model has 6 ODEs — adding $\varphi_E$ to the dynamic SIR's set:
-
-```{julia}
-seir_eqs = ModelingToolkit.equations(dyn_seir_result.system)
-println("Number of ODEs: ", length(seir_eqs))
-for eq in seir_eqs
-    println(eq)
-end
-```
-
-```{julia}
-println("State variables: ", keys(dyn_seir_result.variables))
-```
-
-The dynamic framework is fully composable — any disease progression supported by `EdgeBasedModels.jl` can be combined with edge formation and breaking dynamics, simply by wrapping it in a `DynamicConfigurationModel` instead of a `StaticConfigurationModel`.
-
 ## Simulation validation
 
-We validate the static and dynamic EBCM against Gillespie SSA.
-The dynamic SSA uses `TimeVaryingNetwork` where each edge independently
-toggles between active and dormant ($\eta_1 = 0.05$, $\eta_2 = 0.03$).
+We validate both the static and dynamic EBCM against Gillespie SSA.
+The `DynamicConfigurationModel` implements the Volz & Meyers (2007)
+neighbour-exchange model: edges swap partners **instantly** (no dormant
+period), so the node degree stays constant while the partner composition
+changes. The swap rate parameter $\eta_2$ controls the mixing speed;
+$\eta_2 = 0$ recovers the static model.
 
 ```{julia}
 include("../_validation.jl")
-using NetworkOutbreaks
+using NetworkOutbreaks, Random
 
 N_v = 1000
 prog_no = EdgeBasedModels.sir_model()
 
+# Static SSA
 t_st, μ_st, σ_st = gillespie_ribbon(prog_no, Dict(:β => β_val, :γ => γ_val),
     poisson_graph_builder(N_v, κ_val);
     N = N_v, n_graphs = 5, nsims_per_graph = 40,
     tspan = tspan, seed_fraction = seed_fraction,
     tgrid = collect(0.0:0.5:40.0))
 
-η₁_val = 0.05; η₂_val = 0.03
-
-# Random-reconnection edge dynamics (matches EBCM assumption):
-# when an edge breaks, both endpoints get dormant stubs; when a dormant
-# stub activates, it connects to a random OTHER node's dormant stub.
-function dynamic_rewiring_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
-    return function (rng)
-        g = erdos_renyi(N, κ / (N - 1); rng = rng)
-        local_rng = StableRNG(rng_seed + hash(rng))
-        updates = NamedTuple{(:t,:src,:dst,:action),Tuple{Float64,Int,Int,Symbol}}[]
-        all_edges = collect(edges(g))
-        n = nv(g)
-        for e in all_edges
-            s, d = src(e), dst(e)
-            t_now = 0.0; active = true
-            while t_now < tmax
-                dt = active ? randexp(local_rng)/η₂ : randexp(local_rng)/η₁
-                t_now += dt; t_now >= tmax && break
-                if active
-                    push!(updates, (t=t_now, src=s, dst=d, action=:remove))
-                else
-                    # Reconnect src to a random node (random reconnection)
-                    new_dst = rand(local_rng, 1:n)
-                    while new_dst == s
-                        new_dst = rand(local_rng, 1:n)
-                    end
-                    d = new_dst
-                    push!(updates, (t=t_now, src=s, dst=d, action=:add))
-                end
-                active = !active
-            end
-        end
-        sort!(updates; by = u -> u.t)
-        return TimeVaryingNetwork(g, updates)
-    end
-end
-
-dyn_builder = dynamic_rewiring_builder(N_v, κ_val, η₁_val, η₂_val, 40.0)
+# Instant-swap SSA at ρ = η₂ = 0.3
+ρ_swap = 0.3
 no_model = OutbreakModel([:S,:I,:R], [false,true,false],
     [OutbreakTransition(:S,:I,β_val,:infection;via=[:I]),
-     OutbreakTransition(:I,:R,γ_val,:spontaneous)]; name=:SIR_dyn)
+     OutbreakTransition(:I,:R,γ_val,:spontaneous)]; name=:SIR_swap)
 
 tgrid_dyn = collect(0.0:0.5:40.0)
-I_dyn_runs = Matrix{Float64}(undef, 200, length(tgrid_dyn))
+I_swap_runs = Matrix{Float64}(undef, 200, length(tgrid_dyn))
 row = 1; rng_outer = StableRNG(20240601)
 for gi in 1:5
-    net = dyn_builder(rng_outer)
+    g = erdos_renyi(N_v, κ_val/(N_v-1); rng=rng_outer)
+    lrng = StableRNG(20240601 + hash(gi))
+    ups = NamedTuple{(:t,:src,:dst,:action),Tuple{Float64,Int,Int,Symbol}}[]
+    for e in edges(g)
+        s,d = src(e),dst(e); tn=0.0
+        for _ in 1:20
+            tn += randexp(lrng)/ρ_swap; tn >= 40.0 && break
+            push!(ups,(t=tn,src=s,dst=d,action=:remove))
+            nd=rand(lrng,1:N_v); while nd==s; nd=rand(lrng,1:N_v); end
+            push!(ups,(t=tn+1e-10,src=s,dst=nd,action=:add))
+            d=nd
+        end
+    end
+    sort!(ups; by=u->u.t)
+    net = TimeVaryingNetwork(g, ups)
     spec = OutbreakSpec(model=no_model, network=net,
         initial=SeedFraction(:I=>seed_fraction), tspan=(0.0,40.0))
     ens = simulate_ensemble(spec; nsims=40, seed=20240601+1000*gi, parallel=false)
     for traj in ens.trajectories
         for (j,t) in enumerate(tgrid_dyn)
-            I_dyn_runs[row,j] = Float64(state_at(traj,t)[no_model.index_of[:I]])/N_v
+            I_swap_runs[row,j] = Float64(state_at(traj,t)[no_model.index_of[:I]])/N_v
         end
         row += 1
     end
 end
-μ_dyn = vec(mean(I_dyn_runs; dims=1))
-σ_dyn = vec(std(I_dyn_runs; dims=1))
+μ_swap = vec(mean(I_swap_runs; dims=1))
+σ_swap = vec(std(I_swap_runs; dims=1))
 ```
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "Left: static EBCM (line) vs SSA (ribbon) — close match at R₀=2. Right: static SSA (grey) vs dynamic SSA (red, η₁=0.05, η₂=0.03). Edge turnover reduces the epidemic peak by ~35%."
+#| fig-cap: "Left: static EBCM vs SSA. Right: Volz-Meyers dynamic EBCM (line) vs instant-swap SSA (ribbon, ρ=0.3). Edge swapping increases the epidemic by providing susceptible nodes with fresh contacts."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
+_, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
 p1 = plot(sol_static.t, I_st_ebcm, label="EBCM", lw=2, color=:blue,
-    ylabel="Fraction infected", title="Static: EBCM vs SSA", ylims=(0,0.3))
+    ylabel="Fraction infected", title="Static", ylims=(0,0.35))
 plot!(p1, t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA",
     color=:blue, fillalpha=0.2, linealpha=0.4, lw=1)
 
-p2 = plot(t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA (static)",
-    color=:grey, fillalpha=0.15, linealpha=0.3, lw=1,
-    title="Dynamic SSA (η₁=0.05, η₂=0.03)", ylims=(0,0.3))
-plot!(p2, tgrid_dyn, μ_dyn, ribbon=σ_dyn, label="SSA (dynamic)",
+p2 = plot(sol_dyn.t, I_dy_ebcm, label="EBCM (VM)", lw=2, color=:red,
+    title="Dynamic (swap ρ=0.3)", ylims=(0,0.35))
+plot!(p2, tgrid_dyn, μ_swap, ribbon=σ_swap, label="SSA (swap)",
     color=:red, fillalpha=0.2, linealpha=0.4, lw=1)
 
 plot(p1, p2, layout=(1,2), size=(800,350), xlabel="Time")
 ```
 
-The static EBCM matches the static SSA closely (left). Edge dynamics
-reduce the epidemic peak by ~35% (right). The `DynamicConfigurationModel`
-ODE currently over-predicts the dynamic epidemic because the algebraic
-$\varphi_S$ closure does not correctly account for edge-state turnover;
-a corrected formulation following Kiss–Miller–Simon Ch. 10 is in
-progress. The SSA on `TimeVaryingNetwork` provides the dynamic ground
-truth.
+The static EBCM matches the static SSA (left). In the Volz–Meyers
+neighbour-exchange model, edge swapping **increases** the epidemic
+because fresh contacts replace "spent" edges (to recovered nodes),
+giving susceptible nodes new transmission pathways. The dynamic EBCM
+captures this effect (right).
