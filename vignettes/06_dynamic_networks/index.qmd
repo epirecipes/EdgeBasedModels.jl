@@ -134,7 +134,7 @@ Now solve the dynamic model:
 
 ```{julia}
 ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction)
-p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 0.03)
+p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 0.5)
 prob_dyn = ODEProblem(dyn_result.system, merge(ic_dyn, p_dyn), tspan)
 sol_dyn = solve(prob_dyn, Tsit5())
 ```
@@ -146,7 +146,7 @@ _, I_static, _ = extract_SIR(sol_static, static_result, 5.0)
 _, I_dynamic, _ = extract_SIR(sol_dyn, dyn_result, 5.0)
 
 plot(sol_static.t, I_static, label="Static", lw=2, linestyle=:dash, color=:grey)
-plot!(sol_dyn.t, I_dynamic, label="Dynamic (η₁=0.05, η₂=0.03)", lw=2, color=:red)
+plot!(sol_dyn.t, I_dynamic, label="Dynamic (ρ=0.5)", lw=2, color=:red)
 xlabel!("Time")
 ylabel!("Fraction infected")
 title!("Static vs Dynamic Network")
@@ -216,7 +216,7 @@ t_st, μ_st, σ_st = gillespie_ribbon(prog_no, Dict(:β => β_val, :γ => γ_val
     tgrid = collect(0.0:0.5:40.0))
 
 # Instant-swap SSA at ρ = η₂ = 0.3
-ρ_swap = 0.3
+ρ_swap = 1.0
 no_model = OutbreakModel([:S,:I,:R], [false,true,false],
     [OutbreakTransition(:S,:I,β_val,:infection;via=[:I]),
      OutbreakTransition(:I,:R,γ_val,:spontaneous)]; name=:SIR_swap)
@@ -256,7 +256,7 @@ end
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "Left: static EBCM vs SSA. Right: Volz-Meyers dynamic EBCM (line) vs instant-swap SSA (ribbon, ρ=0.3). Edge swapping increases the epidemic by providing susceptible nodes with fresh contacts."
+#| fig-cap: "Left: static EBCM vs SSA. Right: Volz-Meyers dynamic EBCM (line) vs instant-swap SSA (ribbon, ρ=1.0). Edge swapping increases the epidemic by providing susceptible nodes with fresh contacts."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
 _, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
@@ -266,7 +266,7 @@ plot!(p1, t_st, μ_st[:I], ribbon=σ_st[:I], label="SSA",
     color=:blue, fillalpha=0.2, linealpha=0.4, lw=1)
 
 p2 = plot(sol_dyn.t, I_dy_ebcm, label="EBCM (VM)", lw=2, color=:red,
-    title="Dynamic (swap ρ=0.3)", ylims=(0,0.35))
+    title="Dynamic (swap ρ=1.0)", ylims=(0,0.35))
 plot!(p2, tgrid_dyn, μ_swap, ribbon=σ_swap, label="SSA (swap)",
     color=:red, fillalpha=0.2, linealpha=0.4, lw=1)
 
