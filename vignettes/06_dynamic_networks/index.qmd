@@ -133,7 +133,7 @@ println("Observables: ", keys(dyn_result.observables))
 Now solve the dynamic model:
 
 ```{julia}
-ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction)
+ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction / κ_val)
 p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₂ => 0.03)
 prob_dyn = ODEProblem(dyn_result.system, merge(ic_dyn, p_dyn), tspan)
 sol_dyn = solve(prob_dyn, Tsit5())

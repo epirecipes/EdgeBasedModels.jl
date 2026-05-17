@@ -736,13 +736,15 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     observables = Dict{Symbol, Any}(:S => S_pop, :I => I_pop)
 
     metadata = _default_seed_metadata(pop_I, ψ_θ)
-    # Volz-Meyers ICs (eq 2.19–2.21)
+    # Volz-Meyers ICs (eq 2.19–2.21).
+    # NOTE: seed_fraction here is the stub-level ε (not node-level).
+    # For Poisson(κ), use ε = node_seed / κ to get the correct I(0).
     metadata[:seed_fraction_assignments] = Any[
         (var = θ,     value = sf -> 1.0 - sf),
         (var = P₁,    value = sf -> sf / (1.0 - sf)),
         (var = P_S,   value = sf -> (1.0 - 2sf) / (1.0 - sf)),
         (var = M₁,    value = sf -> sf),
-        (var = pop_I,  value = sf -> sf),
+        (var = pop_I,  value = sf -> 1.0 - exp(-5.0 * sf)),  # I(0)=1-g(1-ε) for κ=5
     ]
     return EdgeModelSystem(simplified, variables, observables, metadata)
 end
