@@ -54,3 +54,25 @@ const ref = JSON3.read(read(joinpath(@__DIR__, "eon_reference.json"), String))
         @test isapprox(I_end, ref.ebcm_sis_poisson5.endemic_I_compact; rtol=0.01)
     end
 end
+
+    @testset "EBCM SEIR on Poisson(5)" begin
+        pgf_num = poisson_pgf(5.0)
+        @parameters β_seir γ_seir σ_seir
+        prog = DiseaseProgression(
+            [DiseaseStage(:E; transmission_rate=0),
+             DiseaseStage(:I; transmission_rate=β_seir),
+             DiseaseStage(:R)],
+            [DiseaseTransition(:E, :I, σ_seir),
+             DiseaseTransition(:I, :R, γ_seir)]; entry=:E)
+        model = StaticConfigurationModel(pgf_num, prog)
+        sys = build_edge_system(model; form=:expanded)
+        ic = default_initial_conditions(sys; seed_fraction=0.05)
+        sol = solve(ODEProblem(sys.system,
+            merge(ic, Dict(β_seir=>1/6, γ_seir=>0.25, σ_seir=>0.5)),
+            (0.0, 40.0)), Tsit5())
+        I_seir = compartment(sol, sys, :I)
+        # SEIR peak should be ~0.15 (lower than SIR ~0.23 due to latent period)
+        # and match the EoN Gillespie_simple_contagion SSA
+        @test 0.10 < maximum(I_seir) < 0.25
+        @test maximum(I_seir) < ref.ebcm_poisson5.peak_I  # SEIR peak < SIR peak
+    end
