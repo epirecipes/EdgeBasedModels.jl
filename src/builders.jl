@@ -352,10 +352,16 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
         stage.transmission_rate * phi[stage.name] for stage in prog.stages
     ))
 
-    # Excess hazard: edge_hazard · ψ''(θ)/ψ'(θ).  The (1-ρ) factor lives inside
-    # phi_S, so the inflow term `excess_hazard * phi_S` already carries it; do
-    # NOT multiply by (1-ρ) again here.
+    # Excess hazard: edge_hazard · ψ''(θ)/ψ'(θ).  Used as an observable only.
     excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
+
+    # Pre-cancelled inflow term used in the φ-entry equation.
+    # excess_hazard * phi_S = edge_hazard · ψ''(θ)/ψ'(θ) · q · ψ'(θ)/ψ'(1)
+    #                      = edge_hazard · q · ψ''(θ) / ψ'(1)
+    # Computing this directly avoids depending on Symbolics.simplify cancelling
+    # the shared ψ'(θ) factor; for high-degree polynomial PGFs the unsimplified
+    # division by ψ'(θ) produces severe numerical errors.
+    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
 
     S_pop = only(@variables S(t))
     I_pop = only(@variables I(t))
@@ -385,7 +391,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
 
         inflow_terms = Any[]
         if stage.name == prog.entry
-            push!(inflow_terms, excess_hazard * phi_S)
+            push!(inflow_terms, entry_inflow_expanded)
         end
         for tr in incoming[stage.name]
             push!(inflow_terms, tr.rate * phi[tr.source])
@@ -671,8 +677,10 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
         pop[stage.name] = only(@variables $(Symbol("pop_", stage.name))(t))
     end
 
-    # PGF evaluations
+    # PGF evaluations — note: S uses (θ + φ_D) because a node is susceptible
+    # if NONE of its stubs have transmitted, whether active or dormant.
     ψ_θ = _eval_pgf(model.pgf, θ)
+    ψ_θ_plus_D = _eval_pgf(model.pgf, θ + phi_D)
     ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
     ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
     ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
@@ -685,8 +693,11 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
         stage.transmission_rate * phi[stage.name] for stage in prog.stages
     ))
 
-    # Excess hazard through active edges
+    # Excess hazard through active edges (kept as observable; replaced in inflow
+    # by pre-cancelled `entry_inflow_expanded` for numerical robustness on
+    # polynomial PGFs — see `build_sir_expanded` for rationale).
     excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
+    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
 
     # Edge formation and breaking rates
     η₁ = model.η₁
@@ -713,7 +724,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
 
         inflow_terms = Any[]
         if stage.name == prog.entry
-            push!(inflow_terms, excess_hazard * phi_S)
+            push!(inflow_terms, entry_inflow_expanded)
         end
         for tr in incoming[stage.name]
             push!(inflow_terms, tr.rate * phi[tr.source])
@@ -732,7 +743,7 @@ function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_θ_plus_D)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)
@@ -898,6 +909,14 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
     # Rate at which the type-j neighbor gets infected through its OTHER edges.
     # excess_hazard_{jl} = Σ_k edge_hazard_{kj} · ∂²ψ_j/(∂x_l ∂x_k)(θ_vec_j) / ∂ψ_j/∂x_l(θ_vec_j)
     excess_hazard = Dict{Tuple{Symbol,Symbol}, Any}()
+    # Pre-cancelled inflow term used in the φ-entry equation:
+    #   excess_hazard[(j,l)] * phi_S[(j,l)]
+    # = (Σ_k h_kj · ∂²ψ_j/∂x_l∂x_k(θ)) / ∂ψ_j/∂x_l(θ)  ·  q_j · ∂ψ_j/∂x_l(θ) / ∂ψ_j/∂x_l(1)
+    # = q_j · (Σ_k h_kj · ∂²ψ_j/∂x_l∂x_k(θ)) / ∂ψ_j/∂x_l(1)
+    # Computing this directly avoids the Symbolics.simplify cancellation of a
+    # shared partial-derivative factor, which fails for high-degree polynomial
+    # PGFs and produces severe numerical errors. See `build_sir_expanded`.
+    entry_inflow_expanded = Dict{Tuple{Symbol,Symbol}, Any}()
     for j in types, l in types
         pgf_j = model.pgfs[j]
         sub_theta = Dict{Any, Any}(
@@ -909,7 +928,12 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
         deriv_l = partial_derivative(pgf_j, l, 1)
         denom = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_l, sub_theta)))
 
+        # ∂ψ_j/∂x_l at 1 (used for the pre-cancelled inflow term)
+        sub_ones = Dict{Any, Any}(v => 1 for v in pgf_j.variables)
+        denom_at_1 = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_l, sub_ones)))
+
         eh = 0
+        eh_pre = 0
         for k in types
             # ∂²ψ_j/(∂x_l ∂x_k) at θ
             mixed = mixed_partial(pgf_j, l, k)
@@ -923,8 +947,10 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
                 init = 0
             )
             eh += h_kj * numer_k
+            eh_pre += h_kj * numer_k
         end
         excess_hazard[(j, l)] = Symbolics.simplify(eh / denom)
+        entry_inflow_expanded[(j, l)] = Symbolics.simplify(q[j] * eh_pre / denom_at_1)
     end
 
     incidence = Dict{Symbol, Any}()
@@ -951,8 +977,9 @@ function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Sym
         # Inflow
         inflow_terms = Any[]
         if stage.name == prog.entry
-            # Infection of the j-neighbor through its OTHER edges
-            push!(inflow_terms, excess_hazard[(j, l)] * phi_S[(j, l)])
+            # Infection of the j-neighbor through its OTHER edges.
+            # Use pre-cancelled form to avoid division by ∂ψ_j/∂x_l(θ).
+            push!(inflow_terms, entry_inflow_expanded[(j, l)])
         end
         for tr in incoming[stage.name]
             push!(inflow_terms, tr.rate * phi[(tr.source, j, l)])

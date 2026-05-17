@@ -44,11 +44,17 @@ pgf = poisson_pgf(κ)
 We also define a helper function to extract population-level trajectories from an ODE solution, given a Poisson PGF.
 
 ```{julia}
-function extract_SIR(sol, result, κ_val)
+function extract_SIR(sol, result, κ_val; seed_fraction = 0.01)
     ψ(x) = exp(κ_val * (x - 1))
     θ_vals = compartment(sol, result, :θ)
-    S = ψ.(θ_vals)
     R = compartment(sol, result, :R)
+    q = 1 - seed_fraction
+    if haskey(result.variables, :φ_D)
+        φ_D = compartment(sol, result, :φ_D)
+        S = q .* ψ.(θ_vals .+ φ_D)
+    else
+        S = q .* ψ.(θ_vals)
+    end
     I = 1.0 .- S .- R
     return S, I, R
 end
@@ -127,7 +133,7 @@ Now solve the dynamic model:
 
 ```{julia}
 ic_dyn = default_initial_conditions(dyn_result; seed_fraction = seed_fraction)
-p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.5, η₂ => 0.3)
+p_dyn = Dict(β => β_val, γ => γ_val, κ => κ_val, η₁ => 0.05, η₂ => 0.03)
 prob_dyn = ODEProblem(dyn_result.system, merge(ic_dyn, p_dyn), tspan)
 sol_dyn = solve(prob_dyn, Tsit5())
 ```
@@ -139,7 +145,7 @@ _, I_static, _ = extract_SIR(sol_static, static_result, 5.0)
 _, I_dynamic, _ = extract_SIR(sol_dyn, dyn_result, 5.0)
 
 plot(sol_static.t, I_static, label="Static", lw=2, linestyle=:dash, color=:grey)
-plot!(sol_dyn.t, I_dynamic, label="Dynamic (η₁=0.5, η₂=0.3)", lw=2, color=:red)
+plot!(sol_dyn.t, I_dynamic, label="Dynamic (η₁=0.05, η₂=0.03)", lw=2, color=:red)
 xlabel!("Time")
 ylabel!("Fraction infected")
 title!("Static vs Dynamic Network")
@@ -176,7 +182,7 @@ _, I_fast, _ = extract_SIR(sol_fast, dyn_result, 5.0)
 
 plot(sol_static.t, I_static, label="Static", lw=2, color=:black, linestyle=:dash)
 plot!(sol_slow.t, I_slow, label="Slow (η₁=0.1, η₂=0.05)", lw=2, color=:blue)
-plot!(sol_dyn.t, I_dynamic, label="Medium (η₁=0.5, η₂=0.3)", lw=2, color=:orange)
+plot!(sol_dyn.t, I_dynamic, label="Medium (η₁=0.05, η₂=0.03)", lw=2, color=:orange)
 plot!(sol_fast.t, I_fast, label="Fast (η₁=2.0, η₂=1.2)", lw=2, color=:red)
 xlabel!("Time")
 ylabel!("Fraction infected")
@@ -191,7 +197,7 @@ The dynamic model tracks four types of edge stubs: susceptible ($\varphi_S$), in
 
 ```{julia}
 #| label: fig-edge-states
-#| fig-cap: "Edge-level state dynamics during the epidemic on a dynamic network (η₁=0.5, η₂=0.3). The dormant edge fraction (φ_D) grows as active edges break."
+#| fig-cap: "Edge-level state dynamics during the epidemic on a dynamic network (η₁=0.05, η₂=0.03). The dormant edge fraction (φ_D) grows as active edges break."
 κ_val = 5.0
 θ_vals = compartment(sol_dyn, dyn_result, :θ)
 φ_S_vals = exp.(κ_val .* (θ_vals .- 1.0))
@@ -205,7 +211,7 @@ plot!(sol_dyn.t, φ_R_vals, label="φ_R (recovered)", lw=2, color=:green)
 plot!(sol_dyn.t, φ_D_vals, label="φ_D (dormant)", lw=2, color=:purple)
 xlabel!("Time")
 ylabel!("Edge stub fraction")
-title!("Edge State Dynamics (η₁=0.5, η₂=0.3)")
+title!("Edge State Dynamics (η₁=0.05, η₂=0.03)")
 ```
 
 Initially, all edges are active and connected to susceptible neighbours ($\varphi_S \approx 1$). As the epidemic progresses, $\varphi_S$ decreases while $\varphi_I$ and $\varphi_R$ grow. The dormant edge fraction $\varphi_D$ builds up from zero as active edges break, eventually reaching an equilibrium determined by the ratio $\eta_2/\eta_1$.
@@ -271,7 +277,7 @@ t_st, μ_st, σ_st = gillespie_ribbon(prog_no, params_no,
     tgrid = collect(0.0:0.5:40.0))
 
 # --- Dynamic: pre-generate edge break/reform schedule ---
-η₁_val = 0.5; η₂_val = 0.3
+η₁_val = 0.05; η₂_val = 0.03
 function dynamic_poisson_builder(N, κ, η₁, η₂, tmax; rng_seed = 20240601)
     return function (rng)
         g = erdos_renyi(N, κ / (N - 1); rng = rng)
@@ -340,7 +346,7 @@ end
 
 ```{julia}
 #| label: fig-ebm06-validation
-#| fig-cap: "EBCM (lines) vs SSA ribbons (mean ± 1σ). Left: static network (Poisson κ=5, R₀=2). Right: dynamic network with edge turnover (η₁=0.5, η₂=0.3). Edge dynamics reduce the epidemic peak, and the dynamic EBCM tracks the dynamic SSA."
+#| fig-cap: "EBCM (lines) vs SSA ribbons (mean ± 1σ). Left: static network (Poisson κ=5, R₀=2). Right: dynamic network with edge turnover (η₁=0.05, η₂=0.03). Edge dynamics reduce the epidemic peak, and the dynamic EBCM tracks the dynamic SSA."
 _, I_st_ebcm, _ = extract_SIR(sol_static, static_result, κ_val)
 _, I_dy_ebcm, _ = extract_SIR(sol_dyn, dyn_result, κ_val)
 
@@ -350,7 +356,7 @@ plot!(p1, t_st, μ_st[:I], ribbon = σ_st[:I],
       label = "SSA", color = :blue, fillalpha = 0.2, linealpha = 0.4, lw = 1)
 
 p2 = plot(sol_dyn.t, I_dy_ebcm, label = "EBCM", lw = 2, color = :red,
-          title = "Dynamic (η₁=0.5, η₂=0.3)", ylims = (0, 0.3))
+          title = "Dynamic (η₁=0.05, η₂=0.03)", ylims = (0, 0.3))
 plot!(p2, tgrid_dyn, μ_dyn, ribbon = σ_dyn,
       label = "SSA", color = :red, fillalpha = 0.2, linealpha = 0.4, lw = 1)
 
