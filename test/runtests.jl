@@ -1505,3 +1505,5 @@ import Catalyst
 end
 
 include("test_eon_crossval.jl")
+
+include("test_eon_patterns.jl")
