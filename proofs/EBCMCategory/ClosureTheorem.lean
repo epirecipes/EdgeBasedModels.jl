@@ -5,7 +5,8 @@ import Mathlib.Tactic
 /-!
 # Exact Pairwise Closure -- Theorems 1 and 2 of Kiss, Kenah, Rempala (2023)
 
-This file formalizes the characterization of exact pairwise closure from:
+This file checks algebraic identities behind the characterization of exact
+pairwise closure from:
 
   Kiss IZ, Kenah E, Rempala GA (2023).
   Necessary and sufficient conditions for exact closures of epidemic
@@ -21,12 +22,15 @@ This closure is exact (N -> infinity) iff kappa is constant for all theta.
 
 ## Verification strategy
 
-We verify the closure ODE psi'' psi = kappa (psi')^2 algebraically
-for each PT family at every point theta. For the converse, we exhibit
-a non-PT distribution where kappa varies.
+We check the sufficiency identities for PT families: for each PT family,
+the values psi(theta), psi'(theta), psi''(theta) of its PGF, written as
+monomials in free scalars, satisfy psi'' psi = kappa (psi')^2 as ring
+identities. The necessity direction of KKR Theorem 1 (only PT laws have
+constant kappa) is not formalised; we only exhibit one non-PT law,
+psi = 1/2 + theta^2/2, whose ratio kappa(theta) takes two different values.
 
-The paper's proof is correct. The ODE characterization is clean,
-the case analysis is exhaustive, and all algebraic content is sorry-free.
+The paper's proof is not checked in Lean.
+All algebraic content here is sorry-free.
 
 | Result | Statement                                          |
 |--------|-----------------------------------------------------|
@@ -38,7 +42,7 @@ the case analysis is exhaustive, and all algebraic content is sorry-free.
 | 56     | General NegBin ODE algebraic identity               |
 | 57     | Non-PT counterexample: kappa varies with theta      |
 | 58     | Connection: closureRatio at theta=1 = closureKappa  |
-| 59     | PT classification is exhaustive for kappa > 0       |
+| 59     | Trichotomy kappa < 1, = 1, > 1 (not a classification) |
 -/
 
 /-! ## The closure ODE -/
@@ -168,7 +172,10 @@ theorem closure_ratio_at_one' (psi : PGFData) :
 
 /-! ## Exhaustiveness of PT classification -/
 
-/-- **Result 59.** Trichotomy: kappa < 1, = 1, or > 1. -/
+/-- **Result 59.** Trichotomy: kappa < 1, = 1, or > 1.
+    This is order trichotomy for a rational number. It does not show that
+    every kappa > 0 is the closure constant of a PT law: kappa < 1 is
+    realised by a Binomial law only when 1/(1 - kappa) ∈ ℕ. -/
 theorem pt_classification_exhaustive (kap : ℚ) (_hkap : 0 < kap) :
     kap < 1 ∨ kap = 1 ∨ 1 < kap := by
   rcases lt_trichotomy kap 1 with h | h | h

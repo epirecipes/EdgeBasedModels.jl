@@ -1,0 +1,47 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "analysis"
+columns = []
+description = "R₀ and final sizes for multistage, branching, re-susceptibilising and sub-threshold progressions on poisson_pgf(5.0)"
+generated_by = "test/golden/generate.jl"
+issues = ["E14", "E17"]
+kind = "scalars"
+name = "multistage_analysis"
+notes = "Correct: the Erlang(3, 3γ) value 5(1 - (3γ/(3γ+τ))³) and the linear two-stage chain. Fixed by WP19 (src/analysis.jl): with an E → R bypass (probability 1/2) the absorbing-chain transmissibility is T = τ/(2(τ+γ)) = 0.2, so R₀ = 1: final_size_bypass and epidemic_probability_bypass are 0 (the legacy final size was the SIR value 0.7968) and epidemic_threshold_bypass = γ/(κ/2 - 1) = 1/6 = τ (E14, E15); epidemic_threshold refuses SIS (E17: the SIS threshold is γ/κ on the pairwise model, not γ/(κ-1); the old entry epidemic_threshold_sis = 0.0625 is removed). Fixed by WP29 (src/builders.jl): the legacy R₀ uses the same absorbing-chain transmissibility, so R0_bypass = 5·0.2 = 1.0 (the 0.1 single-stage shortcut gave 2.0, E14; test/suites/analysis.jl checks bypassp(0.5) = 1.25 against the lifted system), and it refuses SIRS (E17), so the entry R0_sirs (the unguarded SIR formula, 2.0) is removed."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.2.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "ed035ce8e0a51a3e124e6bb0662e5597023d3630"
+julia = "1.12.7"
+
+[scalars]
+R0_bypass = 1.0000000000000002
+R0_erlang3 = 2.2614575507137493
+R0_twostage = 1.7857142857142858
+epidemic_probability_bypass = 0.0
+epidemic_threshold_bypass = 0.16666666666666666
+final_size_bypass = 0.0
+final_size_erlang3 = 0.8555431681478762
+final_size_twostage = 0.7269631345062739
+subthreshold_R_infinity = 0.0
+subthreshold_epidemic_probability = 0.0
+subthreshold_theta_infinity = 1.0
+
+[setup]
+gamma = 0.25
+network = "poisson_pgf(5.0)"
+sigma = 0.2
+subthreshold_gamma = 1.0
+subthreshold_tau = 0.01
+tau = 0.16666666666666666
+
+[structure]

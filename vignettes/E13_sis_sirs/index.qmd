@@ -1,0 +1,233 @@
+---
+title: "E13. Where edge-based models stop: SIS and SIRS"
+subtitle: "Why an edge-based model cannot represent reinfection, and what the node-based approximations give against simulation"
+---
+
+## What this page shows
+
+An edge-based model keeps one number θ per edge: the probability that the edge has not yet
+transmitted. That is enough when a node, once infected, never becomes susceptible again. Then a
+node is susceptible exactly when no edge has transmitted to it, so S = q ψ(θ). If recovered nodes
+return to S (SIS, SIRS), a node can be susceptible after an edge *has* transmitted to it, and
+the edges of a node are no longer independent. Miller, Slim and Volz state this as the scope of
+the method [@miller2012edge]. The typing layer refuses these models and names the back ends that
+accept them. This page:
+
+1. shows the refusal for `:sis_reg3` and `:sirs_pois5`, with the typing reports and the error
+   texts;
+2. compares the node-based (pairwise, motif and neighbourhood) approximations of NodeBasedModels
+   with NetworkOutbreaks' SIS simulation, conditioned on survival. This is the same comparison as
+   NodeBasedModels' page N12;
+3. does the same for SIRS with the constant-closure pairwise model.
+
+## The shared first cell
+
+```{julia}
+#| label: shared-cell
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using Statistics
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+sis = @reaction_network sis begin
+    @parameters τ γ
+    τ, S + I --> 2I        # contact: per-contact (per-edge) rate τ
+    γ, I --> S             # recovery back into the susceptible class (type resus)
+end
+model = contact_model(sis)          # prints the typing report: T_net, not T_EB
+sc    = scenario(:sis_reg3)         # 3-regular, τ = 1/2, γ = 1/4, 1% seeds in I, t ∈ [0, 80]
+@assert isequivalent(model, sc.model)
+ref   = scenario_summary(sc)        # committed NetworkOutbreaks ensemble, conditioned on survival
+# --- EBM vignette ---------------------------------------------------------------
+using EdgeBasedModels
+err = try
+    edge_based(model, sc.network)                          # low level: refused
+catch e
+    e
+end
+@assert err isa AdmissibilityError
+print(sprint(showerror, err))
+```
+
+The factory refuses too, with a migration message:
+
+```{julia}
+try
+    build_sis(RegularDegree(3), :τ, :γ)
+catch e
+    print(sprint(showerror, e))
+end
+```
+
+The typing report of the model says why. The reaction `γ, I --> S` has type `resus`, which is in
+T_net but not in the edge-based fragment T_EB:
+
+```{julia}
+model
+```
+
+No Lean theorem is cited for this refusal. It is a rule of the typing (a `resus` reaction is
+outside T_EB), and it is tested: NetworkEpiCore's test set "T_EB and the transition types"
+(`test/suites/ir_typing.jl`) checks that T_EB is {contact, exit, progress, remove} and that a
+`resus` violation blocks the edge-based back ends, and EdgeBasedModels' test set "E19: SIS, SIRS
+and reinfection-counted models are refused by every closure" (`test/suites/lift_errors.jl`)
+checks that `edge_based` refuses SIS and SIRS on every network type. This is a statement about
+the syntax only, not a proof that no edge-based semantics for reinfection can exist.
+
+SIRS is refused for the same reason (`ε, R --> S`):
+
+```{julia}
+sirs = @reaction_network sirs begin
+    @parameters τ γ ε
+    τ, S + I --> 2I
+    γ, I --> R
+    ε, R --> S             # waning immunity (type resus)
+end
+sr = scenario(:sirs_pois5)          # Poisson(5), τ = 1/6, γ = 1/4, ε = 1/50, t ∈ [0, 300]
+@assert isequivalent(contact_model(sirs), sr.model)
+try
+    edge_based(contact_model(sirs), sr.network)
+catch e
+    print(sprint(showerror, e))
+end
+```
+
+## SIS: node-based approximations against simulation
+
+The scenario lists the back ends that accept SIS, each with its status:
+
+```{julia}
+sort(collect(sc.backends); by = first)
+```
+
+The error message points to `node_based`. NodeBasedModels builds the population pairwise model
+(Bernoulli closure on a regular network), the motif closures of order m = 2, 3, 4 and the
+neighbourhood model with n = 2 [@keeling1999effects]. The motif and neighbourhood systems are
+solved with their own solvers, and their prevalence is wrapped as `ModelCurves` on the scenario
+grid.
+
+The shared recipe `comparisonplot` styles a curve by its representation; `style_curves!` gives each
+curve of a comparison figure its own colour and dash, in the order the curves were passed:
+
+```{julia}
+"""
+    style_curves!(p, styles) -> p
+
+Give the model curves of a `comparisonplot` figure `p` their own line colours and styles.
+`styles` holds one `(linecolor, linestyle)` pair per curve, in the order the curves were passed.
+The recipe draws the curves last in every panel, so they are the last `length(styles)` series of
+each subplot; the labels of the first panel are checked against `labels`.
+"""
+function style_curves!(p, styles, labels)
+    n = length(styles)
+    first_labels = [s[:label] for s in p.subplots[1].series_list[end-n+1:end]]
+    first_labels == collect(labels) ||
+        error("style_curves!: the last series of the first panel are $(first_labels), not $(labels)")
+    for sp in p.subplots, (k, (lc, ls)) in enumerate(styles)
+        s = sp.series_list[end-n+k]
+        s[:linecolor] = Plots.plot_color(lc)
+        s[:linestyle] = ls
+    end
+    return p
+end
+```
+
+```{julia}
+import NodeBasedModels as NBM
+pw  = NBM.node_based(sc; closure = NBM.BernoulliClosure())
+cpw = model_curves(pw, solve_epidemic(pw, sc); t = sc.tgrid, label = "pairwise (Bernoulli)")
+function motif_curves(m)
+    s = NBM.node_based(sc; level = :motif, closure = NBM.MotifClosure(3, m))
+    sol = NBM.solve_motif(s; saveat = sc.tgrid)
+    ModelCurves(sc.tgrid, Dict(:I => compartment(s, sol, :I)); label = "motif m = $(m)", representation = :motif)
+end
+cm2, cm3, cm4 = motif_curves(2), motif_curves(3), motif_curves(4)
+nb  = NBM.node_based(sc; level = :neighbourhood, n = 2)
+cnb = ModelCurves(sc.tgrid, Dict(:I => NBM.neighbourhood_compartment(nb, NBM.solve_neighbourhood(nb; saveat = sc.tgrid), :I));
+                  label = "neighbourhood n = 2", representation = :neighbourhood)
+approx = [cpw, cm2, cm3, cm4, cnb]
+# one colour and dash per approximation, in both figures of this section (see `style_curves!` below)
+styles = [(:darkorange, :dash), (:forestgreen, :dot), (:teal, :dashdot), (:royalblue, :solid), (:crimson, :solid)]
+p = comparisonplot(ref, approx...; observables = [:I])
+style_curves!(p, styles, [c.label for c in approx])
+```
+
+```{julia}
+reference_note(sc, ref)
+```
+
+```{julia}
+tab = compare(ref, approx; observables = [:I])
+```
+
+The ΔR∞ column is meaningless here. It compares cumulative incidence, which for SIS counts
+reinfections, and only the pairwise curves carry it. The transient and the endemic level are the
+quantities to compare:
+
+```{julia}
+st = ref.cond[:I]
+rows = map(approx) do c
+    row = tab[c.label, :I]
+    (c.label, row.D∞, row.t_D∞, c[:I][end], c[:I][end] - st.mean[end], row.z∞)
+end
+push!(rows, ("NetworkOutbreaks (mean of surviving runs)", 0.0, NaN, st.mean[end], 0.0, NaN))
+mdtable(["approximation", "D∞(I)", "t at D∞", "I(80)", "I(80) − SSA", "z∞"], rows)
+```
+
+```{julia}
+#| echo: false
+best = argmin(r -> r[2], rows[1:end-1])
+endgap = maximum(r -> abs(r[5]), rows[1:end-1])
+Markdown.parse(@sprintf("At t = 80 every approximation is within %.4f of the simulated endemic prevalence %.4f, whose standard error is %.5f. They differ in the transient, where the epidemic takes off: the closest over the whole time course is %s (D∞(I) = %.4f), and the pairwise curve is up to %.4f from the simulated mean. The motif closure with m = 2 *is* Keeling's pairwise closure; its curve differs from the pairwise one by at most %.1e. This page does not establish what causes the transient gap. Moment-closure error is one candidate, but a timing offset of this kind can also come from the initial condition (the ODEs start from an uncorrelated pair state around a small seed, while each simulated run starts from explicit seeded nodes whose neighbourhoods are not yet correlated in the same way) or from the comparison itself: the reference is the mean over surviving runs with no time alignment, so run-to-run variation in when the epidemic takes off flattens and delays the mean curve. The endemic level at t = 80 should be insensitive to both, and there the approximations agree with the simulation to within the values in the I(80) − SSA column.",
+    endgap, st.mean[end], st.se[end], best[1], best[2], tab[cpw.label, :I].D∞, maximum(abs.(cm2[:I] .- cpw[:I]))))
+```
+
+The early epidemic, where the approximations differ most:
+
+```{julia}
+p = plot(ref, :I; median = false, legend = :bottomright, title = "SIS on a 3-regular network, early phase")
+for (c, (lc, ls)) in zip(approx, styles)
+    plot!(p, c, :I; linecolor = lc, linestyle = ls)
+end
+xlims!(p, 0, 30)
+```
+
+## SIRS: the constant-closure pairwise model
+
+For SIRS on Poisson(5) NodeBasedModels' default is the pairwise model with the constant closure
+K = ⟨k(k−1)⟩/⟨k⟩² = 1, which is exact for SIR on a Poisson network but only an approximation once
+immunity wanes:
+
+```{julia}
+refr = scenario_summary(sr)
+pr = NBM.node_based(sr)
+cpr = model_curves(pr, solve_epidemic(pr, sr); t = sr.tgrid, label = "pairwise (K = 1)")
+comparisonplot(refr, cpr; observables = [:I, :R])
+```
+
+```{julia}
+reference_note(sr, refr)
+```
+
+```{julia}
+compare(refr, cpr; observables = [:S, :I, :R])
+```
+
+```{julia}
+str = refr.cond[:I]
+mdtable(["quantity", "pairwise (K = 1)", "NetworkOutbreaks (surviving runs)", "SE of the mean"],
+        [("I(300)", cpr[:I][end], str.mean[end], str.se[end]),
+         ("peak I", maximum(cpr[:I]), maximum(str.mean), NaN),
+         ("time of the peak", sr.tgrid[argmax(cpr[:I])], sr.tgrid[argmax(str.mean)], NaN)])
+```
+
+## Where to go instead
+
+- NodeBasedModels' pages N09–N12 treat SIS in depth: reinfection counting (N09), motif closures
+  (N10), the neighbourhood model (N11) and all of them against simulation (N12).
+- NetworkOutbreaks simulates any T_net model exactly on explicit graphs.
+- For models with waning immunity *and* a large effect of network structure, simulation is the
+  reference; the pairwise model above is a fast approximation whose error is printed on this page.
+
+## References
+
+::: {#refs}
+:::

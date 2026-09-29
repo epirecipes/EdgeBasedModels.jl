@@ -6,10 +6,12 @@
 
 Edge-based compartmental models (EBCMs) and node-based compartmental models
 (e.g., SIR) are two frameworks for modelling infectious disease on networks.
-This document formalises the categorical relationship between them: the
-**morphisms** connecting them, the **information lost** in translation, the
+This document sketches, informally, a categorical relationship between them:
+the **maps** connecting them, the **information lost** in translation, the
 conditions under which the translation is exact, and the obstructions that
-prevent an edge-based formulation.
+prevent an edge-based formulation. None of the categories, functors or
+adjunctions below is formalised; the Lean library `EBCMCategory` proves only
+scalar shadows of some statements (see `Alignment/SUMMARY.md`).
 
 We work in the setting of applied category theory, drawing on
 Baez–Fong–Pollard's open Markov processes [1], Baez–Courser's
@@ -46,8 +48,8 @@ a probability generating function (PGF).
   - dφ_{m,jl}/dt = (inflow)_m - (outflow)_m  with excess hazard terms
     involving ψ''_j / ψ'_j
   - φ_{S,jl} = ∂ψ_j/∂x_l(θ_j) / ∂ψ_j/∂x_l(1)  (algebraic)
-- **Morphisms:** Maps of edge-state spaces that preserve the ODE structure
-  and are compatible with the PGF data.
+- **Morphisms:** not yet specified. Candidate: maps of edge-state spaces
+  that preserve the ODE structure and are compatible with the PGF data.
 
 ### 2.3 The ambient category
 
@@ -55,7 +57,7 @@ Both **Node** and **Edge** embed in the category **ODE** of smooth
 dynamical systems on compact manifolds with corners, with semi-conjugacies
 as morphisms.
 
-## 3. The Coarse-Graining Functor F: Edge → Node
+## 3. The Coarse-Graining Map F: Edge → Node
 
 ### 3.1 Definition
 
@@ -68,8 +70,9 @@ F(θ, φ, R, ψ) = (S, I, R)  where
     I_l = 1 - S_l - R_l                   (derived)
 ```
 
-On morphisms, F sends an edge-level semi-conjugacy h to its induced
-population-level semi-conjugacy F(h) = ψ ∘ h ∘ ψ^{-1} (where defined).
+On morphisms, F is not yet defined: the formula ψ ∘ h ∘ ψ^{-1} does not
+type-check in general (h acts on (θ, φ, R), ψ only on θ), so F is a map on
+objects only.
 
 ### 3.2 F is well-defined
 
@@ -86,73 +89,92 @@ Substituting the EBCM θ-equation and using the algebraic relation
 becomes a function of S, I, R alone (plus the PGF-determined network
 parameters). The resulting ODE is a generalised mass-action system. □
 
-### 3.3 F is lossy (not faithful)
+### 3.3 F is lossy
 
-**Theorem 3.2.** F is not faithful: distinct EBCM trajectories can project
-to identical node-level trajectories.
+**Theorem 3.2.** F is not injective on EBCM states: distinct EBCM states
+(θ, φ, R, ψ) can have the same image (S, I, R), because F forgets φ and
+all of ψ except its value at θ. Whether distinct EBCM *trajectories* can
+project to identical node-level trajectories is not established here.
 
-*Proof.* Consider two EBCMs with different PGFs ψ₁, ψ₂ but identical mean
-degree κ and identical R₀. Choose ψ₁ = Poisson(κ), ψ₂ = bimodal with
-same mean. Both yield the same S(0), I(0), R(0) and the same linearised
-growth rate near the disease-free equilibrium, but differ in transient
-dynamics. Thus ker(F) is non-trivial. □
+*Remark.* An earlier proof sketch compared a Poisson and a bimodal PGF with
+the same mean and R₀; such models differ in their transient dynamics, so
+they have different node-level trajectories and do not show the claim.
 
-**Theorem 3.3 (Information loss characterisation).** The fibre F⁻¹(S,I,R)
-over a node-level trajectory is parameterised by the space of PGFs ψ with:
+**Theorem 3.3 (Information loss characterisation; not proved here).** The
+fibre F⁻¹(S,I,R) over a node-level trajectory is parameterised by the space
+of PGFs ψ with:
 1. ψ(1) = 1 (normalisation)
 2. ψ'(1) = κ (mean degree)
 3. S(t) = ψ(θ(t)) for all t (consistency)
+4. θ(t) solves the EBCM θ-equation for ψ (dynamics)
 
-The **lost information** is precisely the degree distribution beyond its
-first moment — i.e., the variance, skewness, and all higher cumulants.
+The node-level trajectory does not determine ψ, but it retains more than the
+first moment: for instance its early growth rate depends on ψ''(1)/ψ'(1). So
+the lost information is not simply the degree distribution beyond its mean.
 
-## 4. The Lift G: Node → Edge (Right Adjoint)
+## 4. The Lift G: Node → Edge
 
 ### 4.1 Definition
 
-Given a node-based SIR model with transmission rate β, recovery rate γ, and
-basic reproduction number R₀ = βκ/(β+γ), define G by:
+Given a node-based SIR model with mass-action rates β and γ
+(R₀ = β/γ), define G by:
 
 ```
-G(S, I, R; β, γ) = EBCM(ψ_Poisson(κ), β, γ)
-    where κ = R₀(β+γ)/β
+G(S, I, R; β, γ) = EBCM(ψ_Poisson(κ), β̃, γ̃)
+    where β̃ = β/κ, γ̃ = γ − β/κ, for any mean degree κ > R₀
 ```
 
-This embeds the node-based model into an EBCM with the **Poisson PGF** —
-the unique PGF for which F ∘ G = id.
+The Poisson EBCM with per-edge rates β̃, γ̃ has the same S(t) as the
+mass-action model with β = κβ̃ and γ = β̃ + γ̃ (Rempała 2023), and its R₀
+T·κ = β/γ is the node model's. (The formula R₀ = βκ/(β+γ) is the R₀ of a
+Poisson network with per-edge rates β and γ, not of the node model.)
 
-### 4.2 The Galois connection
+This embeds the node-based model into an EBCM with the **Poisson PGF**,
+whose susceptible curve matches the node model's after this
+reparametrisation; the EBCM infected curve differs. Among PGFs, only the
+Poisson PGF gives mass-action dynamics for S (Theorem 4.3(c)).
 
-**Theorem 4.1.** (F, G) form a Galois connection on the preorder of
-epidemic models ordered by "refines" (i.e., M₁ ≤ M₂ iff M₁ can be
-obtained from M₂ by coarse-graining):
+### 4.2 No Galois connection
+
+**Theorem 4.1 (corrected).** F and G are not a Galois connection for the
+dimension preorder (M₁ ≤ M₂ iff dim M₁ ≤ dim M₂) used in the Lean library:
+the condition
 
 ```
 F(E) ≤ N  ⟺  E ≤ G(N)
 ```
 
-where ≤ means "is a coarse-graining of".
+fails for E = ⟨10, r⟩ and N = ⟨3, r⟩, where F(E) ≤ N holds but E ≤ G(N)
+does not (`not_galoisConnection_coarseGrain_poissonLift`). F ∘ G is the
+identity on node models (dimension 3) and the idempotency laws are proved
+directly (Corollary 4.2).
 
 **Corollary 4.2.**
 - F ∘ G = id_Node  (coarse-graining the Poisson lift recovers the original)
-- G ∘ F ≠ id_Edge  (lifting then projecting forgets the original PGF)
+- G ∘ F ≠ id_Edge  (projecting then lifting forgets the original PGF)
 - G ∘ F ∘ G = G     (the connection is idempotent)
 - F ∘ G ∘ F = F     (the connection is idempotent)
 
+These identities hold for the Lean records (dimension and R₀). At the level of
+trajectories, F ∘ G reproduces S(t) but not I(t) (§4.1).
+
 ### 4.3 Exactness of the Poisson section
 
-**Theorem 4.3.** The following are equivalent:
-1. F ∘ G(N) = N exactly (not just at equilibrium, but for all t)
-2. The underlying network has a Poisson degree distribution
-3. ψ''(1)/ψ'(1) = ψ'(1) (excess degree equals mean degree)
-4. The degree distribution has variance equal to its mean
+**Theorem 4.3.**
+(a) ψ''(1)/ψ'(1) = ψ'(1) (excess degree equals mean degree) iff the degree
+distribution has variance equal to its mean.
+(b) A Poisson degree distribution satisfies (a).
+(c) The EBCM has mass-action form for S iff ψ' = κψ on [0, 1], i.e. iff the
+degree distribution is Poisson.
+(a) does not imply Poisson: ψ(u) = (1 + u²)/2 satisfies (a) and is not Poisson.
 
-*Proof.* For Poisson(κ): ψ(z) = exp(κ(z-1)), so ψ'(z) = κψ(z),
-ψ''(z) = κ²ψ(z), and ψ''(1)/ψ'(1) = κ = ψ'(1). The excess hazard
-term in the EBCM reduces to β·κ·φ_S, which is exactly the mass-action
-term β·S·I/N after rescaling. Conversely, if ψ''(1)/ψ'(1) ≠ ψ'(1),
-the excess hazard introduces degree-heterogeneity corrections that have
-no counterpart in the node-based model. □
+*Proof.* (a) ψ''(1) = κ² iff Var = ψ''(1) + κ − κ² = κ. (b) For Poisson(κ):
+ψ(z) = exp(κ(z-1)), so ψ'(z) = κψ(z), ψ''(z) = κ²ψ(z), and
+ψ''(1)/ψ'(1) = κ = ψ'(1). (c) With S = ψ(θ), dS/dt = ψ'(θ)·dθ/dt =
+−β̃ψ'(θ)φ_I, which equals −(κβ̃)·S·φ_I iff ψ'(θ) = κψ(θ); then S(t) solves the
+mass-action equation with I := φ_I and rates β = κβ̃, γ = β̃ + γ̃
+(Rempała 2023). Conversely ψ'/ψ = κ on [0, 1] and ψ(1) = 1 force
+ψ(θ) = exp(κ(θ − 1)). □
 
 ## 5. When Can't We Use an EBCM? Obstructions to Edge-Based Modelling
 
@@ -168,11 +190,10 @@ The EBCM assumes edges are **independent** conditional on degree — i.e.,
 the network is drawn from a configuration model. This is equivalent to
 requiring that the local neighbourhood of each node is tree-like.
 
-Categorically, the EBCM functor F is only well-defined (i.e., produces a
-closed ODE) when the PGF closure holds:
+The map F produces a closed ODE only when the PGF closure holds:
 
 ```
-S(t) = ψ(θ(t))     (exact iff tree-like)
+S(t) = ψ(θ(t))     (exact on configuration-model networks as N → ∞, which are locally tree-like)
 ```
 
 On networks with clustering (triangles, cliques), the joint probability of
@@ -187,11 +208,10 @@ the PGF provides. In categorical terms, the would-be functor F fails to
 preserve the ODE structure — dS/dt is no longer expressible as a function
 of (S, I, R, θ, φ) alone; it depends on higher-order edge correlations.
 
-**Formal statement:** Let **Edge_tree** be the full subcategory of **Edge**
-on configuration-model networks. The functor F: **Edge_tree** → **Node** is
-well-defined. The extension to **Edge_clustered** requires additional
-structure (triangle-closing terms, Volz's clustering corrections) that
-changes the category.
+**Informal statement** (no category is defined): on configuration-model
+networks the map F yields a closed node-level ODE (Proposition 3.1). On
+clustered networks it does not without additional structure (triangle-closing
+terms, Volz's clustering corrections).
 
 ### 5.2 The Markov assumption (memoryless transitions)
 
@@ -208,8 +228,10 @@ fixed infectious period, gamma-distributed latency):
 
 Categorically, the state space [0,1]^n is insufficient — we need a
 function space (the infection-age distribution), moving us from **ODE** to
-**PDE** or **DDE**. The EBCM category **Edge** does not contain objects
-with these dynamics.
+**PDE** or **DDE**. These dynamics are outside the ODE-based **Edge**
+models, but they are not an obstruction to edge-based modelling: the
+non-Markovian EBCM is exact for general independent transmission and
+recovery processes (Sherborne, Miller, Blyuss & Kiss 2018).
 
 ### 5.3 The independence of initial conditions
 
@@ -229,14 +251,16 @@ Stochastic on config. model     ← EBCM exact (on trees, N→∞)
     ↓ restrict to Markovian
 Markovian on config. model      ← EBCM with ODEs (our Edge category)
     ↓ restrict to Poisson degree
-Markovian on Poisson network    ← equivalent to mass-action SIR
+Markovian on Poisson network    ← same S(t) as mass-action SIR (after reparametrisation)
     ↓ forget network
 Standard compartmental (Node)
 ```
 
-Each restriction defines a **subcategory inclusion** with a forgetful
-functor. The EBCM is valid precisely in the subcategory of Markovian
-processes on configuration-model networks.
+Each restriction narrows the class of models (informally a subcategory
+inclusion; no category is defined).
+The ODE EBCM is exact for Markovian processes on configuration-model networks
+with uniform (independent) seeding; the non-Markovian (PDE) EBCM extends this
+to general independent transmission and recovery processes.
 
 ## 6. Open Systems and Composition
 
@@ -303,19 +327,17 @@ models.
 **Given** a node-based model (S, I, R trajectories), can we find an EBCM
 that reproduces them?
 
-**Theorem 7.1.** For any well-posed SIR trajectory with S(0) = 1-ε, there
-exists a one-parameter family of EBCMs indexed by PGFs ψ with ψ'(1) = κ
-that reproduce the trajectory exactly.
+**Theorem 7.1 (withdrawn).** It is not true that every SIR trajectory is
+reproduced exactly by EBCMs with arbitrary PGFs ψ with ψ'(1) = κ: an EBCM
+with given ψ has only two rates (β̃, γ̃), which cannot in general match an
+arbitrary curve S(t). The earlier proof defined θ(t) = ψ⁻¹(S(t)) but did not
+check that θ(t) solves the EBCM θ-equation. What does hold is the Poisson
+lift of §4.1: for Poisson ψ and κ > R₀ the EBCM reproduces the mass-action
+S(t) (Rempała 2023).
 
-*Proof.* Given S(t), define θ(t) = ψ⁻¹(S(t)) where ψ⁻¹ is the functional
-inverse of ψ on [0,1] (which exists since ψ is strictly increasing on [0,1]
-for any valid PGF with positive mean degree). Then R(t) is given, and the
-φ variables are determined by the EBCM algebraic relations. □
-
-**Caveat:** The lift is not unique — the choice of ψ is free (subject to
-ψ'(1) = κ). Different PGFs give different edge-level dynamics that project
-to the same population curve. The Poisson lift is canonical (minimal
-information added).
+**Caveat:** Even the Poisson lift is not unique: any mean degree κ > R₀
+works, with β̃ = β/κ and γ̃ = γ − β/κ. The Poisson lift is singled out by
+giving mass-action dynamics for S, not by any minimality property.
 
 ### 7.2 When the lift fails
 
@@ -345,15 +367,16 @@ mean degree κ. Then:
     ψ''(1)/ψ'(1) = κ + (σ² - κ)/κ = κ + (σ²/κ - 1)
 ```
 
-where σ² = Var(degree). The EBCM excess hazard exceeds the mass-action
-rate by a factor of (1 + (σ²/κ - 1)/κ) = σ²/κ².
+where σ² = Var(degree). The ratio of the EBCM excess degree to the mean
+degree is (ψ''(1)/ψ'(1))/κ = 1 + (σ²/κ - 1)/κ = (κ² − κ + σ²)/κ².
 
-- σ² = κ (Poisson): excess hazard = mass-action rate (exact equivalence)
+- σ² = κ (e.g. Poisson): excess degree = mean degree; exact equivalence of S(t) with mass action holds for Poisson degrees (Theorem 4.3(c)), not for every law with σ² = κ
 - σ² > κ (overdispersed): EBCM predicts faster epidemic, higher R₀
 - σ² < κ (underdispersed): EBCM predicts slower epidemic, lower R₀
 
-This is the **index of dispersion** (σ²/κ), and it is the single scalar
-that measures "how much information the EBCM adds over the node model."
+The correction involves the **index of dispersion** σ²/κ and the mean κ:
+ψ''(1)/ψ'(1) = κ − 1 + σ²/κ. No single scalar measures how much information
+the EBCM adds over the node model.
 
 ## References
 
@@ -375,3 +398,9 @@ that measures "how much information the EBCM adds over the node model."
 
 [6] Fong, Spivak. "Seven Sketches in Compositionality: An Invitation to
     Applied Category Theory." Cambridge University Press (2019).
+
+[7] Rempała. "Equivalence of mass action and Poisson network SIR epidemic
+    models." arXiv:2310.13866 (2023).
+
+[8] Sherborne, Miller, Blyuss, Kiss. "Mean-field models for non-Markovian
+    epidemics on networks." J. Math. Biol. 76, 755–778 (2018).

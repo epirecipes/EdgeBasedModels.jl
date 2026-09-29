@@ -1,0 +1,647 @@
+# SA-PASS claim registry fragment: group DegreeCorrelation
+# Source module: EBCMCategory/DegreeCorrelation.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: 'R<N>' / 'R<N><letter>' follow the '**Result N.**' docstring labels; 'R<N>-sec' is the
+#   '/-! ## Result N: ... -/' section text; an already-lettered result that is split gets '-1', '-2'.
+# Result numbers 77-78 do not occur anywhere in the library (numbering jumps from 76 to 79).
+- id: DegreeCorrelation.R79-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 43-43
+  text: The excess-degree probability q_l = l·p_l/⟨k⟩ is a valid distribution.
+  kind: structural
+  impl:
+  - neutral_mixing_sums_to_one
+  supporting: []
+  impl_note: impl covers only a two-degree network and only the sum-to-one part (with ⟨k⟩ substituted as k₁p₁+k₂p₂); non-negativity and general degree sequences are not stated.
+  required: true
+  status: implemented
+  notes: Section text.
+- id: DegreeCorrelation.R79a
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 45-45
+  text: '**Result 79.** Neutral mixing Q(l|k) = l·p_l/⟨k⟩ is independent of k.'
+  kind: structural
+  impl: []
+  supporting:
+  - neutral_mixing_sums_to_one
+  impl_note: Definitional (the formula has no k); no Q is defined in Lean.
+  required: false
+  status: informal
+  notes: ''
+- id: DegreeCorrelation.R79b
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 46-48
+  text: 'For a two-degree network with degrees k₁, k₂ and fractions p₁, p₂: the excess-degree probabilities q₁ = k₁·p₁/⟨k⟩ and q₂ = k₂·p₂/⟨k⟩ sum to 1 when ⟨k⟩ = k₁·p₁ + k₂·p₂.'
+  kind: algebraic-identity
+  impl:
+  - neutral_mixing_sums_to_one
+  supporting: []
+  impl_note: 'Good match: k₁p₁/(k₁p₁+k₂p₂) + k₂p₂/(k₁p₁+k₂p₂) = 1 given k₁p₁+k₂p₂ > 0; the hypothesis p₁+p₂ = 1 is present but unused.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R80-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 58-58
+  text: For neutral mixing, R₀ = T · ⟨k²-k⟩/⟨k⟩ = T · ψ''(1)/ψ'(1).
+  kind: algebraic-identity
+  impl:
+  - uncorrelated_R0_formula
+  supporting: []
+  impl_note: 'impl: uncorrelated_R0 T d = T·(⟨k²⟩−⟨k⟩)/⟨k⟩ — an unfolding of the definition; that this is the R₀ of an epidemic model is not established, and the link to ψ''''(1)/ψ''(1) / EpiCategory''s PGFData (ℚ) is not stated (DegreeMomentData is a separate ℝ structure).'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: DegreeCorrelation.R80
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 60-60
+  text: '**Result 80.** R₀ for an uncorrelated network equals T times the excess degree.'
+  kind: structural
+  impl: []
+  supporting:
+  - uncorrelated_R0_formula
+  impl_note: Def docstring of uncorrelated_R0 (body T * d.excessDegree); definitional.
+  required: false
+  status: informal
+  notes: ''
+- id: DegreeCorrelation.uncorrelatedR0Formula
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 64-64
+  text: R₀ = T·(⟨k²⟩ - ⟨k⟩)/⟨k⟩ is the explicit formula.
+  kind: algebraic-identity
+  impl:
+  - uncorrelated_R0_formula
+  supporting: []
+  impl_note: Good match for uncorrelated_R0.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R81-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 72-74
+  text: For a degree-correlated network, R₀ = T · ρ(D) where ρ(D) is the spectral radius (largest eigenvalue) of the next-generation matrix D_{kl} = (l − 1) · Q(l|k) (Wang, Ma, Cao and Li 2018, J Theor Biol).
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'P1.2 + P2.6 (WP4): the content-free axiom correlated_R0_spectral (T * ρ = T * ρ) was deleted and the text corrected: the old matrix C_kl = k·Q(l|k) is off by one. D is the SIR/EBCM next-generation matrix of papers/degreecorrelation.md (linearisation φ′_k = −(β+γ)φ_k + β Σ_l (l−1)Q(l|k)φ_l, R₀ = β/(β+γ)·Λ_m). True (yes-lit); no Lean theorem (P3.5).'
+- id: DegreeCorrelation.R81-sec.2
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 75-77
+  text: 'Equivalently R₀ = T · ρ(K) with K_{kl} = (k − 1) · Q(l|k), the matrix used by the Julia `correlated_R0`: with Δ = diag(k − 1), D = QΔ and K = ΔQ have the same spectral radius.'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'WP4: new text. True: ρ(AB) = ρ(BA); checked numerically for a random degree-correlated Q (WP4 report). Julia src/pgf.jl correlated_R0 uses (k−1)·Q(l|k).'
+- id: DegreeCorrelation.R81-sec.3
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 77-78
+  text: Under neutral mixing, Q(l|k) = l·p_l/⟨k⟩, K has rank one and ρ(K) = ⟨k(k−1)⟩/⟨k⟩, which recovers Result 80.
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'WP4: new text. True: K = u qᵀ with u_k = k − 1, q_l = l p_l/⟨k⟩, so ρ(K) = qᵀu = ⟨k(k−1)⟩/⟨k⟩ (checked numerically).'
+- id: DegreeCorrelation.R81-sec.4
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 78-79
+  text: (The mixing matrix C_{kl} = k · Q(l|k) would give ⟨k²⟩/⟨k⟩ instead, which is off by one.)
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'WP4: new text. True: under neutral mixing ρ(kQ) = ⟨k²⟩/⟨k⟩ = ⟨k(k−1)⟩/⟨k⟩ + 1 (checked numerically).'
+- id: DegreeCorrelation.R81
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 81-82
+  text: '**Result 81** (not formalised). This library formalises no spectral radius, so the statement has no Lean counterpart.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.2 (WP4): meta statement replacing the deleted content-free axiom.'
+- id: DegreeCorrelation.R82
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 88-136
+  text: |-
+    For a two-degree network with degrees k₁, k₂, degree fractions p₁, p₂, and assortative parameter r ∈ [0,1]: C = [[k₁·(r + (1-r)·q₁), k₁·(1-r)·q₂], [k₂·(1-r)·q₁, k₂·(r + (1-r)·q₂)]] where q_i = k_i·p_i/⟨k⟩ are the excess-degree probabilities.
+    [...]
+    **Result 82.** The four entries of the 2×2 mixing matrix C_{kl} = k·Q(l|k) (not the next-generation matrix; see `TwoDegreeData.K11`).
+  kind: structural
+  impl: []
+  supporting:
+  - row1_sum_eq_degree
+  - detailed_balance_col1
+  impl_note: 'Definitional: describes TwoDegreeData.C11/C12/C21/C22 (bridge material). Corresponds to Q(l|k) = r·δ_kl + (1−r)·q_l.'
+  required: false
+  status: informal
+  notes: 'Section text + def docstring of TwoDegreeData.C11. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For a two-degree network with degrees k₁, k₂, degree fractions p₁, p₂, and assortative parameter r ∈ [0,1]: C = [[k₁·(r + (1-r)·q₁), k₁·(1-r)·q₂], [k₂·(1-r)·q₁, k₂·(r + (1-r)·q₂)]] where q_i = k_i·p_i/⟨k⟩ are the excess-degree probabilities. [...] **Result 82.** The four entries of the 2×2 mixing matrix.'
+- id: DegreeCorrelation.meanDegPos
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 120-120
+  text: Mean degree is positive.
+  kind: inequality
+  impl:
+  - TwoDegreeData.meanDeg_pos
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 151-152
+  text: Setting r = 0 in the mixing matrix gives C_{kl} = k·q_l = k·l·p_l/⟨k⟩, which is the neutral (uncorrelated) mixing matrix.
+  kind: algebraic-identity
+  impl:
+  - neutral_C11
+  - neutral_C12
+  - neutral_C21
+  - neutral_C22
+  supporting: []
+  impl_note: Conjunction of the four entrywise identities C_kl = k·q_l at r = 0; the expansion k·l·p_l/⟨k⟩ is by definition of q_l.
+  required: true
+  status: implemented
+  notes: Section text.
+- id: DegreeCorrelation.R83a
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 154-154
+  text: '**Result 83a.** When r=0, C₁₁ = k₁·q₁ (neutral mixing).'
+  kind: algebraic-identity
+  impl:
+  - neutral_C11
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83b
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 161-161
+  text: '**Result 83b.** When r=0, C₁₂ = k₁·q₂ (neutral mixing).'
+  kind: algebraic-identity
+  impl:
+  - neutral_C12
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83c
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 168-168
+  text: '**Result 83c.** When r=0, C₂₁ = k₂·q₁ (neutral mixing).'
+  kind: algebraic-identity
+  impl:
+  - neutral_C21
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83d
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 175-175
+  text: '**Result 83d.** When r=0, C₂₂ = k₂·q₂ (neutral mixing).'
+  kind: algebraic-identity
+  impl:
+  - neutral_C22
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83e
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 182-183
+  text: '**Result 83e.** Under neutral mixing (r=0), the row sums of C equal the degree: C₁₁ + C₁₂ = k₁·(q₁ + q₂).'
+  kind: algebraic-identity
+  impl:
+  - neutral_row_sum_type1
+  supporting: []
+  impl_note: impl states C₁₁ + C₁₂ = k₁(q₁+q₂) for row 1 only; 'equal the degree' additionally needs q_sum_one (R83f); row 2 is not covered here (R85b covers it for every r).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R83f
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 190-190
+  text: '**Result 83f.** And q₁ + q₂ = 1, so the neutral row sum equals k₁.'
+  kind: algebraic-identity
+  impl:
+  - q_sum_one
+  - neutral_row_sum_type1
+  supporting: []
+  impl_note: Conjunction gives q₁+q₂ = 1 and (r = 0 → C₁₁+C₁₂ = k₁(q₁+q₂)), hence the neutral row sum k₁; q_sum_one alone holds for every r.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R84-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 200-201
+  text: For a Poisson degree distribution with mean κ, ⟨k²⟩ = κ² + κ, so ⟨k²-k⟩/⟨k⟩ = κ, and R₀ = T·κ under neutral mixing.
+  kind: algebraic-identity
+  impl:
+  - poisson_excess_degree
+  - poisson_neutral_R0
+  supporting: []
+  impl_note: Arithmetic (κ²+κ−κ)/κ = κ and T·that = T·κ; the Poisson second moment ⟨k²⟩ = κ²+κ is substituted by hand, not derived; neither uncorrelated_R0 nor DegreeMomentData is referenced.
+  required: true
+  status: implemented
+  notes: Section text.
+- id: DegreeCorrelation.R84
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 203-203
+  text: '**Result 84.** Poisson excess degree equals the mean.'
+  kind: algebraic-identity
+  impl:
+  - poisson_excess_degree
+  supporting: []
+  impl_note: 'impl: (κ²+κ−κ)/κ = κ for κ > 0; ''Poisson'' and ''excess degree'' enter only through the chosen expression.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R84b
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 210-210
+  text: '**Result 84b.** For Poisson, R₀ = T·κ.'
+  kind: algebraic-identity
+  impl:
+  - poisson_neutral_R0
+  supporting: []
+  impl_note: 'impl: T·((κ²+κ−κ)/κ) = T·κ; not phrased via uncorrelated_R0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R85-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 217-221
+  text: 'Any valid conditional degree distribution must satisfy: (a) Σ_l Q(l|k) = 1 for all k (normalization) (b) Σ_k k·p_k·Q(l|k) = l·p_l (detailed balance) We verify these for the 2×2 case.'
+  kind: structural
+  impl:
+  - row1_sum_eq_degree
+  - row2_sum_eq_degree
+  - detailed_balance_col1
+  - detailed_balance_col2
+  supporting: []
+  impl_note: 'Stated through C = k·Q: row sums C_k1 + C_k2 = k (equivalent to Σ_l Q(l|k) = 1 since k > 0) and p₁C₁ₗ + p₂C₂ₗ = l·p_l; Q itself is never defined. Holds for every r ∈ [0,1].'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: DegreeCorrelation.R85a
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 223-224
+  text: '**Result 85a.** Row 1 of the mixing matrix sums to k₁ (normalization of Q(·|k₁)): C₁₁ + C₁₂ = k₁.'
+  kind: algebraic-identity
+  impl:
+  - row1_sum_eq_degree
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R85b
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 234-234
+  text: '**Result 85b.** Row 2 sums to k₂.'
+  kind: algebraic-identity
+  impl:
+  - row2_sum_eq_degree
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R85c
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 244-246
+  text: '**Result 85c.** Detailed balance column 1: k₁·p₁·Q(1|1) + k₂·p₂·Q(1|2) = k₁·p₁, i.e., p₁·C₁₁ + p₂·C₂₁ = k₁·p₁.'
+  kind: algebraic-identity
+  impl:
+  - detailed_balance_col1
+  supporting: []
+  impl_note: Good match for the C-form (Q is implicit as C_kl/k).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R85d
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 263-264
+  text: '**Result 85d.** Detailed balance column 2: p₁·C₁₂ + p₂·C₂₂ = k₂·p₂.'
+  kind: algebraic-identity
+  impl:
+  - detailed_balance_col2
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86-sec
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 283-286
+  text: For the 2×2 mixing matrix, the eigenvalues can be expressed via the trace and determinant. These identities concern the mixing matrix C; the spectral R₀ uses K_{kl} = (k-1)·Q(l|k) = C_{kl} - Q(l|k) instead (see the section on K below).
+  kind: other
+  impl: []
+  supporting:
+  - neutral_largest_eigenvalue
+  - trace_decomposition
+  impl_note: Motivational; no general eigenvalue formula (λ = (τ ± √(τ²−4δ))/2) is stated; no Matrix object is used.
+  required: false
+  status: informal
+  notes: 'Section text. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For the 2×2 mixing matrix, the eigenvalues can be expressed via the trace and determinant. These algebraic identities are needed for the spectral R₀ computation.'
+- id: DegreeCorrelation.R86a
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 296-297
+  text: '**Result 86a.** The trace of C decomposes as: tr(C) = k₁·r + k₂·r + (1-r)·(k₁·q₁ + k₂·q₂).'
+  kind: algebraic-identity
+  impl:
+  - trace_decomposition
+  supporting: []
+  impl_note: Good match (trC is defined as C₁₁ + C₂₂, not Matrix.trace).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86b
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 307-307
+  text: '**Result 86b.** The sum k₁·q₁ + k₂·q₂ = ⟨k²⟩/⟨k⟩ (second moment over mean).'
+  kind: algebraic-identity
+  impl:
+  - weighted_q_sum
+  supporting: []
+  impl_note: Good match with secondMom = k₁²p₁ + k₂²p₂.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86c
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 315-315
+  text: '**Result 86c.** Under neutral mixing (r=0), the trace equals ⟨k²⟩/⟨k⟩.'
+  kind: algebraic-identity
+  impl:
+  - neutral_trace
+  - weighted_q_sum
+  supporting: []
+  impl_note: neutral_trace alone gives trC = k₁q₁ + k₂q₂; the conjunction with weighted_q_sum yields ⟨k²⟩/⟨k⟩.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86d-1
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 322-322
+  text: '**Result 86d.** Under full assortativity (r=1), the trace equals k₁ + k₂.'
+  kind: algebraic-identity
+  impl:
+  - fully_assortative_trace
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86d-2
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 323-323
+  text: This means each degree class only infects its own kind.
+  kind: structural
+  impl:
+  - fully_assortative_C12
+  - fully_assortative_C21
+  supporting: []
+  impl_note: The sentence is attached to the trace theorem, whose statement does not imply it; the off-diagonal vanishing (Result 86e) is the formal counterpart. 'Infects' has no formal meaning (C is a contact matrix).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86e
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 330-330
+  text: '**Result 86e.** Under full assortativity (r=1), the off-diagonal entries vanish.'
+  kind: algebraic-identity
+  impl:
+  - fully_assortative_C12
+  - fully_assortative_C21
+  supporting: []
+  impl_note: Good match (fully_assortative_C21 has no docstring but completes the pair).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86f-1
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 343-343
+  text: '**Result 86f.** Under full assortativity, det(C) = k₁·k₂'
+  kind: algebraic-identity
+  impl:
+  - fully_assortative_det
+  supporting: []
+  impl_note: Good match (detC := C₁₁C₂₂ − C₁₂C₂₁).
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86f-2
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 344-344
+  text: so eigenvalues are k₁ and k₂.
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - fully_assortative_trace
+  - fully_assortative_det
+  impl_note: No eigenvalue statement for r = 1.
+  required: false
+  status: missing
+  notes: ''
+- id: DegreeCorrelation.R86g-1
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 352-352
+  text: '**Result 86g.** Under neutral mixing (r=0), det(C) = 0.'
+  kind: algebraic-identity
+  impl:
+  - neutral_det_zero
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86g-2
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 353-353
+  text: This reflects rank-1 structure of the neutral mixing matrix.
+  kind: structural
+  impl: []
+  supporting:
+  - neutral_det_zero
+  impl_note: Interpretive; no Matrix.rank statement.
+  required: false
+  status: informal
+  notes: ''
+- id: DegreeCorrelation.R86h-1
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 365-367
+  text: '**Result 86h.** Under neutral mixing (r=0), the largest eigenvalue of C equals tr(C) = k₁·q₁ + k₂·q₂ = ⟨k²⟩/⟨k⟩, since the other eigenvalue is 0 (det = 0).'
+  kind: algebraic-identity
+  impl:
+  - neutral_largest_eigenvalue
+  - neutral_trace
+  - weighted_q_sum
+  supporting: []
+  impl_note: 'neutral_largest_eigenvalue: any λ with λ² − trC·λ + detC = 0 (the characteristic equation is supplied as a hypothesis; no Matrix/eigenvalue notion) is 0 or trC. It does not show that trC is a root, that it is the largest (needs trC ≥ 0), or that it is the spectral radius.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DegreeCorrelation.R86h-2
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 367-367
+  text: The eigenvalues of a 2×2 matrix with trace τ and det 0 are τ and 0.
+  kind: algebraic-identity
+  impl:
+  - neutral_largest_eigenvalue
+  supporting: []
+  impl_note: Proved only for this particular C at r = 0 (not any 2×2 matrix) and only one inclusion (every root is 0 or τ).
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): fully_assortative_C21 (registered with R86e).
+# Axioms: none. correlated_R0_spectral (R81, R81-sec; content-free statement T * ρ = T * ρ) was deleted in
+#   WP4 (P1.2).
+# Not registered (definitions / intent text, see DataTypes/DegreeCorrelation.md):
+#   module header 'The standard (uncorrelated) configuration model has Q(l|k) = l·p_l/⟨k⟩ ...' (lines 7-10),
+#   DegreeMomentData (docstring says 'first and second factorial moments' but the field is the raw
+#   second moment ⟨k²⟩), DegreeMomentData.secondFactorial, DegreeMomentData.excessDegree,
+#   TwoDegreeData, meanDeg, q1, q2, C12, C21, C22 (no docstrings), trC, detC, secondMom.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: DegreeCorrelation.neutralDetK
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 399-399
+  text: 'Under neutral mixing (r = 0), det K = 0: K has rank one.'
+  kind: algebraic-identity
+  impl:
+  - neutral_detK
+  supporting: []
+  impl_note: d.r = 0 → d.K11 * d.K22 - d.K12 * d.K21 = 0, with K_{kl} = (k − 1)·Q(l|k).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: DegreeCorrelation.neutralTraceK
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 406-406
+  text: Under neutral mixing (r = 0), tr K = ⟨k(k−1)⟩/⟨k⟩.
+  kind: algebraic-identity
+  impl:
+  - neutral_traceK
+  supporting: []
+  impl_note: d.r = 0 → d.K11 + d.K22 = (k₁(k₁−1)p₁ + k₂(k₂−1)p₂)/⟨k⟩. The eigenvalue remark in the docstring (det K = 0 ⇒ largest eigenvalue = trace) is not part of the statement.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: DegreeCorrelation.neutralTraceCSubTraceK
+  group: DegreeCorrelation
+  source:
+    file: EBCMCategory/DegreeCorrelation.lean
+    lines: 417-418
+  text: 'Under neutral mixing (r = 0), tr C − tr K = 1: the mixing matrix C = k·Q overstates the largest eigenvalue of the next-generation matrix by one.'
+  kind: algebraic-identity
+  impl:
+  - neutral_traceC_sub_traceK
+  supporting: []
+  impl_note: d.r = 0 → d.trC - (d.K11 + d.K22) = 1 (trace identity; the eigenvalue reading uses det C = det K = 0).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

@@ -1,0 +1,658 @@
+# SA-PASS claim registry fragment: group SurvivalBridge
+# Source module: EBCMCategory/SurvivalBridge.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: 'R<N>' for '**Result N.**' docstrings, letter suffix for splits;
+#   'table.R<N>' = module-header table rows; 'header.*' = module-header prose without a theorem;
+#   '<lowerCamelDefName>-x' = claims in def/structure docstrings.
+# Some impl names live in the ClosureTheorem module (same trusted library, root namespace).
+- id: SurvivalBridge.header.ptCharacterisation
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 11-14
+  text: '**Poisson-type characterisation** (Theorem 1): The pairwise closure is exact iff the degree distribution is Poisson, Binomial, or Negative Binomial — collectively called "Poisson-type" (PT) distributions. These are exactly the distributions whose PGF satisfies ψ''(u) = α·ψ(u)^κ.'
+  kind: equivalence
+  impl: []
+  supporting:
+  - poisson_kappa_eq_one
+  - binomial_kappa_lt_one
+  - negbin_kappa_gt_one
+  impl_note: 'No theorem: there is no notion of pairwise-closure exactness, of a PGF as a function, or of the ODE ψ'' = α·ψ^κ in the module.'
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: SurvivalBridge.header.threeModelEquivalence
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 16-18
+  text: '**Three-model equivalence** (Theorem 2): For PT distributions, the pairwise model, Volz''s EBCM, and the DSA model are all equivalent and exact in the N→∞ limit.'
+  kind: equivalence
+  impl: []
+  supporting:
+  - volz_dsa_roundtrip
+  impl_note: 'No theorem: no pairwise/Volz/DSA ODE systems, no equivalence of dynamics, no N→∞ limit.'
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: SurvivalBridge.header.survivalEquation
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 20-22
+  text: '**Survival equation** (Eq. 33): Under PT assumptions, the epidemic dynamics collapse to a SINGLE autonomous ODE for the survival probability S_t, enabling statistical inference from incidence data.'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: 'No theorem: no ODE and no survival probability S_t in the module.'
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: SurvivalBridge.header.kappaInvariant-a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 24-25
+  text: 'The key invariant is κ = ψ''''(θ)ψ(θ)/ψ''(θ)², which is constant in θ iff the degree distribution is PT:'
+  kind: equivalence
+  impl: []
+  supporting:
+  - poisson_closure_ratio
+  - nonPT_closure_ratio_varies
+  impl_note: 'No theorem: closureKappa has no θ argument (it is evaluated at θ=1 from two moments); the pointwise ClosureTheorem.PGFEval.closureRatio exists but no iff with PT is proved.'
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: SurvivalBridge.header.kappaInvariant-b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 26-28
+  text: '* κ = (n-1)/n for Binomial(n,p) * κ = 1 for Poisson(λ) * κ = (r+1)/r for NegBin(r,p)'
+  kind: algebraic-identity
+  impl:
+  - binomial_closure_ratio
+  - poisson_closure_ratio
+  - negbin_general_closure_ode
+  supporting: []
+  impl_note: 'Cross-module impl (ClosureTheorem): Poisson ratio = 1 for all λ, ψ > 0; Binomial(n+2) ratio = (n+1)/(n+2) (so n ≥ 2 only); NegBin only for integer r = m+1 and only as the ODE identity ψ''''ψ = ((m+2)/(m+1))(ψ'')², not as a ratio. Derivatives are supplied as explicit expressions (free variables w, psi_val), never derived from the PGF.'
+  required: true
+  status: implemented
+  notes: Module-header claim; real r > 0 for NegBin is not covered.
+- id: SurvivalBridge.header.categorical.naturalIso
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 32-37
+  text: 'No category or functor is formalised here. Informally, Volz''s model and the DSA model are two ODE systems for the same configuration-model epidemic: Volz : edge-probability variables θ, p_I, p_S DSA : survival variables x_θ, x_{SI}, x_{SS}'
+  kind: categorical
+  impl: []
+  supporting:
+  - volz_dsa_roundtrip
+  impl_note: No category Net or ODE, no functors and no natural isomorphism are defined anywhere in EBCMCategory.
+  required: false
+  status: missing
+  notes: 'Module-header claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The Volz model ↔ DSA equivalence is a **natural isomorphism** between two functors from the category of configuration-model networks to the category of ODE systems: Volz : Net → ODE (edge-probability variables θ, p_I, p_S) DSA : Net → ODE (survival variables x_θ, x_{SI}, x_{SS})'
+- id: SurvivalBridge.header.categorical.eta
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 38-40
+  text: They are related by the change of variables x_θ = θ, x_{SI} = p_I · θ · ψ'(θ), x_{SS} = p_S · θ · ψ'(θ) (Kiss, Kenah & Rempała 2023, App. B), which is invertible when θ·ψ'(θ) > 0.
+  kind: categorical
+  impl: []
+  supporting:
+  - volz_dsa_roundtrip
+  - volz_dsa_equiv_general
+  impl_note: Only a one-sided state-space inverse (dsaToVolz ∘ volzToDSA = id) is proved; naturality is not formalised.
+  required: false
+  status: missing
+  notes: 'In Kiss, Kenah & Rempała (2023, App. B; papers/s00285-023-01967-9.md) p_I = M_SI/M_S with M_SI = x_SI/ψ''(1) and M_S = x_θ·ψ''(x_θ)/ψ''(1), i.e. x_SI = p_I·θ·ψ''(θ) (and x_SS = p_S·θ·ψ''(θ)); the module''s change of variables omits the factor θ. Also ''(finite mean degree)'' conflates ψ''(θ) > 0 with finiteness of ψ''(1). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The change of variables x_{SI} = p_I · ψ''(θ), x_{SS} = p_S · ψ''(θ) defines a natural transformation η : DSA ⟹ Volz that is invertible for any PGF with ψ''(θ) > 0 (finite mean degree).'
+- id: SurvivalBridge.header.categorical.pairwiseIso
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 42-45
+  text: 'For PT distributions the pairwise model with closure constant κ is a third equivalent description: Pairwise ≅ DSA ≅ Volz (iff PT degree distribution)'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No pairwise functor/ODE and no iff with PT is formalised.
+  required: false
+  status: missing
+  notes: 'Module-header claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For PT distributions, a THIRD functor — the pairwise closure — is also naturally isomorphic, collapsing the tower: Pairwise ≅ DSA ≅ Volz (iff PT degree distribution)'
+- id: SurvivalBridge.header.categorical.colimit
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 47-48
+  text: The survival equation (33) is a reduction of these systems to a single scalar ODE for S_t; it is not a colimit in any formalised sense.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No diagram, colimit or universal property is formalised.
+  required: false
+  status: missing
+  notes: 'Categorically doubtful: the colimit of a diagram of isomorphisms is (isomorphic to) any of its objects, not a lower-dimensional reduction; a reduction to one scalar ODE is a quotient/projection, so ''colimit'' needs a precise diagram to be meaningful. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The survival equation (33) is the **colimit** of this diagram: a single scalar ODE that is universal among all three representations.'
+- id: SurvivalBridge.table.R41
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 54-54
+  text: '| 41 | The PT ODE ψ'' = α·ψ^κ characterises Poisson-type dists|'
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: No 'Result 41' theorem exists; the ODE ψ' = α·ψ^κ never appears in Lean.
+  required: false
+  status: missing
+  notes: Header-table row with no implementing theorem.
+- id: SurvivalBridge.table.R42
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 55-55
+  text: '| 42 | Poisson ⇒ κ(1) = 1 (κ ≡ 1 on an interval iff Poisson) |'
+  kind: equivalence
+  impl:
+  - poisson_kappa_eq_one
+  supporting: []
+  impl_note: 'impl proves only Poisson → κ = 1. The converse is FALSE for closureKappa (evaluated at θ=1): ψ(u) = ½ + u²/2 (degrees 0 or 2 w.p. ½) has ψ''''(1)/ψ''(1)² = 1 (cf. ClosureTheorem.nonPT_kappa_at_one''); it becomes true only for κ(θ) ≡ 1 for all θ.'
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 42 | κ = 1 iff Poisson |'
+- id: SurvivalBridge.table.R43
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 56-56
+  text: '| 43 | Some record has κ(1) < 1 (Binomial: κ ≡ (n-1)/n) |'
+  kind: equivalence
+  impl:
+  - binomial_kappa_lt_one
+  supporting: []
+  impl_note: 'impl is ∃ ψ : PGFData, closureKappa ψ < 1; no binomial, no (n−1)/n, no iff.'
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 43 | κ < 1 iff Binomial (κ = (n-1)/n) |'
+- id: SurvivalBridge.table.R44
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 57-57
+  text: '| 44 | Some record has κ(1) > 1 (NegBin: κ ≡ (r+1)/r) |'
+  kind: equivalence
+  impl:
+  - negbin_kappa_gt_one
+  supporting: []
+  impl_note: 'impl is ∃ ψ : PGFData, closureKappa ψ > 1; no negative binomial, no (r+1)/r, no iff.'
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 44 | κ > 1 iff Negative Binomial (κ = (r+1)/r) |'
+- id: SurvivalBridge.table.R45
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 58-58
+  text: '| 45 | The Volz ↔ DSA variable change is invertible |'
+  kind: equivalence
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: impl proves dsaToVolz ∘ volzToDSA = id (left inverse) for ψ' ≠ 0; the other composite volzToDSA ∘ dsaToVolz = id is not proved.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: SurvivalBridge.table.R46
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 59-59
+  text: '| 46 | S = ψ(θ) gives dS/dt = −β x_SI (chain rule; informal) |'
+  kind: categorical
+  impl: []
+  supporting:
+  - survival_map_R0_poisson
+  impl_note: The Result-46 theorem (survival_map_R0_poisson) proves only a Poisson R₀ equality, as its own docstring says; no survival map or naturality is formalised.
+  required: false
+  status: missing
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 46 | The survival map S_t = ψ(θ) is a natural transformation|'
+- id: SurvivalBridge.table.R47
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 60-60
+  text: '| 47 | Poisson ⇒ κ(1) = 1 (DSA has mass-action form, rescaled) |'
+  kind: dynamical
+  impl:
+  - poisson_closure_is_one
+  supporting: []
+  impl_note: impl is closureKappa (PGFData.poisson κ) = 1 (identical to Result 42); no DSA or mass-action dynamics appear.
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 47 | For Poisson (κ=1), DSA reduces to mass-action SIR |'
+- id: SurvivalBridge.table.R48
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 61-61
+  text: '| 48 | PT closure constant κ = excess/degree ratio |'
+  kind: algebraic-identity
+  impl:
+  - closure_kappa_eq_second_over_mean_sq
+  supporting: []
+  impl_note: 'impl: closureKappa ψ = secondFactorial/mean² by rfl; its relation to excessDegree/mean (''excess/degree ratio'') is not stated.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: SurvivalBridge.table.R49
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 62-62
+  text: '| 49 | Non-PT distributions: κ(t) varies, closure is approximate|'
+  kind: existence
+  impl:
+  - nonPT_closure_varies
+  supporting: []
+  impl_note: 'impl: ∃ ψ : PGFData, closureKappa ψ ≠ 1 ∧ dispersionIndex ψ ≠ 1; no time/θ dependence, no PT predicate, no closure error.'
+  required: true
+  status: implemented
+  notes: 'Header-table row. See R49a notes: the witness has NegBin(1) (PT) moments.'
+- id: SurvivalBridge.table.R50
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 63-63
+  text: '| 50 | Volz-DSA equivalence holds for ANY degree distribution |'
+  kind: equivalence
+  impl:
+  - volz_dsa_equiv_general
+  supporting: []
+  impl_note: 'impl: left-inverse round trip using ψ.mean as the scale; a state-space statement, not an equivalence of dynamics.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: SurvivalBridge.closureKappa-b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 79-79
+  text: This is the ratio of mean excess degree to mean degree.
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: No theorem relates PGFData.closureKappa to PGFData.excessDegree / mean (true by unfolding, but unstated).
+  required: false
+  status: missing
+  notes: Def docstring of PGFData.closureKappa.
+- id: SurvivalBridge.closureKappa-c
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 80-83
+  text: 'The function κ(θ) = ψ''''(θ)ψ(θ)/ψ''(θ)² is constant in θ iff the degree distribution is Poisson-type; `closureKappa` records only its value κ(1), which does not determine the family: ψ(u) = (1 + u²)/2 has κ(1) = 1 but is not Poisson.'
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: closureKappa takes no θ; no PT predicate exists; no theorem.
+  required: false
+  status: missing
+  notes: 'Def docstring of PGFData.closureKappa. WP4b (TRIAGE P1.4/P2): text corrected; previous text: It is constant in θ iff the degree distribution is Poisson-type.'
+- id: SurvivalBridge.volzState-a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 126-131
+  text: 'They are related by (Kiss, Kenah & Rempała 2023, App. B): x_{SI} = p_I · θ · ψ''(θ) x_{SS} = p_S · θ · ψ''(θ) The maps `volzToDSA`/`dsaToVolz` below multiply and divide by an arbitrary scalar factor `psi_prime`; this change of variables is the instance `psi_prime := θ·ψ''(θ)`.'
+  kind: structural
+  impl: []
+  supporting:
+  - volz_dsa_roundtrip
+  impl_note: 'Definitional: describes volzToDSA/dsaToVolz (bridge material).'
+  required: false
+  status: informal
+  notes: 'In Kiss, Kenah & Rempała (2023, App. B; papers/s00285-023-01967-9.md) p_I = M_SI/M_S with M_SI = x_SI/ψ''(1) and M_S = x_θ·ψ''(x_θ)/ψ''(1), i.e. x_SI = p_I·θ·ψ''(θ) (and x_SS = p_S·θ·ψ''(θ)); the module''s change of variables omits the factor θ. WP4b (TRIAGE P1.4/P2): text corrected; previous text: They are related by: x_{SI} = p_I · ψ''(θ) x_{SS} = p_S · ψ''(θ)'
+- id: SurvivalBridge.volzState-b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 132-132
+  text: This is invertible whenever θ·ψ'(θ) > 0.
+  kind: equivalence
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: impl assumes ψ' ≠ 0 (weaker than > 0, fine) but proves only the left-inverse composite; ψ' is a free scalar, not ψ'(θ) at the state's θ; '(mean degree > 0)' conflates ψ'(θ) with ψ'(1).
+  required: true
+  status: implemented
+  notes: 'Structure docstring of VolzState. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is invertible whenever ψ''(θ) > 0 (mean degree > 0).'
+- id: SurvivalBridge.R42
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 94-95
+  text: '**Result 42.** For Poisson, κ = 1. This is because ψ''''(1) = κ² and ψ''(1) = κ, so κ = κ²/κ² = 1.'
+  kind: algebraic-identity
+  impl:
+  - poisson_kappa_eq_one
+  supporting: []
+  impl_note: 'impl: closureKappa (PGFData.poisson κ hκ) = 1. PGFData.poisson DEFINES secondFactorial := κ², so ψ''''(1) = κ² is built in, not derived from ψ(u) = e^{κ(u−1)}; the symbol κ is overloaded (mean degree vs closure constant).'
+  required: true
+  status: implemented
+  notes: ''
+- id: SurvivalBridge.R43a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 102-102
+  text: '**Result 43.** For Binomial(n, p), κ = (n-1)/n < 1.'
+  kind: inequality
+  impl:
+  - binomial_kappa_lt_one
+  supporting: []
+  impl_note: 'impl is ∃ ψ : PGFData, closureKappa ψ < 1 — no binomial family, no n, p, and no value (n−1)/n; much weaker than the universal text.'
+  required: true
+  status: implemented
+  notes: 'Suspicious: universal family claim implemented by a bare existential.'
+- id: SurvivalBridge.R43b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 103-103
+  text: We construct a Binomial(3, p) example where ψ'(1) = 3p, ψ''(1) = 6p².
+  kind: other
+  impl: []
+  supporting:
+  - binomial_kappa_lt_one
+  impl_note: Proof commentary about the witness; the existential statement does not expose it.
+  required: false
+  status: informal
+  notes: Witness ⟨mean 3/2, secondFactorial 3/2⟩ is consistent with Binomial(3, 1/2) (3p = 3/2, 6p² = 3/2, κ = 2/3 = (n−1)/n).
+- id: SurvivalBridge.R44a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 112-112
+  text: '**Result 44.** For NegBin(r, p), κ = (r+1)/r > 1.'
+  kind: inequality
+  impl:
+  - negbin_kappa_gt_one
+  supporting: []
+  impl_note: 'impl is ∃ ψ : PGFData, closureKappa ψ > 1 — no negative-binomial family, no r, and no value (r+1)/r.'
+  required: true
+  status: implemented
+  notes: 'Suspicious: universal family claim implemented by a bare existential.'
+- id: SurvivalBridge.R44b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 113-113
+  text: We construct a NegBin(2, 1/2) example where mean = 2, ψ''(1) = 6.
+  kind: other
+  impl: []
+  supporting:
+  - negbin_kappa_gt_one
+  impl_note: Proof commentary about the witness.
+  required: false
+  status: informal
+  notes: 'Witness consistent: NegBin(r=2, p=1/2) has mean r(1−p)/p = 2 and ψ''''(1) = r(r+1)((1−p)/p)² = 6, κ = 3/2 = (r+1)/r.'
+- id: SurvivalBridge.R45a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 158-158
+  text: '**Result 45.** The round-trip Volz → DSA → Volz is the identity.'
+  kind: equivalence
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: 'Good match: dsaToVolz (volzToDSA v ψ'') ψ'' h = v for ψ'' ≠ 0 (ψ'' a free scalar).'
+  required: true
+  status: implemented
+  notes: ''
+- id: SurvivalBridge.R45b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 159-160
+  text: Together with `dsa_volz_roundtrip`, the variable change is a bijection of state spaces for every nonzero scalar factor.
+  kind: equivalence
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: Only one composite is proved (left inverse ⇒ injective); an isomorphism also needs volzToDSA (dsaToVolz d ψ' h) ψ' = d, which is absent.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This proves the variable change is an isomorphism of state spaces. -- Candidate impl: volz_dsa_roundtrip ∧ dsa_volz_roundtrip (new).'
+- id: SurvivalBridge.R46a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 177-178
+  text: '**Result 46.** The survival map S_t = ψ(θ(t)) relates the EBCM to node-level survival analysis (informal; no category is defined).'
+  kind: categorical
+  impl: []
+  supporting:
+  - survival_map_R0_poisson
+  impl_note: The docstring itself says the theorem only proves an R₀ identity (see R46c); no survival map, flow or naturality is formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 46.** The survival map S_t = ψ(θ(t)) defines a natural transformation from the EBCM to node-level survival analysis.'
+- id: SurvivalBridge.R46b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 180-185
+  text: 'For any PGF, if we define S = ψ(θ) and differentiate, with x_{SI} = p_I · θ · ψ''(θ) as in Kiss, Kenah & Rempała (2023, App. B): dS/dt = ψ''(θ) · dθ/dt = ψ''(θ) · (-β·p_I·θ) = -β · x_{SI} So the DSA equation ẋ_S = -β·x_{SI} is the chain rule applied to S = ψ(θ). This chain-rule computation is not formalised here.'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: No derivative, chain rule or ODE flow appears in Lean.
+  required: false
+  status: missing
+  notes: 'Internally inconsistent: the last equality needs x_SI = p_I·θ·ψ''(θ) (KKR 2023), but the module''s volzToDSA uses x_SI = p_I·ψ''(θ); with the module''s variables dS/dt = −β·θ·x_SI. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For any PGF, if we define S = ψ(θ) and differentiate: dS/dt = ψ''(θ) · dθ/dt = ψ''(θ) · (-β·p_I·θ) = -β · x_{SI} So the DSA equation ẋ_S = -β·x_{SI} is exactly the chain rule applied to S = ψ(θ). This proves the transformation is natural — it commutes with the ODE flow.'
+- id: SurvivalBridge.R46c
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 187-190
+  text: Here we prove the algebraic identity that, for Poisson degrees, the EBCM R₀ T·ψ''(1)/ψ'(1) equals T·μ, where μ = mean degree (the `nodeModel` value). The DSA model is equivalent to Volz's for every degree law, so its R₀ is also T·ψ''(1)/ψ'(1).
+  kind: algebraic-identity
+  impl:
+  - survival_map_R0_poisson
+  supporting: []
+  impl_note: 'impl: (edgeModel p (PGFData.poisson κ hκ)).R0 = (nodeModel p κ).R0, i.e. T·excessDegree = T·κ; ''DSA'' R₀ is represented by nodeModel.R0 = T·κ = β·μ/(β+γ). Matches for Poisson.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Here we prove the algebraic identity that the two R₀ formulations agree: the EBCM uses T·ψ''''(1)/ψ''(1) while DSA uses β·μ/(β+γ) where μ = mean degree. For Poisson, these are the same.'
+- id: SurvivalBridge.R47a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 198-207
+  text: '**Result 47.** For Poisson networks (κ=1), the DSA survival equation has the form of the classical mass-action SIR survival equation, with rescaled rates. From Eq (33) of the paper, with κ=1: -dS/dt = β̃(S - S²) + γ̃·S·log(S) + ρ̃·S This has the form of the mass-action SIR survival equation of KhudaBukhsh et al. (2020), with β̃ = μβ, γ̃ = β + γ and ρ̃ = βμρ. The Lean theorem proves only that the Poisson record has closureKappa = 1.'
+  kind: dynamical
+  impl:
+  - poisson_closure_is_one
+  supporting: []
+  impl_note: impl is literally Result 42 (closureKappa (PGFData.poisson κ) = 1); no ODE, survival function S, parameters β̃/γ̃/ρ̃, logarithm or mass-action model appears.
+  required: true
+  status: implemented
+  notes: 'Suspicious: dynamical reduction claim implemented by a moment identity. Eq. (33) with κ=1 matches KKR 2023 (papers/s00285-023-01967-9.md l.324), where β̃, γ̃, ρ̃ are re-scaled parameters, so ''reduces to the classical mass-action SIR'' holds only in form, not with the network''s β, γ. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 47.** For Poisson networks (κ=1), the DSA survival equation reduces to the classical mass-action SIR. From Eq (33) of the paper, with κ=1: -dS/dt = β̃(S - S²) + γ̃·S·log(S) + ρ̃·S This is exactly the mass-action SIR survival equation from KhudaBukhsh et al. (2020).'
+- id: SurvivalBridge.R47b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 207-209
+  text: The proof is that the Poisson PGF ψ(u) = e^{λ(u-1)} satisfies ψ''·ψ/(ψ')² = 1 identically, which eliminates all network-structure terms.
+  kind: algebraic-identity
+  impl:
+  - poisson_closure_is_one
+  supporting:
+  - poisson_closure_ratio
+  impl_note: impl evaluates only at u = 1 through the moment record (whose ψ''(1) := κ² by definition); 'identically in u' is closer to ClosureTheorem.poisson_closure_ratio, which still supplies ψ' = λψ, ψ'' = λ²ψ rather than deriving them from e^{λ(u−1)}.
+  required: true
+  status: implemented
+  notes: ''
+- id: SurvivalBridge.R48a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 216-217
+  text: '**Result 48.** The closure parameter κ equals the dispersion-scaled ratio: κ = secondFactorial / mean².'
+  kind: algebraic-identity
+  impl:
+  - closure_kappa_eq_second_over_mean_sq
+  supporting: []
+  impl_note: impl is rfl (unfolding PGFData.closureKappa); 'dispersion-scaled ratio' has no formal meaning.
+  required: true
+  status: implemented
+  notes: Definitional restatement.
+- id: SurvivalBridge.R48b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 219-220
+  text: For the pairwise closure to be exact, κ must be constant as θ varies. This happens iff ψ'(u) = α·ψ(u)^κ, which characterises PT distributions.
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: No closure exactness, θ-dependence or ODE characterisation is formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: SurvivalBridge.R48c
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 222-226
+  text: 'For a PT law (κ(θ) constant), the value of κ determines the family: * κ < 1: Binomial(n, p) with n = 1/(1-κ); this needs 1/(1-κ) ∈ ℕ, so κ ∈ [0, 1) is realised only for κ = (n-1)/n * κ = 1: Poisson(λ) * κ > 1: NegBin(r, p) with r = 1/(κ-1)'
+  kind: equivalence
+  impl: []
+  supporting:
+  - binomial_recover_n'
+  - negbin_kappa_determines_r'
+  - pt_classification_exhaustive
+  impl_note: Only the scalar inversions 1/(1−(n−1)/n) = n and 1/(κ−1) > 0 exist (ClosureTheorem); nothing states that κ determines the family.
+  required: false
+  status: missing
+  notes: 'For κ < 1 a binomial exists only when 1/(1−κ) is an integer; e.g. κ = 0.3 gives n = 10/7, so the stated trichotomy is not exhaustive over κ ∈ (0,1). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The value of κ determines the distribution family: * κ < 1: Binomial(n, p) with n = 1/(1-κ) * κ = 1: Poisson(λ) * κ > 1: NegBin(r, p) with r = 1/(κ-1)'
+- id: SurvivalBridge.R49a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 231-235
+  text: '**Result 49.** Some degree record has closure constant κ(1) ≠ 1 and dispersion index ≠ 1. A two-moment record cannot show that a law is non-PT. For a non-PT law such as ψ(u) = (1 + u²)/2, κ(θ) = (1 + θ²)/(2θ²) varies with θ, making the pairwise closure approximate rather than exact.'
+  kind: existence
+  impl:
+  - nonPT_closure_varies
+  supporting: []
+  impl_note: 'impl: ∃ ψ : PGFData, closureKappa ψ ≠ 1 ∧ dispersionIndex ψ ≠ 1. It does not compare the dispersion index with κ, has no θ and no PT predicate. Every NegBin (a PT law) also satisfies the statement, so it cannot separate PT from non-PT.'
+  required: true
+  status: implemented
+  notes: 'Suspicious: the witness ⟨mean 10, secondFactorial 200⟩ has exactly the moments of a geometric = NegBin(r=1) law (ψ''''(1) = 2·mean²), which IS Poisson-type. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 49.** For non-PT distributions, the dispersion index ≠ κ in general. The excess degree ratio depends on θ, making the pairwise closure approximate rather than exact.'
+- id: SurvivalBridge.R49b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 237-240
+  text: 'Witness: the record mean 10, ψ''''(1) = 200 (κ(1) = 2, dispersion 11). It is the record of the geometric law (NegBin with r = 1), which is PT; the bimodal law with 80% degree 4 and 20% degree 34 has mean 10 but ψ''''(1) = 234.'
+  kind: other
+  impl: []
+  supporting:
+  - nonPT_closure_varies
+  impl_note: Proof commentary about the witness.
+  required: false
+  status: informal
+  notes: 'Wrong witness description: 80% degree 4 / 20% degree 34 has mean 10 but E[k(k−1)] = 0.8·12 + 0.2·1122 = 234, not the 200 used in the proof (checked with sympy). WP4b (TRIAGE P1.4/P2): text corrected; previous text: Witness: a bimodal distribution (80% degree-4, 20% degree-34) where κ(θ) varies with θ.'
+- id: SurvivalBridge.R50a
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 251-252
+  text: '**Result 50.** The Volz ↔ DSA equivalence holds for ANY degree distribution with finite variance — not just PT distributions.'
+  kind: equivalence
+  impl:
+  - volz_dsa_equiv_general
+  supporting: []
+  impl_note: 'impl: for ψ.mean ≠ 0 (redundant given mean_pos), dsaToVolz ∘ volzToDSA = id with scale ψ.mean = ψ''(1) (not ψ''(θ)); a one-sided state-space inverse, not an equivalence of the Volz and DSA ODEs; variance plays no role.'
+  required: true
+  status: implemented
+  notes: 'Suspicious: dynamical equivalence claim implemented by a record round-trip.'
+- id: SurvivalBridge.R50b
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 254-255
+  text: The variable change x_{SI} = p_I · θ · ψ'(θ) is well-defined and invertible whenever θ·ψ'(θ) > 0,
+  kind: equivalence
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: Left inverse only (see R45b).
+  required: true
+  status: implemented
+  notes: 'In Kiss, Kenah & Rempała (2023, App. B; papers/s00285-023-01967-9.md) p_I = M_SI/M_S with M_SI = x_SI/ψ''(1) and M_S = x_θ·ψ''(x_θ)/ψ''(1), i.e. x_SI = p_I·θ·ψ''(θ) (and x_SS = p_S·θ·ψ''(θ)); the module''s change of variables omits the factor θ. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The variable change x_{SI} = p_I · ψ''(θ) is well-defined and invertible whenever ψ''(θ) > 0,'
+- id: SurvivalBridge.R50c
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 255-256
+  text: which holds for all θ ∈ (0,1] when the degree distribution has positive mean.
+  kind: inequality
+  impl: []
+  supporting: []
+  impl_note: No PGF-as-function; ψ'(θ) > 0 on (0,1] is not formalised.
+  required: false
+  status: missing
+  notes: True mathematically (ψ'(θ) = Σ k p_k θ^{k−1} > 0 for θ > 0 if some p_k > 0 with k ≥ 1).
+- id: SurvivalBridge.R50d
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 258-261
+  text: 'The difference is: * For PT distributions: Pairwise ≅ DSA ≅ Volz (all three equivalent) * For non-PT distributions: DSA ≅ Volz (still equivalent), but Pairwise is only approximate'
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: No pairwise model and no model equivalence is formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: SurvivalBridge.R50e
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 263-266
+  text: This is formalised here only as the round trip of Result 45 with the scalar factor ψ'(1) = mean degree, so it needs only ψ'(1) ≠ 0 and no condition on κ. It is a statement about one linear rescaling, not about the ODE systems.
+  kind: structural
+  impl:
+  - volz_dsa_roundtrip
+  supporting: []
+  impl_note: True of volz_dsa_roundtrip's signature (sole hypothesis ψ' ≠ 0), but that proof is a one-sided inverse, not an isomorphism.
+  required: true
+  status: implemented
+  notes: 'Meta-claim about the formalisation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is formalised here as: the isomorphism proof (Result 45) requires only ψ'' ≠ 0, not any condition on κ.'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text, see DataTypes/SurvivalBridge.md):
+#   PGFData.closureKappa sentence 'κ = ψ''(1)·ψ(1)/(ψ'(1))² = secondFactorial/mean²' (definitional),
+#   PTType (classification enum), DSAState, dsaToVolz, volzToDSA docstrings.
+# Proof-sketch sentence of R42 ('This is because ψ''(1) = κ² ...') is kept inside the R42 text.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: SurvivalBridge.dsaVolzRoundtrip
+  group: SurvivalBridge
+  source:
+    file: EBCMCategory/SurvivalBridge.lean
+    lines: 167-167
+  text: The round-trip DSA → Volz → DSA is the identity.
+  kind: algebraic-identity
+  impl:
+  - dsa_volz_roundtrip
+  supporting: []
+  impl_note: volzToDSA (dsaToVolz d ψ' h) ψ' = d for ψ' ≠ 0.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

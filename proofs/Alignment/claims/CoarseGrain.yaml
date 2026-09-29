@@ -1,0 +1,152 @@
+# SA-PASS claim registry fragment: group CoarseGrain
+# Source module: EBCMCategory/CoarseGrain.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: CoarseGrain.header.coarseGrainMap
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 6-9
+  text: 'The **coarse-graining** map sends an edge-based model to its node-based projection by evaluating the PGF at the edge-transmission-failure probability: S = ψ(θ), R = R, I = 1 - S - R'
+  kind: structural
+  impl: []
+  supporting:
+  - coarseGrain_preserves_R0
+  impl_note: 'coarseGrain : EpiModel → EpiModel only sets dim := 3 and copies R0; no state (θ, S, I, R), no PGF and no evaluation ψ(θ) exist, so the described projection is not formalised.'
+  required: false
+  status: missing
+  notes: 'Module-header claim; the title also calls F ''The forgetful functor F: Edge → Node'' although domain and codomain are the same type EpiModel.'
+- id: CoarseGrain.table.R5
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 19-19
+  text: '| 5 | F is a monotone map (preserves refinement) |'
+  kind: categorical
+  impl:
+  - coarseGrain_mono
+  supporting: []
+  impl_note: Monotone coarseGrain on the EpiModel dim-preorder; since coarseGrain always returns dim 3 the proof is 3 ≤ 3.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R5.
+- id: CoarseGrain.table.R6
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 20-20
+  text: '| 6 | F is not injective (lossy) |'
+  kind: structural
+  impl:
+  - coarseGrain_not_injective
+  supporting: []
+  impl_note: ∃ e₁ e₂, e₁ ≠ e₂ ∧ coarseGrain e₁ = coarseGrain e₂ (non-injectivity in unfolded form).
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R6.
+- id: CoarseGrain.table.R7
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 21-21
+  text: '| 7 | Degree-variance inequality: excess = κ-1+σ²/κ |'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_decomposition
+  supporting: []
+  impl_note: impl is the identity excessDegree = mean − 1 + dispersionIndex; no inequality is proved although the row is titled 'Degree-variance inequality'.
+  required: true
+  status: implemented
+  notes: Header-table row. The name 'inequality' is not backed by any inequality theorem (e.g. excess ≥ κ − 1 would need variance ≥ 0, which PGFData does not enforce).
+- id: CoarseGrain.table.R8
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 22-22
+  text: '| 8 | Poisson dispersion = 1 |'
+  kind: algebraic-identity
+  impl:
+  - poisson_dispersion_eq_one
+  supporting: []
+  impl_note: (PGFData.poisson κ hκ).dispersionIndex = 1.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R8.
+- id: CoarseGrain.R5
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 37-37
+  text: '**Result 5.** F is monotone.'
+  kind: categorical
+  impl:
+  - coarseGrain_mono
+  supporting: []
+  impl_note: impl proves Monotone coarseGrain (Mathlib Monotone) on the EpiModel preorder; coarseGrain is constant in dim (3), so every instance is 3 ≤ 3. F is an endomap of EpiModel, not a map between two categories.
+  required: true
+  status: implemented
+  notes: ''
+- id: CoarseGrain.coarseGrainPreservesR0
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 43-43
+  text: F preserves R₀.
+  kind: structural
+  impl:
+  - coarseGrain_preserves_R0
+  supporting:
+  - coarseGrain_R0
+  impl_note: impl proves (coarseGrain e).R0 = e.R0 for all e, true by definition (coarseGrain copies R0).
+  required: true
+  status: implemented
+  notes: Identical text and statement to GaloisPair.coarseGrainR0 (coarseGrain_R0).
+- id: CoarseGrain.R6
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 50-50
+  text: '**Result 6.** F is not injective.'
+  kind: structural
+  impl:
+  - coarseGrain_not_injective
+  supporting: []
+  impl_note: 'impl proves ∃ e₁ e₂ : EpiModel, e₁ ≠ e₂ ∧ coarseGrain e₁ = coarseGrain e₂, which is ¬ Function.Injective coarseGrain in unfolded form; the witnesses ⟨4,1⟩, ⟨10,1⟩ differ only in dim.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CoarseGrain.R7
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 62-63
+  text: '**Result 7.** The excess degree ratio decomposes as: ψ''''(1)/ψ''(1) = κ - 1 + σ²/κ'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_decomposition
+  supporting: []
+  impl_note: impl proves ψ.excessDegree = ψ.mean − 1 + ψ.dispersionIndex for every PGFData ψ (field identity using mean ≠ 0), with variance := secondFactorial + mean − mean² and dispersionIndex := variance/mean. ψ''(1), ψ'(1) are record fields, not derivatives of a PGF. Algebra checked with sympy.
+  required: true
+  status: implemented
+  notes: PGFData admits unrealisable moment pairs (e.g. mean 2, secondFactorial 0 gives variance −2).
+- id: CoarseGrain.R8
+  group: CoarseGrain
+  source:
+    file: EBCMCategory/CoarseGrain.lean
+    lines: 71-71
+  text: '**Result 8.** For Poisson, the dispersion index equals 1.'
+  kind: algebraic-identity
+  impl:
+  - poisson_dispersion_eq_one
+  supporting: []
+  impl_note: impl proves (PGFData.poisson κ hκ).dispersionIndex = 1, i.e. κ/κ = 1. Faithful at the record level.
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definition / intent text only, see DataTypes/CoarseGrain.md):
+#   coarseGrain ("Projects any model to a 3-dimensional node model, preserving R₀." - its body).

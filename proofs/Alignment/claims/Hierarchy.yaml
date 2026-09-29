@@ -1,0 +1,273 @@
+# SA-PASS claim registry fragment: group Hierarchy
+# Source module: EBCMCategory/Hierarchy.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: Hierarchy.header.fullGtPair
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 7-13
+  text: |-
+    Epidemic models are compared here by the state-space dimension of an N-node SIR network model (`levelDim`): Full stochastic (3^N) > Pair approximation (12N)
+    [...]
+    The first inequality holds only for N ≥ 4 (`pair_lt_full`); for N = 3, 3³ = 27 < 36 = 12·3 (`full_lt_pair_three`).
+  kind: inequality
+  impl: []
+  supporting:
+  - meanField_lt_edgeBased
+  - edgeBased_lt_pair
+  impl_note: No theorem compares levelDim .fullStochastic and .pairApproximation. With the library's levelDim (3^N vs 12·N) the strict inequality is false for N = 1, 2, 3 (3 < 12, 9 < 24, 27 < 36) and holds only for N ≥ 4.
+  required: false
+  status: missing
+  notes: 'Module-header claim; the Pair > EBCM > Mean-field links are Results 24 and 23. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Epidemic models form a strict hierarchy of decreasing information content: Full stochastic > Pair approximation -- Candidate impl: pair_lt_full, full_lt_pair_three (new).'
+- id: Hierarchy.header.pairGtEbcmGtMeanField
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 10-10
+  text: Pair approximation (12N) > EBCM (4) > Mean-field SIR (3)
+  kind: inequality
+  impl:
+  - edgeBased_lt_pair
+  - meanField_lt_edgeBased
+  supporting: []
+  impl_note: Results 24 (needs N ≥ 1) and 23; dimension comparisons via levelDim only; 'information content' is proxied by dimension.
+  required: true
+  status: implemented
+  notes: 'Module-header claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Pair approximation > EBCM > Mean-field SIR'
+- id: Hierarchy.header.stepsAreCoarseGrainings
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 13-14
+  text: 'The comparison is by dimension only: no coarse-graining map between the levels is formalised.'
+  kind: categorical
+  impl: []
+  supporting:
+  - coarseGrain_mono
+  impl_note: levelDim is a dimension lookup; no map between levels (e.g. coarseGrain) is related to ModelLevel, and no correlations are formalised.
+  required: false
+  status: missing
+  notes: 'Module-header claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Each step is a coarse-graining that discards correlations.'
+- id: Hierarchy.table.R23
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 20-20
+  text: '| 23 | Mean-field < EBCM |'
+  kind: inequality
+  impl:
+  - meanField_lt_edgeBased
+  supporting: []
+  impl_note: 3 < 4 via levelDim.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R23.
+- id: Hierarchy.table.R24
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 21-21
+  text: '| 24 | EBCM < Pair approximation (for N ≥ 1) |'
+  kind: inequality
+  impl:
+  - edgeBased_lt_pair
+  supporting: []
+  impl_note: 4 < 12·N for N ≥ 1.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R24.
+- id: Hierarchy.table.R25
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 22-22
+  text: '| 25 | EBCM → Mean-field is exact for Poisson networks |'
+  kind: structural
+  impl:
+  - ebcm_to_meanfield_exact_iff_poisson
+  supporting: []
+  impl_note: impl only restates (poisson κ).excessDegree = (poisson κ).mean; 'exact' is not formalised.
+  required: true
+  status: implemented
+  notes: Header-table row; the one-directional content of R25.
+- id: Hierarchy.table.R26
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 23-23
+  text: '| 26 | Every node model has a canonical Poisson lift |'
+  kind: existence
+  impl:
+  - node_lifts_to_edge
+  supporting: []
+  impl_note: Only R₀ equality for node models of the form nodeModel p κ; 'canonical' is not formalised.
+  required: true
+  status: implemented
+  notes: Header-table row; see R26.
+- id: Hierarchy.table.R27
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 24-24
+  text: '| 27 | Excess = mean forces variance = mean (records only) |'
+  kind: structural
+  impl:
+  - poisson_unique_exact_lift
+  supporting: []
+  impl_note: impl concludes ψ.variance = κ, not ψ = PGFData.poisson κ _.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R27. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 27 | Poisson is the unique exact lift |'
+- id: Hierarchy.table.R28
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 25-25
+  text: '| 28 | A Poisson-record lift exists; R₀ kept iff excess = κ |'
+  kind: existence
+  impl:
+  - lift_space_parameterised
+  supporting: []
+  impl_note: Only the existence of one mean-κ PGFData (Poisson); no parameterisation.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R28. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 28 | Lift space is parameterised by mean-matching PGFs | -- Candidate additional impl: edge_lift_R0_eq_iff.'
+- id: Hierarchy.R23
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 52-52
+  text: '**Result 23.** Mean-field has fewer variables than EBCM.'
+  kind: inequality
+  impl:
+  - meanField_lt_edgeBased
+  supporting: []
+  impl_note: 'impl: ∀ N, levelDim .meanField N < levelDim .edgeBased N (3 < 4). Faithful at the dimension level.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Hierarchy.R24
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 57-57
+  text: '**Result 24.** EBCM has fewer variables than pair approximation for N ≥ 1.'
+  kind: inequality
+  impl:
+  - edgeBased_lt_pair
+  supporting: []
+  impl_note: 'impl: 1 ≤ N → levelDim .edgeBased N < levelDim .pairApproximation N (4 < 12·N). Faithful given the library''s choice of 12·N pair-approximation variables.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Hierarchy.R25
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 65-65
+  text: '**Result 25.** The EBCM → Mean-field step is exact iff Poisson.'
+  kind: equivalence
+  impl:
+  - ebcm_to_meanfield_exact_iff_poisson
+  supporting:
+  - PGFData.poisson_excess_eq_mean
+  impl_note: impl proves only (PGFData.poisson κ hκ).excessDegree = (PGFData.poisson κ hκ).mean, a restatement of EpiCategory Result 1. There is no notion of the step being 'exact', no converse direction and no biconditional, despite the theorem name.
+  required: true
+  status: implemented
+  notes: Strong text-vs-statement gap ('iff' claimed, one special-case identity proved).
+- id: Hierarchy.R26
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 76-77
+  text: '**Result 26.** Every node model lifts to an edge model via Poisson, preserving R₀.'
+  kind: existence
+  impl:
+  - node_lifts_to_edge
+  supporting:
+  - poisson_R0_agree
+  impl_note: 'impl: (nodeModel p κ).R0 = (edgeModel p (PGFData.poisson κ hκ)).R0 for SIRParams p and κ > 0 (identical statement to poisson_R0_agree). Only node models of the form nodeModel p κ are covered, not arbitrary EpiModel values; ''lifts'' is not formalised beyond R₀ equality (poissonLift is not used).'
+  required: true
+  status: implemented
+  notes: ''
+- id: Hierarchy.R27
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 82-87
+  text: '**Result 27.** For a two-moment record with mean κ, excess degree = mean forces variance = mean, so the record is the Poisson record `poisson κ` (`PGFData.dispersionIndex_eq_one_iff`). This does not make Poisson the unique degree distribution with excess degree = mean: ψ(u) = (1 + u²)/2 has ψ''''(1)/ψ''(1) = 1 = ψ''(1) and is not Poisson.'
+  kind: structural
+  impl:
+  - poisson_unique_exact_lift
+  supporting:
+  - excess_degree_decomposition
+  impl_note: 'impl: for ψ with ψ.mean = κ and ψ.excessDegree = κ, concludes ψ.variance = κ — not ψ = PGFData.poisson κ hκ. Within the two-moment record the stronger uniqueness would be provable, but for genuine degree distributions uniqueness is false: any non-Poisson law with variance = mean has excess degree = mean.'
+  required: true
+  status: implemented
+  notes: 'Uniqueness is not what is proved. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 27.** The Poisson lift is the UNIQUE PGF for which excess degree = mean (the exactness condition).'
+- id: Hierarchy.R28
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 102-105
+  text: '**Result 28.** Some PGF record with mean κ (the Poisson record) gives an edge model with R₀ = T·ψ''''(1)/ψ''(1). Matching the mean does not preserve R₀: the edge model of a record ψ has the node model''s R₀ T·κ iff ψ''''(1)/ψ''(1) = κ (`edge_lift_R0_eq_iff`).'
+  kind: existence
+  impl:
+  - lift_space_parameterised
+  supporting: []
+  impl_note: 'impl: ∃ ψ, ψ.mean = κ ∧ (edgeModel p ψ).R0 = p.transmissibility * ψ.excessDegree, witnessed by Poisson. The second conjunct holds by definition for every ψ, so the theorem only asserts that a mean-κ PGFData exists; no parameterisation (a correspondence between lifts and mean-matching PGFs) is stated.'
+  required: true
+  status: implemented
+  notes: 'Near-vacuous formalisation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 28.** The lift space is parameterised by PGFs with matching mean. -- Candidate impl: lift_space_parameterised ∧ edge_lift_R0_eq_iff.'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions only, see DataTypes/Hierarchy.md): ModelLevel, levelDim
+#   ("State-space dimension at each level for an N-node SIR network model.").
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: Hierarchy.edgeLiftR0EqIff
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 111-112
+  text: The edge model of a record ψ has the R₀ of the node model with mean degree κ iff ψ''(1)/ψ'(1) = κ.
+  kind: equivalence
+  impl:
+  - edge_lift_R0_eq_iff
+  supporting: []
+  impl_note: (edgeModel p ψ).R0 = (nodeModel p κ).R0 ↔ ψ.excessDegree = κ, for every SIRParams p.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: Hierarchy.pairLtFull
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 120-121
+  text: 'The pair approximation has fewer variables than the full stochastic model for N ≥ 4: 12N < 3^N.'
+  kind: inequality
+  impl:
+  - pair_lt_full
+  supporting: []
+  impl_note: 4 ≤ N → levelDim .pairApproximation N < levelDim .fullStochastic N.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: Hierarchy.fullLtPairThree
+  group: Hierarchy
+  source:
+    file: EBCMCategory/Hierarchy.lean
+    lines: 131-132
+  text: 'For N = 3 the full stochastic model has fewer variables than the pair approximation: 3³ = 27 < 36 = 12·3.'
+  kind: inequality
+  impl:
+  - full_lt_pair_three
+  supporting: []
+  impl_note: levelDim .fullStochastic 3 < levelDim .pairApproximation 3.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

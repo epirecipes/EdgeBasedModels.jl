@@ -11,10 +11,8 @@ Q(l|k) = l·p_l/⟨k⟩, independent of k (neutral mixing).
 
 ## References
 
-* Wang Y, Ma J, Cao J (2019). Edge-based epidemic spreading in
+* Wang Y, Ma J, Cao J, Li L (2018). Edge-based epidemic spreading in
   degree-correlated complex networks. J Theor Biol 454:164–181.
-* Koch D, Britton T (2020). An edge-based model of SEIR epidemics
-  on static random networks. Bull Math Biol 82:96.
 * Newman MEJ (2002). Assortative mixing in networks. Phys Rev Lett 89:208701.
 -/
 
@@ -71,16 +69,19 @@ theorem uncorrelated_R0_formula (T : ℝ) (d : DegreeMomentData) :
 
 /-! ## Result 81: R₀ for correlated network (spectral)
 
-For a degree-correlated network, R₀ = T · ρ(C) where ρ(C) is the spectral
-radius (largest eigenvalue) of the mixing matrix C_{kl} = k · Q(l|k).
+For a degree-correlated network, R₀ = T · ρ(D) where ρ(D) is the spectral
+radius (largest eigenvalue) of the next-generation matrix
+D_{kl} = (l − 1) · Q(l|k) (Wang, Ma, Cao and Li 2018, J Theor Biol).
+Equivalently R₀ = T · ρ(K) with K_{kl} = (k − 1) · Q(l|k), the matrix used
+by the Julia `correlated_R0`: with Δ = diag(k − 1), D = QΔ and K = ΔQ have the
+same spectral radius. Under neutral mixing, Q(l|k) = l·p_l/⟨k⟩, K has rank
+one and ρ(K) = ⟨k(k−1)⟩/⟨k⟩, which recovers Result 80. (The mixing matrix
+C_{kl} = k · Q(l|k) would give ⟨k²⟩/⟨k⟩ instead, which is off by one.)
 
-This is stated axiomatically; the eigenvalue computation requires
-linear algebra beyond simple algebraic identities. -/
-
-/-- **Result 81.** R₀ for a degree-correlated network is T times the spectral radius
-of the mixing matrix C_{kl} = k·Q(l|k). Stated as an axiom. -/
-axiom correlated_R0_spectral (T spectralRadius : ℝ) :
-    T * spectralRadius = T * spectralRadius
+**Result 81** (not formalised). This library formalises no spectral radius,
+so the statement has no Lean counterpart. (The former axiom
+`correlated_R0_spectral`, which stated `T * ρ = T * ρ`, was content-free and
+has been removed.) -/
 
 /-! ## Result 82: Two-degree mixing matrix
 
@@ -90,7 +91,12 @@ and assortative parameter r ∈ [0,1]:
   C = [[k₁·(r + (1-r)·q₁),  k₁·(1-r)·q₂],
        [k₂·(1-r)·q₁,         k₂·(r + (1-r)·q₂)]]
 
-where q_i = k_i·p_i/⟨k⟩ are the excess-degree probabilities. -/
+where q_i = k_i·p_i/⟨k⟩ are the excess-degree probabilities. C_{kl} = k·Q(l|k)
+with Q(l|k) = r·δ_{kl} + (1-r)·q_l is the expected number of degree-l
+neighbours of a degree-k node. C is not the next-generation matrix: R₀ =
+T·ρ(K) with K_{kl} = (k-1)·Q(l|k) (Result 81; `TwoDegreeData.K11` …). At
+r = 0, ρ(C) = ⟨k²⟩/⟨k⟩ while ρ(K) = ⟨k(k-1)⟩/⟨k⟩, one less
+(`neutral_traceC_sub_traceK`). -/
 
 /-- Data for a 2×2 assortative mixing matrix. -/
 structure TwoDegreeData where
@@ -126,7 +132,8 @@ def TwoDegreeData.q1 (d : TwoDegreeData) : ℝ :=
 def TwoDegreeData.q2 (d : TwoDegreeData) : ℝ :=
   d.k2 * d.p2 / d.meanDeg
 
-/-- **Result 82.** The four entries of the 2×2 mixing matrix. -/
+/-- **Result 82.** The four entries of the 2×2 mixing matrix C_{kl} = k·Q(l|k)
+    (not the next-generation matrix; see `TwoDegreeData.K11`). -/
 def TwoDegreeData.C11 (d : TwoDegreeData) : ℝ :=
   d.k1 * (d.r + (1 - d.r) * d.q1)
 
@@ -274,8 +281,9 @@ theorem detailed_balance_col2 (d : TwoDegreeData) :
 /-! ## Result 86: Trace and determinant of the mixing matrix
 
 For the 2×2 mixing matrix, the eigenvalues can be expressed via the trace
-and determinant. These algebraic identities are needed for the spectral
-R₀ computation. -/
+and determinant. These identities concern the mixing matrix C; the
+spectral R₀ uses K_{kl} = (k-1)·Q(l|k) = C_{kl} - Q(l|k) instead (see the
+section on K below). -/
 
 /-- Trace of the 2×2 mixing matrix. -/
 def TwoDegreeData.trC (d : TwoDegreeData) : ℝ :=
@@ -365,5 +373,55 @@ theorem neutral_largest_eigenvalue (d : TwoDegreeData) (hr : d.r = 0)
   rcases mul_eq_zero.mp h with h0 | h0
   · left; exact h0
   · right; linarith
+
+/-! ## Next-generation matrix K = (k − 1)·Q
+
+R₀ = T·ρ(K) with K_{kl} = (k − 1)·Q(l|k) (Result 81), not T·ρ(C). The
+identities below show that at r = 0, K has rank one and trace ⟨k(k−1)⟩/⟨k⟩,
+one less than the trace ⟨k²⟩/⟨k⟩ of C. -/
+
+/-- Entry (1,1) of the next-generation matrix: K₁₁ = (k₁ − 1)·(r + (1 − r)·q₁). -/
+def TwoDegreeData.K11 (d : TwoDegreeData) : ℝ :=
+  (d.k1 - 1) * (d.r + (1 - d.r) * d.q1)
+
+/-- Entry (1,2) of the next-generation matrix: K₁₂ = (k₁ − 1)·(1 − r)·q₂. -/
+def TwoDegreeData.K12 (d : TwoDegreeData) : ℝ :=
+  (d.k1 - 1) * (1 - d.r) * d.q2
+
+/-- Entry (2,1) of the next-generation matrix: K₂₁ = (k₂ − 1)·(1 − r)·q₁. -/
+def TwoDegreeData.K21 (d : TwoDegreeData) : ℝ :=
+  (d.k2 - 1) * (1 - d.r) * d.q1
+
+/-- Entry (2,2) of the next-generation matrix: K₂₂ = (k₂ − 1)·(r + (1 − r)·q₂). -/
+def TwoDegreeData.K22 (d : TwoDegreeData) : ℝ :=
+  (d.k2 - 1) * (d.r + (1 - d.r) * d.q2)
+
+/-- Under neutral mixing (r = 0), det K = 0: K has rank one. -/
+theorem neutral_detK (d : TwoDegreeData) (hr : d.r = 0) :
+    d.K11 * d.K22 - d.K12 * d.K21 = 0 := by
+  unfold TwoDegreeData.K11 TwoDegreeData.K12 TwoDegreeData.K21 TwoDegreeData.K22
+  rw [hr]
+  ring
+
+/-- Under neutral mixing (r = 0), tr K = ⟨k(k−1)⟩/⟨k⟩. Since det K = 0, this is
+    the largest eigenvalue of K, so R₀ = T·⟨k(k−1)⟩/⟨k⟩ (Result 80). -/
+theorem neutral_traceK (d : TwoDegreeData) (hr : d.r = 0) :
+    d.K11 + d.K22 =
+      (d.k1 * (d.k1 - 1) * d.p1 + d.k2 * (d.k2 - 1) * d.p2) / d.meanDeg := by
+  unfold TwoDegreeData.K11 TwoDegreeData.K22 TwoDegreeData.q1 TwoDegreeData.q2
+  rw [hr]
+  have hM : d.meanDeg ≠ 0 := ne_of_gt d.meanDeg_pos
+  field_simp
+  ring
+
+/-- Under neutral mixing (r = 0), tr C − tr K = 1: the mixing matrix C = k·Q
+    overstates the largest eigenvalue of the next-generation matrix by one. -/
+theorem neutral_traceC_sub_traceK (d : TwoDegreeData) (hr : d.r = 0) :
+    d.trC - (d.K11 + d.K22) = 1 := by
+  have hq := q_sum_one d
+  unfold TwoDegreeData.trC TwoDegreeData.C11 TwoDegreeData.C22
+    TwoDegreeData.K11 TwoDegreeData.K22
+  rw [hr]
+  linear_combination hq
 
 end

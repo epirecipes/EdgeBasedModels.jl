@@ -1,0 +1,66 @@
+name: Vignettes
+
+# Builds the HTML vignettes from the committed _freeze/ (no Julia needed: every page is
+# frozen, so a project-wide `quarto render` only re-assembles the executed results) and
+# publishes them to the gh-pages branch under vignettes/. Pull requests only build.
+#
+# If a page's .qmd changed without re-rendering it locally, its freeze entry is stale and
+# Quarto would try to execute it; the "no stale freeze" step fails the job instead.
+
+on:
+  push:
+    branches: [main]
+    paths: ["vignettes/**", ".github/workflows/vignettes.yml"]
+  pull_request:
+    paths: ["vignettes/**", ".github/workflows/vignettes.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vignettes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Render HTML from _freeze (no code execution)
+        working-directory: vignettes
+        run: |
+          # Julia is not installed: a page with a stale or missing freeze entry makes this fail loudly.
+          quarto render --to html 2>&1 | tee render.log
+          if grep -qiE 'julia server|EvaluationError|Starting julia' render.log; then
+            echo "::error::a vignette tried to execute code; re-render it locally and commit its _freeze/ entry"
+            exit 1
+          fi
+
+      - name: No stale freeze
+        run: git diff --exit-code -- vignettes/_freeze
+
+      - name: Collect site
+        run: |
+          mkdir -p _site
+          cd vignettes
+          find . -name index.html -not -path './_freeze/*' -print0 |
+            while IFS= read -r -d '' f; do mkdir -p "../_site/$(dirname "$f")"; cp "$f" "../_site/$f"; done
+          ls -R ../_site | head -50
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vignettes-html
+          path: _site
+
+      - name: Publish to gh-pages/vignettes
+        if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          destination_dir: vignettes
+          keep_files: true

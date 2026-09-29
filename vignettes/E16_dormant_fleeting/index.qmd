@@ -1,0 +1,291 @@
+---
+title: "E16. Dormant contacts and fleeting heterogeneous contacts (DVD, MFSH)"
+subtitle: "Partnerships that pause and resume, and their fast limit: mean-field social heterogeneity"
+---
+
+## What this page shows
+
+In the neighbour-exchange network of [E09](../E09_dynamic_partnerships/index.qmd) a broken edge
+is replaced at once. In the **dormant-contact** (DC) model of Miller and Volz (arXiv:1106.6319,
+Part II §3.2.4) a node has k_m stubs, and each stub is either *active* (half of an edge) or
+*dormant*. An active edge breaks at rate η₂ = η_break and both stubs go dormant. A dormant stub
+reactivates at rate η₁ = η_form by pairing with another reactivating stub. In the limit η₁ → 0,
+with degrees scaled up, this is the dynamic variable-degree (DVD) model. When η₁ = η₂ → ∞ every
+contact is fleeting, and the model tends to **mean-field social heterogeneity** (MFSH): each node
+has an activity k, but meets a new random partner at every contact
+[@miller2012edge; arXiv:1106.6320 §3.1]. EdgeBasedModels lifts any T_EB model to both:
+`DynamicNetwork(base, DormantContacts(η_form, η_break))` and `MFSHNetwork(d)`. This page:
+
+1. builds the dormant-contact SIR of MSV's Figure 5 twice and prints its equations;
+2. compares it with NetworkOutbreaks' `DormantContactProcess` on `:sir_dormant_msv` and
+   `:sir_dormant_dvd`;
+3. shows the fast limit `:sir_dormant_fast` → MFSH with per-contact rate τA;
+4. compares MFSH with NetworkOutbreaks' fleeting-contact SSA on `:sir_mfsh_pois5` and
+   `:sir_mfsh_msv`, including a residual offset at N = 10⁴;
+5. shows MFSH as the η → ∞ limit of neighbour exchange on a Poisson base.
+
+## The shared first cell
+
+```{julia}
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using Statistics
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+sir = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I        # contact: per-contact (per-edge) rate τ; S converted, I unchanged
+    γ, I --> R             # node-local transition
+end
+model = contact_model(sir)          # prints the typing report
+sc    = scenario(:sir_dormant_msv)  # k_m ∈ {2, 8} (½ each), η_form = η_break = 1, τ = γ = 1
+@assert isequivalent(model, sc.model)
+ref   = scenario_summary(sc)        # committed NetworkOutbreaks ensemble (DormantContactProcess)
+# --- EBM vignette ---------------------------------------------------------------
+using EdgeBasedModels
+net   = DynamicNetwork(EmpiricalDegree(2 => 0.5, 8 => 0.5), DormantContacts(η_form = 1, η_break = 1))
+sys   = edge_based(model, net)                             # low level
+sysF  = build_sir(net, :τ, :γ)                             # factory
+@assert vector_fields_equal(symbolic_ode(sys), symbolic_ode(sysF))
+lift_contributions(model, net)                             # per-reaction terms and the dormant-contact process
+```
+
+## The dormant-contact equations
+
+At stationarity, which the model assumes at t = 0, a stub is active with probability
+A = η₁/(η₁ + η₂) and dormant with probability D = η₂/(η₁ + η₂). The coordinates are:
+
+- θ = Aθ_A + Dθ_D, the probability that a stub has not transmitted to its node, given active
+  (θ_A) or dormant (θ_D);
+- χ, the partnership memory: φ_S = χ q ψ′(θ)/ψ′(1);
+- φ_X, an active stub has not transmitted and is joined to an X node;
+- α_X and π_X, the fractions of active and of dormant stubs that belong to X nodes.
+
+```{julia}
+symbolic_ode(sys)
+```
+
+Both rates enter the field. With symbolic η's the parameters of the lifted system are:
+
+```{julia}
+η₁, η₂ = as_parameter(:η₁), as_parameter(:η₂)          # symbolic parameters
+syss = edge_based(model, DynamicNetwork(EmpiricalDegree(2 => 0.5, 8 => 0.5), DormantContacts(η₁, η₂)))
+symbolic_ode(syss).parameters
+```
+
+With η_break = 0 no edge ever breaks, and the model is the static configuration model:
+
+```{julia}
+tol = (; reltol = 1e-10, abstol = 1e-12)
+grid = sc.tgrid
+static_dc = edge_based(model, DynamicNetwork(EmpiricalDegree(2 => 0.5, 8 => 0.5), DormantContacts(η_form = 1, η_break = 0)))
+static_cm = edge_based(model, ConfigurationNetwork(EmpiricalDegree(2 => 0.5, 8 => 0.5)))
+run(y, s = sc; label = "") = model_curves(y, solve_epidemic(y, s; tol...); t = s.tgrid, label)
+maximum(abs.(run(static_dc)[:I] .- run(static_cm)[:I]))
+```
+
+The EdgeBasedModels test suite checks the field symbolically against a hand transcription of
+MSV's DC equations.
+
+## Against the dormant-contact process
+
+```{julia}
+det = run(sys; label = "edge-based (dormant contacts)")
+comparisonplot(ref, det; observables = [:I, :cumulative])
+```
+
+```{julia}
+reference_note(sc, ref)
+```
+
+```{julia}
+compare(ref, det)
+```
+
+The DVD regime, `:sir_dormant_dvd`, has slow reformation (η_form = 0.1, η_break = 1, so A = 1/11)
+and stub numbers {11, 44}. A node has on average k_m A active partners, the degrees {1, 4} of
+the DVD network in MSV's Figure 5:
+
+```{julia}
+sd = scenario(:sir_dormant_dvd)
+@assert isequivalent(model, sd.model)
+refd = scenario_summary(sd)
+sysd = edge_based(model, sd.network)
+detd = run(sysd, sd; label = "edge-based (dormant contacts, DVD regime)")
+comparisonplot(refd, detd; observables = [:I, :cumulative])
+```
+
+```{julia}
+reference_note(sd, refd)
+```
+
+```{julia}
+compare(refd, detd; observables = [:S, :I, :R, :cumulative])
+```
+
+## The fast limit: dormant contacts → MFSH
+
+If both rates grow at the same speed, a stub changes partner infinitely often and is active a
+fraction A of the time. The limit is MFSH with per-contact rate τA. For `:sir_dormant_fast`,
+η₁ = η₂ = 10, so A = 1/2 and τA = 1/2. That is the MFSH scenario `:sir_mfsh_msv`:
+
+The shared recipe `comparisonplot` styles every curve by its representation, so two edge-based
+curves would come out in the same colour. `style_curves!` gives each curve of a comparison figure its
+own colour and dash, in the order the curves were passed:
+
+```{julia}
+"""
+    style_curves!(p, styles) -> p
+
+Give the model curves of a `comparisonplot` figure `p` their own line colours and styles.
+`styles` holds one `(linecolor, linestyle)` pair per curve, in the order the curves were passed.
+The recipe draws the curves last in every panel, so they are the last `length(styles)` series of
+each subplot; the labels of the first panel are checked against `labels`.
+"""
+function style_curves!(p, styles, labels)
+    n = length(styles)
+    first_labels = [s[:label] for s in p.subplots[1].series_list[end-n+1:end]]
+    first_labels == collect(labels) ||
+        error("style_curves!: the last series of the first panel are $(first_labels), not $(labels)")
+    for sp in p.subplots, (k, (lc, ls)) in enumerate(styles)
+        s = sp.series_list[end-n+k]
+        s[:linecolor] = Plots.plot_color(lc)
+        s[:linestyle] = ls
+    end
+    return p
+end
+```
+
+```{julia}
+sf = scenario(:sir_dormant_fast)
+refF = scenario_summary(sf)
+sm = scenario(:sir_mfsh_msv)
+@assert sm.network.degrees == sf.network.base.degrees && sm.params[:τ] == sf.params[:τ] / 2
+detF = run(edge_based(model, sf.network), sf; label = "edge-based DC, η₁ = η₂ = 10")
+detM = run(edge_based(model, sm.network), sm; label = "MFSH, τA = 1/2")
+p = comparisonplot(refF, detF, detM; observables = [:I, :cumulative])
+style_curves!(p, [(:royalblue, :solid), (:crimson, :dash)], [detF.label, detM.label])
+```
+
+```{julia}
+reference_note(sf, refF)
+```
+
+```{julia}
+compare(refF, detF, detM; observables = [:I, :cumulative])
+```
+
+At η = 10 the DC model has not yet reached its limit. Its distance from MFSH shrinks as both
+rates grow:
+
+```{julia}
+basem = EmpiricalDegree(2 => 0.5, 8 => 0.5)
+dc_gap(η) = maximum(abs.(run(edge_based(model, DynamicNetwork(basem, DormantContacts(η_form = η, η_break = η))), sf)[:I] .- detM[:I]))
+ηs = [1.0, 10.0, 100.0, 1000.0]
+gaps = dc_gap.(ηs)
+mdtable(["η₁ = η₂", "largest gap in I to MFSH"], collect(zip(ηs, gaps)))
+```
+
+```{julia}
+gaps[1:end-1] ./ gaps[2:end]
+```
+
+The ratios approach 10 per decade of η, so the distance to MFSH decays like 1/η.
+
+## Mean-field social heterogeneity
+
+MFSH needs only θ (the probability that a stub has never transmitted to its node), π_X (the
+fraction of stubs belonging to X nodes) and the node fractions. Every contact is with a fresh
+random stub, so φ_X = θπ_X:
+
+```{julia}
+mf = scenario(:sir_mfsh_pois5)       # Poisson(5) activity, τ = 1/12, γ = 1/4
+@assert isequivalent(model, mf.model)
+refm = scenario_summary(mf)
+sysm = edge_based(model, MFSHNetwork(PoissonDegree(5)))
+@assert vector_fields_equal(symbolic_ode(sysm), symbolic_ode(build_sir(MFSHNetwork(PoissonDegree(5)), :τ, :γ)))
+lift_contributions(model, mf.network)
+```
+
+NetworkOutbreaks simulates it exactly with a *fleeting-contact* SSA (algorithm `:fleeting`): a
+node of activity k makes contacts at rate τk, each with the owner of a uniformly random stub.
+
+```{julia}
+detm = run(sysm, mf; label = "MFSH")
+comparisonplot(refm, detm; observables = [:I, :cumulative])
+```
+
+```{julia}
+reference_note(mf, refm)
+```
+
+```{julia}
+tabm = compare(refm, detm)
+```
+
+```{julia}
+refm2 = scenario_summary(sm)
+reference_note(sm, refm2)
+```
+
+```{julia}
+tabm2 = compare(refm2, detM)
+```
+
+```{julia}
+#| echo: false
+a, b = tabm["MFSH", :I], tabm2[detM.label, :I]
+Markdown.parse(@sprintf("Both pass the `:exact_limit` rule (D∞(I) = %.4f and %.4f, ΔR∞ = %+.5f and %+.5f). On `:sir_mfsh_pois5`, however, z∞ is %.2f on I and %.2f on S, while the final size agrees within its confidence interval. This is consistent with a finite-size offset of the fleeting-contact SSA at N = 10⁴, but this page does not show it: N-scaled summaries of the `:sir_mfsh_*` scenarios are not committed, so the N dependence is not demonstrated here. (EdgeBasedModels' test suite, `test/suites/mfsh.jl`, reruns this scenario at N = 4·10⁴ with 100 runs and requires D∞ < 0.005 and z∞ < 4 on every observable. Those bounds are weak evidence for the offset: at N = 10⁴, D∞(I) = %.4f and D∞(S) = %.4f, and z∞(I) = %.2f is already below 4.)",
+    a.D∞, b.D∞, a.ΔR∞, b.ΔR∞, a.z∞, tabm["MFSH", :S].z∞, a.D∞, tabm["MFSH", :S].D∞, a.z∞))
+```
+
+The threshold and final size of MFSH come from its own next-generation matrix and fixed point:
+R₀ = τ(κ_ex + 1)/γ = τ E[k²]/(E[k]γ):
+
+```{julia}
+mdtable(["scenario", "R₀ (formula)", "R₀ (EBCM)", "R₀ (registry)", "final size (fixed point)", "R(t_end), ODE", "NO mean final size"],
+        [(string("`:", s.id, "`"), s.params[:τ] * (excess_degree(s.network.degrees) + 1) / s.params[:γ],
+          basic_reproduction_number(y; p = s.params), s.expected[:R0],
+          final_size(y; p = s.params, initial = s.initial), c[:cumulative][end], mean(r.final_size[r.major]))
+         for (s, y, c, r) in ((mf, sysm, detm, refm), (sm, edge_based(model, sm.network), detM, refm2))])
+```
+
+## MFSH as the η → ∞ limit of neighbour exchange on a Poisson base
+
+On a Poisson(5) base, neighbour exchange at rate η (E09) tends to MFSH with Poisson(5) activity,
+not to mass action. The committed scenario at η = 10 is `:sir_ne_pois5_eta10`. Larger η are
+solved without simulation:
+
+```{julia}
+pbase = ConfigurationNetwork(PoissonDegree(5))
+ne_gap(η) = maximum(abs.(run(edge_based(model, DynamicNetwork(pbase, NeighbourExchange(η))), mf)[:I] .- detm[:I]))
+ηn = [1.0, 10.0, 100.0, 1000.0]
+gn = ne_gap.(ηn)
+mdtable(["η", "largest gap in I to MFSH"], collect(zip(ηn, gn)))
+```
+
+```{julia}
+gn[1:end-1] ./ gn[2:end]
+```
+
+Again the gap falls by a factor approaching 10 per decade of η. The committed η = 10 ensemble
+follows the finite-η model (see the comparison table on [E09](../E09_dynamic_partnerships/index.qmd)).
+
+```{julia}
+sp = scenario(:sir_ne_pois5_eta10)
+refp = scenario_summary(sp)
+detp = run(edge_based(model, sp.network), sp; label = "edge-based DFD, η = 10")
+detp1000 = run(edge_based(model, DynamicNetwork(pbase, NeighbourExchange(1000.0))), sp; label = "edge-based DFD, η = 1000")
+p = plot(refm, :I; median = false, title = "neighbour exchange → MFSH (Poisson(5) base); SSA: :sir_mfsh_pois5")
+plot!(p, detp, :I; linecolor = :orange, linestyle = :solid)
+plot!(p, detp1000, :I; linecolor = :royalblue, linestyle = :dash)
+plot!(p, detm, :I; linecolor = :black, linestyle = :dot, linewidth = 3)
+xlims!(p, 0, 60)
+```
+
+## Lean
+
+None of the dynamic-network statements on this page is formalised.
+
+## References
+
+::: {#refs}
+:::

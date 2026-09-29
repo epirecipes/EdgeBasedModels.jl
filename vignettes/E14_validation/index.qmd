@@ -1,0 +1,285 @@
+---
+title: "E14. Validation methodology"
+subtitle: "How the reference ensembles are built, hashed and cached; what the comparison statistics mean; and how the error scales with N"
+---
+
+## What this page shows
+
+Every other page compares an edge-based model with a NetworkOutbreaks ensemble through the same
+three calls: `scenario_summary(sc)`, `comparisonplot(ref, curves...)` and `compare(ref, curves...)`.
+This page explains what stands behind them:
+
+1. how a reference ensemble is defined, run, conditioned, summarised, hashed and cached, and why
+   a page cannot silently use a stale one;
+2. what the statistics of `compare` are, and how the two bands of `comparisonplot` differ;
+3. the edge-based model against every committed scenario it is declared exact for, in one table;
+4. the N-scaling protocol, which separates "exact in the large-N limit" from "biased".
+
+It mirrors NodeBasedModels' page N13. The simulation side is documented in NetworkOutbreaks'
+validation vignette (`NetworkOutbreaks.jl/vignettes/05_validation`).
+
+## The shared first cell
+
+```{julia}
+#| label: shared-cell
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+sir = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I        # contact: per-contact (per-edge) rate τ; S converted, I unchanged
+    γ, I --> R             # node-local transition
+end
+model = contact_model(sir)          # prints the typing report (B.1)
+sc    = scenario(:sir_pois5)        # Poisson(5), τ = 1/6, γ = 1/4, 1% seeds in I, t ∈ [0, 60]
+@assert isequivalent(model, sc.model)
+ref   = scenario_summary(sc)        # committed NO ensemble: N = 10⁴, 200 runs, a fresh G(N, p) graph per run
+# --- EBM vignette ---------------------------------------------------------------
+using EdgeBasedModels
+sys   = edge_based(model, sc.network)                      # low level
+sysF  = build_sir(PoissonDegree(5), :τ, :γ)                # factory (demonstration only; see A.6)
+@assert vector_fields_equal(symbolic_ode(sys), symbolic_ode(sysF))
+lift_contributions(model, sc.network)                      # table: per-reaction θ̇, φ̇, pop′ terms
+# --- both -------------------------------------------------------------------------
+sol = solve_epidemic(sys, sc)                              # p, initial, tspan, saveat all from the scenario
+det = model_curves(sys, sol; t = sc.tgrid, label = "edge-based")   # back end
+comparisonplot(ref, det; observables = [:I, :cumulative])  # top: spread ribbon + mean + curve; bottom: residual ± 1.96 SE
+compare(ref, det)                                          # D∞, z∞, ΔR∞ (95% CI), Δpeak, Δt_peak
+```
+
+## 1. What a scenario is, and how its ensemble is built
+
+A `Scenario` is pure data: model, network, parameters, seeding, time grid, observables, the
+simulation settings `SimConfig`, the verdict for each back end, tags, and expected values that
+NetworkEpiCore computes when the registry is built.
+
+```{julia}
+println(sc.title)
+println("sim:      ", sc.sim)
+println("backends: ", sort(collect(sc.backends); by = first))
+println("expected: ", sort(collect(sc.expected); by = first))
+println("tgrid:    ", first(sc.tgrid), ":", step(sc.tgrid), ":", last(sc.tgrid))
+```
+
+The simulation settings follow one protocol for every scenario:
+
+- **Population and runs.** N = 10⁴ nodes and 200 runs, with a fresh graph for every run. The
+  runs are then independent and identically distributed, so the standard error of the mean is
+  sd/√n. The expensive dynamic scenarios use N = 5000 and 100 runs.
+- **Streams.** Graph r and SSA run r draw from `NetworkOutbreaks.stable_rng(base_seed + r)` and
+  `stable_rng(base_seed + 2³² + r)`. These are StableRNGs seeded through splitmix64, because
+  adjacent raw seeds of a StableRNG are correlated. The algorithm is NextReaction, or mass action
+  and fleeting-contact SSAs where the scenario says so.
+- **Seeding.** Exactly ρN seed nodes, chosen uniformly without replacement. The `Scenario`
+  constructor requires ρN to be an integer, so the deterministic and stochastic seedings are the
+  same.
+- **Conditioning.** SIR-type scenarios keep the *major* runs, those whose incidence (excluding
+  seeds) reaches 0.05 N by the end (`MajorOutbreak(0.05)`). SIS and SIRS keep the runs still
+  infected at the end (`Survival()`). Summaries store both conditioned and unconditioned
+  statistics, and P(major) with a 95% Wilson interval.
+- **Alignment.** Alignment is off for canonical scenarios: with a fixed fraction ρ of seeds the
+  large-N limit is the ODE from the same ρ, with no random delay at leading order. The
+  small-seed scenarios shift each run to cross 2% incidence at the deterministic crossing time
+  (`CumulativeCrossing(0.02)`) and are also stored unaligned (see
+  [E07](../E07_final_size/index.qmd)).
+
+### Hashing and the strict cache
+
+A scenario is hashed from its canonical text: a versioned, line-based rendering with sorted keys
+and every real printed to 17 significant digits. Neither `Base.hash` nor `repr` is used. The
+cache key is (scenario hash, `NetworkOutbreaks.ALGORITHM_REVISION`), and both are stored in the
+committed file:
+
+```{julia}
+txt = canonical_text(sc)
+println(join(first(split(txt, '\n'), 12), '\n'), "\n… (", length(split(txt, '\n')), " lines)")
+```
+
+```{julia}
+(; scenario_hash = scenario_hash(sc), in_summary = ref.scenario_hash,
+   algorithm_revision = NetworkOutbreaks.ALGORITHM_REVISION, summary_revision = ref.algorithm_revision)
+```
+
+```{julia}
+ref.provenance
+```
+
+The pages are rendered with `NETEPI_STRICT_CACHE=1`, so a missing or stale summary is an error,
+never a silent fallback to a user cache or a fresh simulation. Changing anything about the
+scenario, even only the number of runs, changes the hash:
+
+```{julia}
+alt = derive(sc; id = :sir_pois5_demo, nsims = 7)
+println("hash of the derived scenario: ", scenario_hash(alt)[1:8], " (was ", scenario_hash(sc)[1:8], ")")
+try
+    scenario_summary(alt)
+catch e
+    print(sprint(showerror, e))
+end
+```
+
+### What a summary holds
+
+```{julia}
+(; id = ref.id, N = ref.N, nsims = ref.nsims, n_major = ref.n_major, p_major = ref.p_major,
+   p_major_ci = ref.p_major_ci, observables = ref.observables, grid = length(ref.t),
+   statistics = keys(ref.cond[:I]), realised = keys(ref.realised))
+```
+
+Each run also records the realised degree statistics of its graph. For the Poisson(5) scenario
+(Erdős–Rényi graphs):
+
+```{julia}
+using Statistics
+mdtable(["statistic", "nominal", "mean over runs", "sd over runs"],
+        [("mean degree", mean_degree(sc.network), mean(ref.realised[:mean_degree]), std(ref.realised[:mean_degree])),
+         ("excess degree", excess_degree(sc.network), mean(ref.realised[:excess_degree]), std(ref.realised[:excess_degree]))])
+```
+
+## 2. The comparison statistics and the two bands
+
+`compare(ref, curves...)` evaluates, for each curve and observable, on the summary's grid:
+
+- D∞ = max_t |x_det(t) − x̄(t)| and its argmax t(D∞), where x̄ is the conditioned mean;
+- SE∞, the largest standard error of the mean on the grid, and
+  z∞ = max_t |x_det − x̄| / max(se, 10⁻⁴);
+- ΔR∞ = R_det(t_end) − mean(final size), with its 95% interval ±1.96 sd/√n;
+- Δpeak and Δt_peak, the differences of the peak heights and peak times;
+- the coverage, the fraction of the grid where |x_det − x̄| ≤ 1.96 se.
+
+```{julia}
+tab = compare(ref, det)        # `det` is the edge-based curve of the shared first cell
+```
+
+`comparisonplot` draws two rows. The top row has the **spread** band, the pointwise q2.5–q97.5 of
+the individual runs, which says where a single epidemic lies. The bottom row has the **mean**
+band ±1.96 SE around zero, which says how well the ensemble mean is known. A model that is exact
+in the large-N limit should stay inside the mean band, up to the O(1/N) bias. Min–max bands are
+never drawn.
+
+```{julia}
+comparisonplot(ref, det; observables = [:I, :cumulative])
+```
+
+```{julia}
+reference_note(sc, ref)
+```
+
+The spread band is much wider than the mean band:
+
+```{julia}
+st = ref.cond[:I]
+i = argmax(st.mean)
+(; t_peak = ref.t[i], spread_width = st.q975[i] - st.q025[i], mean_band_width = 2 * 1.96 * st.se[i],
+   ratio = (st.q975[i] - st.q025[i]) / (2 * 1.96 * st.se[i]))
+```
+
+With iid runs the ratio is about 2·1.96·sd/(2·1.96·sd/√n) = √n = √200 ≈ 14, if the runs are
+roughly normal at the peak.
+
+## 3. Every exact-limit scenario in one table
+
+The acceptance rule for back ends declared `:exact_limit` is D∞(I) < 0.005 and |ΔR∞| < 0.005 (at
+N = 10⁴ and 200 runs, the Monte Carlo SE of the mean is about 10⁻³). Here is the edge-based model
+on every committed scenario with that verdict, built with `edge_based(sc)` and solved with
+`solve_epidemic(sys, sc)`. For typed models the prevalence is the observable `:infectious`, the sum
+over infectious compartments:
+
+```{julia}
+exact = [s for s in scenarios() if get(s.backends, :edge_based, :none) === :exact_limit]
+rows = map(exact) do s
+    r = scenario_summary(s)
+    y = edge_based(s)
+    c = model_curves(y, solve_epidemic(y, s); t = s.tgrid, label = "EB")
+    row = compare(r, c; observables = [:infectious])["EB", :infectious]
+    ok = row.D∞ < 0.005 && abs(row.ΔR∞) < 0.005
+    (string("`:", s.id, "`"), r.N, r.nsims, row.D∞, row.z∞, row.ΔR∞, ok ? "yes" : "**no**")
+end
+mdtable(["scenario", "N", "runs", "D∞(infectious)", "z∞", "ΔR∞", "passes"], rows)
+```
+
+```{julia}
+npass = count(r -> r[end] == "yes", rows)
+println(npass, " of ", length(rows), " exact-limit scenarios pass D∞ < 0.005 and |ΔR∞| < 0.005.")
+failing = [r[1] for r in rows if r[end] != "yes"]
+isempty(failing) || println("not passing: ", join(failing, ", "))
+```
+
+A scenario that misses the rule is not necessarily one where the model is wrong in the limit.
+The rule is calibrated for N = 10⁴. At N = 10³ the O(1/N) finite-size bias of the simulation is
+larger than the tolerance, and those N = 10³ variants are what the N-scaling protocol below uses
+to tell the two cases apart. Several scenarios pass with z∞ above 3. In the small-seed scenarios
+the 1000 and 2000 runs make the standard error small, so a gap below 0.005 is many standard
+errors. The fleeting-contact scenarios `:sir_mfsh_*` have
+a known finite-size offset at N = 10⁴ (see [E16](../E16_dormant_fleeting/index.qmd)).
+
+## 4. N-scaling: exact in the limit versus biased
+
+Four scenarios are also run at N ∈ {10³, 10⁴, 10⁵} with {2000, 200, 20} runs, so that N·nsims
+is constant and the Monte Carlo floor stays roughly flat. An exact-in-the-limit representation
+approaches that floor as N grows (its bias is O(1/N)). A structurally biased one levels off at
+its bias. The edge-based model is exact in the limit on all four [@volz2008sir; @miller2012edge];
+the fluctuations of the simulated epidemic about that limit are of order N^(−1/2) [@ball2021clt],
+which is why the Monte Carlo floor is set by N·nsims. As a biased contrast, the
+pairwise model with the constant closure K = ⟨k(k−1)⟩/⟨k⟩² is shown on the non-Poisson-type
+networks `:sir_bim` and `:sir_pl`. It is exact only for Poisson-type degrees (see
+[E06](../E06_edge_based_and_pairwise/index.qmd)).
+
+```{julia}
+import NodeBasedModels as NBM
+bases = [:sir_pois5, :sir_bim, :sir_pl, :sir_clust_s2t2]
+variant(id, N) = N == 10_000 ? id : Symbol(id, "_N", N)
+Ns = [1_000, 10_000, 100_000]
+scaling = Dict{Tuple{Symbol,String},Vector{Float64}}()
+rows = []
+for id in bases, N in Ns
+    s = scenario(variant(id, N))
+    r = scenario_summary(s)
+    y = edge_based(s)
+    c = model_curves(y, solve_epidemic(y, s); t = s.tgrid, label = "EB")
+    row = compare(r, c; observables = [:I])["EB", :I]
+    push!(get!(scaling, (id, "edge-based"), Float64[]), row.D∞)
+    floor = maximum(r.cond[:I].se)
+    push!(rows, (string("`:", id, "`"), N, r.nsims, "edge-based", row.D∞, floor, row.ΔR∞))
+    if id in (:sir_bim, :sir_pl)
+        pw = NBM.node_based(s)
+        cp = model_curves(pw, solve_epidemic(pw, s); t = s.tgrid, label = "PW")
+        rp = compare(r, cp; observables = [:I])["PW", :I]
+        push!(get!(scaling, (id, "pairwise (constant K)"), Float64[]), rp.D∞)
+        push!(rows, (string("`:", id, "`"), N, r.nsims, "pairwise (constant K)", rp.D∞, floor, rp.ΔR∞))
+    end
+end
+mdtable(["scenario", "N", "runs", "model", "D∞(I)", "SE∞ (MC floor)", "ΔR∞"], rows)
+```
+
+```{julia}
+p = plot(; xscale = :log10, yscale = :log10, xlabel = "N", ylabel = "D∞(I)", legend = :outerright,
+         title = "N-scaling of D∞(I)", size = (820, 440))
+for id in bases
+    plot!(p, Ns, scaling[(id, "edge-based")]; marker = :circle, label = "EB :$(id)")
+end
+for id in (:sir_bim, :sir_pl)
+    plot!(p, Ns, scaling[(id, "pairwise (constant K)")]; marker = :square, linestyle = :dash,
+          label = "PW const K :$(id)")
+end
+floors = [maximum(scenario_summary(scenario(variant(:sir_pois5, N))).cond[:I].se) for N in Ns]
+plot!(p, Ns, floors; color = :gray, linestyle = :dot, label = "SE∞ (:sir_pois5)")
+p
+```
+
+```{julia}
+#| echo: false
+eb = [scaling[(id, "edge-based")] for id in bases]
+pwv = [scaling[(id, "pairwise (constant K)")] for id in (:sir_bim, :sir_pl)]
+Markdown.parse(@sprintf("From N = 10³ to 10⁵ the edge-based D∞(I) goes from %s to %s on the four scenarios. The constant-K pairwise model stays at %s on `:sir_bim` and `:sir_pl` at N = 10⁵, above the edge-based values and the Monte Carlo floor.",
+    join([@sprintf("%.4f", v[1]) for v in eb], ", "), join([@sprintf("%.4f", v[end]) for v in eb], ", "),
+    join([@sprintf("%.4f", v[end]) for v in pwv], " and ")))
+```
+
+## Lean
+
+The validation protocol is empirical; no Lean statement is involved.
+
+## References
+
+::: {#refs}
+:::

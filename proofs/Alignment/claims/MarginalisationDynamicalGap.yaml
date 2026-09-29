@@ -1,0 +1,466 @@
+# SA-PASS claim registry fragment -- group MarginalisationDynamicalGap
+# Source module: EBCMCategory/MarginalisationDynamicalGap.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: MarginalisationDynamicalGap.header.bridge
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 11-15
+  text: This file relates the **algebraic** obstruction `kirkwood_form_not_equivariant` (T3b) to the first-order behaviour of trajectories of the surrogate fields. No formal object refers to the Phase B B(c) Gillespie comparison (`NodeBasedModels.jl`), which motivated it; nothing here explains that experiment.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'No formal object refers to the Gillespie experiment. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file bridges the **algebraic** obstruction `kirkwood_form_not_equivariant` (T3b) to the **dynamical** failure observed empirically in the Phase B B(c) Gillespie comparison (`NodeBasedModels.jl`, testset "B(c) Gillespie").'
+- id: MarginalisationDynamicalGap.header.overview
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 34-40
+  text: 'T2 (algebraic gap = 2 at u₁) + T5 (gap = first-order divergence rate) give, in local form: *For any local solutions ψ₄ of F4Kℝ from u₁ and ψ₃ of F3Kℝ from M u₁, the trajectory gap `M(ψ₄ t) − ψ₃ t` has derivative exactly 2 at t = 0 (`witness_localGap_hasDerivAt`), and its norm is at least t for all small t > 0 (`witness_localGap_ge`).*'
+  kind: limit
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_hasDerivAt_zero
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  impl_note: impl covers only C₃ = F3Kℝ (c ↦ c²/4) and assumes IsFlow F3Kℝ φ₃, which is unsatisfiable, so it is vacuously true.
+  required: true
+  status: implemented
+  notes: 'FALSE for "any m=3 closure C₃": the first-order rate is M(F4Kℝ u₁) - C₃(M u₁) = 6 - C₃(4)(c), which equals 2 only when C₃(4)(c) = 4. Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there. WP4b (TRIAGE P1.4/P2): text corrected; previous text: T1 (equivariance ↔ trajectory commutation) + T2 (algebraic gap = 2 at u₁) + T4 (fibre-collapse structure) + T5 (gap = first-order divergence rate) together certify: *For any flows φ₄ of F4Kℝ and φ₃ of any m=3 closure C₃, the trajectory gap `M(φ₄ u₁ t) − φ₃(M u₁) t` diverges at rate exactly 2 as t → 0⁺.* -- P1.4: restated with local solutions. Candidate impl: witness_localGap_hasDerivAt ∧ witness_localGap_ge (with witness_local_solutions_exist as @[sa_witness]); the former impl trajectoryGap_rate_two_at_witness is vacuous (hypothesis_refuted).'
+- id: MarginalisationDynamicalGap.header.T6.a
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 47-49
+  text: 'T6 exhibits an existence result at one state: an order-3 right-hand side `F3_exact` (the constant 6, fitted to `M(F4Kℝ u₁)`) that agrees with the marginalised order-4 surrogate at `u₁`,'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  supporting: []
+  impl_note: The "exact" RHS is an existentially chosen constant function (fun _ _ => 6) fitted to M(F4Kℝ u₁); nothing ties it to exact CTMC moments.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: T6 exhibits the complementary existence result: there **is** an m=4 system that is exact at first order (the "correctly marginalised" one),'
+- id: MarginalisationDynamicalGap.header.T6.b
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 50-52
+  text: 'and the Kirkwood surrogate F3Kℝ, which does not. Other non-additive order-3 closures do match at that state: `c ↦ 3c²/8` gives 6 (`kirkwoodForm_matches_at_witness`).'
+  kind: structural
+  impl: []
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'Only the single closure F3Kℝ is shown to mismatch. Under IsKirkwoodForm (non-additivity) the universal claim is false: C₃(v) = (3/8)·v(c)² is non-additive and gives 6 at M u₁ = 4. WP4b (TRIAGE P1.4/P2): text corrected; previous text: but no Kirkwood-form m=3 closure matches it at that IC -- Now implementable: kirkwoodForm_matches_at_witness (candidate impl; status could become implemented).'
+- id: MarginalisationDynamicalGap.header.T6.c
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 53-53
+  text: So T6 says nothing about the empirical comparison of `err_m4` and `err_m3`.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: confirming the empirical `err_m4 > err_m3` is a fundamental obstruction, not a numerics bug.'
+- id: MarginalisationDynamicalGap.fibreCollapseObstruction
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 64-67
+  text: '**Theorem T4 (Fibre-collapse obstruction).** If `M` identifies two points (`h_fibre : M u₁ = M u₂`) but `F` splits them apart under `M` (`h_split : M (F u₁) ≠ M (F u₂)`), then no order-3 closure family `C₃` can make the diagram `M ∘ F = C₃ ∘ M` commute.'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction
+  supporting: []
+  impl_note: 'Exact: M u₁ = M u₂ → M (F u₁) ≠ M (F u₂) → ∀ C₃, ¬ Equivariant M F C₃.C, for any ℝ-modules and any F.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.kirkwoodNotEquivariantViaT4
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 86-87
+  text: '`kirkwood_form_not_equivariant` (T3b) re-derived via T4: the (2,1) ℝ-witness satisfies the fibre-collapse hypothesis.'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4
+  supporting: []
+  impl_note: 'impl: ∀ C₃ : ClosureFamily U3ℝ, ¬ Equivariant MℝLin F4Kℝ C₃.C (concrete, non-existential form); "re-derived via T4" is a proof-method remark.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.trajectoryGapHasDerivAtZero
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 118-121
+  text: '**Theorem T5 (Quantitative dynamical gap).** For any flow `φ₄` of `F₄` and any flow `φ₃` of `F₃`, the trajectory gap function `t ↦ M(φ₄ u t) − φ₃(M u)(t)` has derivative `algebraicGap M F₄ F₃ u = M(F₄ u) − F₃(M u)` at `t = 0`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_hasDerivAt_zero
+  supporting: []
+  impl_note: Exact, for M continuous linear, IsFlow F₄ φ₄ and IsFlow F₃ φ₃ (global flows).
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.trajectoryGapAtZero
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 143-143
+  text: The trajectory gap vanishes at `t = 0`.
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero
+  supporting: []
+  impl_note: impl requires IsFlow for both systems (only the φ v 0 = v parts are used).
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.trajectoryGapNormGeHalfEpsT
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 151-153
+  text: '**Theorem T7 (Quantitative lower bound on trajectory gap).** If the algebraic gap has norm at least `ε > 0`, then for all small enough `t > 0` the trajectory gap satisfies `‖trajectoryGap M φ₄ φ₃ u t‖ ≥ ε * t / 2`.'
+  kind: inequality
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_norm_ge_half_eps_t
+  supporting: []
+  impl_note: 'impl: IsFlow both, 0 < ε, ε ≤ ‖algebraicGap M F₄ F₃ u‖ → ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε·t/2 ≤ ‖trajectoryGap M φ₄ φ₃ u t‖.'
+  required: true
+  status: implemented
+  notes: Header table (lines 23-25) calls this "Gronwall-style"; the proof is a little-o argument (no Gronwall).
+- id: MarginalisationDynamicalGap.mRealLinCLMApply
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 283-283
+  text: 'Application lemma: `MℝLinCLM u i = u Idx4.a + u Idx4.b` for any `i : Idx3`.'
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply
+  supporting: []
+  impl_note: 'impl: MℝLinCLM u i = u Idx4.a + u Idx4.b (rfl, simp lemma).'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.algebraicGapAtWitness.a
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 287-288
+  text: At `u₁ = (1, 3)` with the Kirkwood m=3 closure `F3Kℝ`, the algebraic gap equals the constant vector `2` in `U3ℝ`.
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  supporting: []
+  impl_note: 'impl: algebraicGap MℝLinCLM F4Kℝ F3Kℝ u₁ = fun _ => 2.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.algebraicGapAtWitness.b
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 288-290
+  text: This is the ℝ-valued translation of `kirkwood_obstruction_witness_value` (which proved the same over ℚ).
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: ''
+- id: MarginalisationDynamicalGap.trajectoryGapRateTwoAtWitness.a
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 297-303
+  text: '**Theorem T5 Corollary (Divergence rate at the (2,1) witness).** For *any* flows `φ₄` of `F4Kℝ` and `φ₃` of `F3Kℝ` (existence is a hypothesis, not derived — cf. §3 of `MARGINALISATION_SPEC.md`), the trajectory gap at `u₁ = (1, 3)` diverges at rate exactly `2` in the `Idx3.c` direction at `t = 0`: `M(φ₄ u₁ t) − φ₃(M u₁) t = 2t · ê_c + o(t)`.'
+  kind: limit
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness
+  supporting: []
+  impl_note: 'impl: IsFlow F4Kℝ φ₄ → IsFlow F3Kℝ φ₃ → HasDerivAt (trajectoryGap MℝLinCLM φ₄ φ₃ u₁) (fun _ => 2) 0 -- matches "rate 2 at t = 0" (HasDerivAt ≡ 2t·ê_c + o(t) since the gap vanishes at 0), but the hypothesis IsFlow F3Kℝ φ₃ is unsatisfiable.'
+  required: true
+  status: implemented
+  notes: 'VACUOUS. The text flags "existence is a hypothesis, not derived"; in fact existence is refutable for global flows. A faithful version would use local solutions on (-δ, δ). Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there.'
+- id: MarginalisationDynamicalGap.trajectoryGapRateTwoAtWitness.b
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 305-307
+  text: '**Vacuity.** The hypothesis `IsFlow F3Kℝ φ₃` cannot be satisfied: `F3Kℝ` has no global flow (`no_flow_F3Kℝ`; from `v(c) = 4` the solution `4/(1 − t)` blows up at `t = 1`).'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.no_global_solution_sq_div_four
+  impl_note: 'no_flow_F3Kℝ : ∀ φ₃ : U3ℝ → ℝ → U3ℝ, ¬ IsFlow F3Kℝ φ₃.'
+  required: true
+  status: implemented
+  notes: 'P1.4 (WP4): replaces the false sentence "This is the rigorous formal bridge from the Lean-certified algebraic difference of `2` to the empirically observed `err_m4 − err_m3 ≈ 0.32` in the B(c) Gillespie testset." NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.trajectoryGapRateTwoAtWitness.c
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 307-309
+  text: This theorem is therefore vacuously true and is not a formal bridge to the empirically observed `err_m4 − err_m3 ≈ 0.32` in the B(c) Gillespie testset.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.4 (WP4): meta statement.'
+- id: MarginalisationDynamicalGap.noGlobalSolutionSqDivFour
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 319-321
+  text: 'There is no real function `w` with `w 0 = 4` and `HasDerivAt w (w t ^ 2 / 4) t` for every `t : ℝ`: the solution of this initial-value problem, `4/(1 − t)`, blows up at `t = 1`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.no_global_solution_sq_div_four
+  supporting: []
+  impl_note: 'no_global_solution_sq_div_four (w : ℝ → ℝ) (h0 : w 0 = 4) (hd : ∀ t, HasDerivAt w (w t ^ 2 / 4) t) : False. The explicit solution 4/(1 − t) is the reason, not part of the statement.'
+  required: true
+  status: implemented
+  notes: 'P1.4 (WP4): new trusted theorem (from the spot-check scratch proof NoFlowF3.lean). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.noFlowF3Real
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 357-359
+  text: '**No global flow of `F3Kℝ`.** The order-3 Kirkwood witness field `F3Kℝ v = (c ↦ v(c)²/4)` has no flow in the sense of `IsFlow`, which requires solutions for all `t ∈ ℝ`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.no_global_solution_sq_div_four
+  impl_note: 'no_flow_F3Kℝ (φ₃ : U3ℝ → ℝ → U3ℝ) : ¬ IsFlow F3Kℝ φ₃.'
+  required: true
+  status: implemented
+  notes: 'P1.4 (WP4): new trusted theorem. NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.noFlowF3Real.b
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 359-362
+  text: From `v(c) = 4` the solution is `4/(1 − t)`, which blows up at `t = 1`. Hence `IsFlow F3Kℝ φ₃` is unsatisfiable, and every theorem that assumes it (such as `trajectoryGap_rate_two_at_witness`) holds vacuously.
+  kind: other
+  impl: []
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.4 (WP4): explanation and consequence (meta).'
+- id: MarginalisationDynamicalGap.f3RealIsKirkwoodForm
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 469-470
+  text: '`F3Kℝ` is nonlinear (has Kirkwood form): witnessed by `u = v = (c ↦ 1)`, where `F3Kℝ(u + v)(c) = 1 ≠ 1/2 = F3Kℝ(u)(c) + F3Kℝ(v)(c)`.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.F3Kℝ_isKirkwoodForm
+  supporting: []
+  impl_note: 'impl: (ClosureFamily.mk F3Kℝ).IsKirkwoodForm, witnessed by u = v = (c ↦ 1).'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationDynamicalGap.refinementFailureExists.a
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 478-486
+  text: '**Theorem T6 (Refinement-failure existence).** There exist Kirkwood-form closures `F4_kirk` (order 4) and `F3_kirk` (order 3), an "exact" order-3 RHS `F3_exact`, and an initial condition `u₀` such that: * the marginalised m=4 chain is **exact at first order**: `M(F4_kirk u₀) = F3_exact(M u₀)` (algebraic gap = 0); * the m=3 Kirkwood chain **deviates from exact**: `F3_kirk(M u₀) ≠ F3_exact(M u₀)`.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  supporting: []
+  impl_note: 'impl: ∃ F4_kirk F3_kirk F3_exact u₀, Kirkwood(F4_kirk) ∧ Kirkwood(F3_kirk) ∧ MℝLin (F4_kirk u₀) = F3_exact (MℝLin u₀) ∧ F3_kirk (MℝLin u₀) ≠ F3_exact (MℝLin u₀). F3_exact is unconstrained (witness: constant 6), so "exact" carries no meaning; M is fixed to MℝLin.'
+  required: true
+  status: implemented
+  notes: 'Near-trivial existential: F3_exact := M ∘ F4 at one point always works.'
+- id: MarginalisationDynamicalGap.refinementFailureExists.b
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 494-496
+  text: 'Together with T5: relative to the fitted `F3_exact`, the marginalised m=4 surrogate has zero first-order error at `u₁` (by construction), while the m=3 Kirkwood surrogate has first-order error `|4 − 6| = 2`.'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_hasDerivAt_zero
+  impl_note: The m=3 first-order error 2 is algebraicGap_at_witness; "error of the correctly-marginalised m=4 ODE is zero" holds only relative to the fitted F3_exact := 6.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Together with T5, this says: the error of the correctly-marginalised m=4 ODE is **zero** at first order at `u₁`, while the m=3 Kirkwood ODE has first-order error `|4 − 6| = 2`.'
+- id: MarginalisationDynamicalGap.refinementFailureExists.c
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 497-499
+  text: T6 does not explain the empirical B(c) phase reversal. T3b (via T4) shows only that no order-3 field commutes with `F4Kℝ` under `MℝLin` at every state.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'T3b/T4 show that no order-3 closure commutes with F4Kℝ under MℝLin; they say nothing about "the correct m=4 marginalisation". WP4b (TRIAGE P1.4/P2): text corrected; previous text: The empirical B(c) phase reversal occurs because the **standard** Kirkwood m=4 marginalisation is not the correct one; T3b (T4) certifies that no correct one exists.'
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented declarations: the two Fintype instances for Idx4 / Idx3 (comment only, no docstring).
+# Header table rows T4-T7 (lines 16-25) restate the registered docstring claims and are not registered
+# separately; the second paragraph of the T4 docstring (lines 55-58) and the T5 proof sketch
+# (lines 109-114) and T7 proof sketch (lines 141-147) are not claims.
+# Definitions (vocabulary, see Alignment/DataTypes/MarginalisationDynamicalGap.md):
+#   algebraicGap, trajectoryGap, F3Kℝ, MℝLinCLM.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: MarginalisationDynamicalGap.normGeHalfEpsTOfHasDerivAt
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 194-195
+  text: If `f 0 = 0`, `f` has derivative `g` at `0` and `ε ≤ ‖g‖` with `ε > 0`, then `ε * t / 2 ≤ ‖f t‖` for all small enough `t > 0`.
+  kind: inequality
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.norm_ge_half_eps_t_of_hasDerivAt
+  supporting: []
+  impl_note: 'f 0 = 0 → HasDerivAt f g 0 → 0 < ε → ε ≤ ‖g‖ → ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε * t / 2 ≤ ‖f t‖ (f : ℝ → V₃, normed space).'
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.localGapHasDerivAtZero
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 222-224
+  text: '**Theorem T5, local form.** For any local solutions `ψ₄` of `F₄` through `u` and `ψ₃` of `F₃` through `M u` (`IsLocalSolution`), the gap `t ↦ M (ψ₄ t) − ψ₃ t` has derivative `algebraicGap M F₄ F₃ u` at `t = 0`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.localGap_hasDerivAt_zero
+  supporting: []
+  impl_note: IsLocalSolution F₄ u δ₄ ψ₄ → IsLocalSolution F₃ (M u) δ₃ ψ₃ → HasDerivAt (fun t => M (ψ₄ t) - ψ₃ t) (algebraicGap M F₄ F₃ u) 0.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.localGapNormGeHalfEpsT
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 243-246
+  text: '**Theorem T7, local form.** If `‖algebraicGap M F₄ F₃ u‖ ≥ ε > 0`, then for any local solutions `ψ₄` of `F₄` through `u` and `ψ₃` of `F₃` through `M u`, `‖M (ψ₄ t) − ψ₃ t‖ ≥ ε * t / 2` for all small enough `t > 0`.'
+  kind: inequality
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.localGap_norm_ge_half_eps_t
+  supporting: []
+  impl_note: local solutions → 0 < ε → ε ≤ ‖algebraicGap M F₄ F₃ u‖ → ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε * t / 2 ≤ ‖M (ψ₄ t) - ψ₃ t‖.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.algebraicGapWitness
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 374-376
+  text: 'The first-order rate at the witness for an arbitrary order-3 field `C₃`: `algebraicGap MℝLinCLM F4Kℝ C₃ u₁ = 6 − C₃(4)`, where `4 = MℝLinCLM u₁`. So the rate is 2 only when `C₃(4) = 4`, as for `F3Kℝ`.'
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_witness
+  supporting: []
+  impl_note: '∀ C₃ : U3ℝ → U3ℝ, algebraicGap MℝLinCLM F4Kℝ C₃ u₁ = fun i => 6 - C₃ (fun _ => 4) i.'
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.kirkwoodFormMatchesAtWitness
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 385-388
+  text: 'A non-additive order-3 closure that matches the marginalised order-4 surrogate at the witness: `C₃ v = (c ↦ 3 v(c)² / 8)` is non-additive (`IsKirkwoodForm`) and `M(F4Kℝ u₁) = C₃(M u₁)`, since `3·4²/8 = 6`. So "no Kirkwood-form order-3 closure matches at `u₁`" is false.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwoodForm_matches_at_witness
+  supporting: []
+  impl_note: (ClosureFamily.mk C₃).IsKirkwoodForm ∧ algebraicGap MℝLinCLM F4Kℝ C₃ u₁ = 0 for the explicit C₃ v = fun _ => 3 * (v .c)^2 / 8.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.witnessLocalSolutionsExist
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 402-405
+  text: '**Local solutions exist at the witness.** `t ↦ (exp (3 (eᵗ − 1)), 3 eᵗ)` solves `F4Kℝ` (`a'' = a b`, `b'' = b`) from `u₁ = (1, 3)` for every `t`, and `t ↦ (c ↦ 4 / (1 − t))` solves `F3Kℝ` (`v'' = v²/4`) from `MℝLinCLM u₁ = 4` on `(-1, 1)`.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.witness_local_solutions_exist
+  supporting: []
+  impl_note: ∃ ψ₄ ψ₃, IsLocalSolution F4Kℝ u₁ 1 ψ₄ ∧ IsLocalSolution F3Kℝ (MℝLinCLM u₁) 1 ψ₃ (the explicit solutions are in the proof; the statement is existential with δ = 1).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.witnessLocalGapHasDerivAt
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 438-441
+  text: '**Theorem T5 Corollary, local form.** For any local solutions `ψ₄` of `F4Kℝ` through `u₁ = (1, 3)` and `ψ₃` of `F3Kℝ` through `MℝLinCLM u₁`, the gap `t ↦ M(ψ₄ t) − ψ₃ t` has derivative `2` (in every coordinate) at `t = 0`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.witness_localGap_hasDerivAt
+  supporting: []
+  impl_note: 'IsLocalSolution F4Kℝ u₁ δ₄ ψ₄ → IsLocalSolution F3Kℝ (MℝLinCLM u₁) δ₃ ψ₃ → HasDerivAt (fun t => MℝLinCLM (ψ₄ t) - ψ₃ t) (fun _ => 2) 0. Hypotheses satisfiable: witness_local_solutions_exist.'
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationDynamicalGap.witnessLocalGapGe
+  group: MarginalisationDynamicalGap
+  source:
+    file: EBCMCategory/MarginalisationDynamicalGap.lean
+    lines: 450-454
+  text: '**Theorem T7 Corollary, local form.** For any local solutions `ψ₄` of `F4Kℝ` through `u₁` and `ψ₃` of `F3Kℝ` through `MℝLinCLM u₁`, there is `T > 0` with `t ≤ ‖M(ψ₄ t) − ψ₃ t‖` for all `0 < t ≤ T`. In particular the marginalised order-4 trajectory and the order-3 trajectory differ at every such `t`.'
+  kind: inequality
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.witness_localGap_ge
+  supporting: []
+  impl_note: local solutions → ∃ T > 0, ∀ t, 0 < t → t ≤ T → t ≤ ‖MℝLinCLM (ψ₄ t) - ψ₃ t‖ (sup norm on U3ℝ). The 'differ' sentence is a consequence.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

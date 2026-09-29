@@ -1,0 +1,262 @@
+---
+title: "E06. Edge-based and pairwise"
+subtitle: "The edge-based model as an S-anchored pairwise model (pairwise_image, verify); when the constant pairwise closure is exact"
+---
+
+A pairwise model follows the numbers of nodes [X] and of ordered pairs of neighbours [XY], and
+closes the triples [XYZ] that their equations need with a closure formula. The edge-based model
+maps onto a pairwise model *exactly*, for every degree distribution, if the closure is chosen
+right: the map
+
+$$
+\pi^{PW}(\theta, \xi, \varphi, \mathrm{pop}) =
+\Big(\theta,\ [s] = q\xi\psi(\theta),\ [sX] = q\xi\psi'(\theta)\varphi_X,\
+[ss] = \frac{q^2\xi^2\psi'(\theta)^2}{\psi'(1)},\ [X] = \mathrm{pop}_X\Big)
+$$
+
+carries the edge-based field onto the susceptible-anchored pairwise model PW^S (only the pairs
+with a susceptible end) with the closure
+
+$$
+[Z\,s\,J] = K_\psi(\theta)\,\frac{[Zs][sJ]}{[s]},\qquad K_\psi(\theta) = \frac{\psi(\theta)\psi''(\theta)}{\psi'(\theta)^2},
+$$
+
+and the auxiliary θ̇ = −(ψ(θ)/ψ′(θ)) Σ_r τ_r [sJ_r]/[s] (the dynamic survival closure of Kiss,
+Kenah and Rempała, 2023). The usual heterogeneous pairwise model uses the constant
+K = K_ψ(1) = ⟨k(k−1)⟩/⟨k⟩². It is exact exactly when K_ψ is constant, which is when ψ is of
+**Poisson type**, ψ′ = αψ^κ: Poisson, regular, binomial and negative binomial degrees, but not a
+bimodal or power-law law [@kiss2017mathematics]. The NodeBasedModels page N02 uses the same
+scenarios and ensembles.
+
+```{julia}
+#| label: shared-cell
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+using EdgeBasedModels, NodeBasedModels
+using Statistics
+sir = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I
+    γ, I --> R
+end
+model = contact_model(sir)
+ids = [:sir_reg6, :sir_pois5, :sir_nb4, :sir_bim, :sir_pl, :seair_pois5]
+scs = Dict(id => scenario(id) for id in ids)
+mdtable(["scenario", "title"], [(string("`:", id, "`"), scs[id].title) for id in ids])
+```
+
+## The pairwise image, on the bimodal network
+
+Low level and factory as always, then `pairwise_image`, which returns the target ODE and the map
+as a semiconjugacy:
+
+```{julia}
+sc = scs[:sir_bim]
+@assert isequivalent(model, sc.model)
+sys  = edge_based(model, sc.network)
+sysF = build_sir(sc.network.degrees, :τ, :γ)
+@assert vector_fields_equal(symbolic_ode(sys), symbolic_ode(sysF))
+pw = pairwise_image(sys)
+pw.morphism
+```
+
+```{julia}
+pw.ode
+```
+
+`verify` checks Dπ·F = G∘π, here symbolically:
+
+```{julia}
+verify(pw.morphism)
+```
+
+NodeBasedModels builds the same pairwise model directly from the reaction network, as
+`node_based(model, net; closure = PGFClosure(), level = :s_anchored)`; its field is the image
+above, up to the names of the coordinates:
+
+```{julia}
+pgf_sys = node_based(model, sc.network; closure = PGFClosure(), level = :s_anchored)
+vector_fields_equal(pw.ode, symbolic_ode(pgf_sys))
+```
+
+## For every ψ, and beyond SIR
+
+The map is exact for every degree PGF and every T_EB model. On all six scenarios (the five SIR
+networks of E03, and SEAIR with branching and two infectors):
+
+```{julia}
+function lift(id)
+    s = scs[id]
+    sysx = edge_based(s.model, s.network)                          # low level (the scenario's model)
+    second = isequivalent(s.model, model) ? build_sir(s.network.degrees, :τ, :γ) :   # factory (SIR)
+                                            edge_based(seair_model(), s.network)     # canned model (SEAIR)
+    @assert vector_fields_equal(symbolic_ode(sysx), symbolic_ode(second))
+    sysx
+end
+eb = Dict(id => lift(id) for id in ids)
+function image_row(id)
+    s = scs[id]; img = pairwise_image(eb[id]); v = verify(img.morphism)
+    nb = node_based(s.model, s.network; closure = PGFClosure(), level = :s_anchored)
+    (string("`:", id, "`"), length(img.ode.states), v.ok, string(v.method), v.max_residual,
+     vector_fields_equal(img.ode, symbolic_ode(nb)))
+end
+mdtable(["scenario", "pairwise states", "verify ok", "method", "residual", "equals NBM PGFClosure"],
+        [image_row(id) for id in ids])
+```
+
+(Where the simplifier does not reduce every component to 0, here for the negative binomial PGF,
+`verify` falls back to numeric probes, and the largest relative residual is printed.)
+
+```{julia}
+lean_cite("NEP.eb_to_pws")
+```
+
+The theorem is the general statement: for any T_EB reaction list (contacts, exits, progressions,
+removals), any configuration network and q ≠ 0, π^PW is a local semiconjugacy onto PW^S with the
+closure K_ψ, on the set where ψ(θ), ψ′(θ) and ξ are non-zero.
+
+## When is the constant closure exact?
+
+K_ψ(θ) is constant exactly for Poisson-type ψ. We evaluate it along θ ∈ [0.2, 1] for the five
+degree laws:
+
+```{julia}
+Kψ(d, θ) = pgf(d, θ) * pgf_derivative(d, θ, 2) / pgf_derivative(d, θ, 1)^2
+θs = range(0.2, 1.0; length = 81)
+sir_ids = ids[1:5]
+plt = plot(; xlabel = "θ", ylabel = "K_ψ(θ) = ψψ″/ψ′²", title = "The closure function of five degree laws",
+           legend = :topright)
+for id in sir_ids
+    d = scs[id].network.degrees
+    plot!(plt, θs, [Kψ(d, θ) for θ in θs]; label = string(":", id))
+end
+plt
+```
+
+```{julia}
+function pt_row(id)
+    d = scs[id].network.degrees; ks = [Kψ(d, θ) for θ in θs]; pt = is_poisson_type(scs[id].network)
+    (string("`:", id, "`"), closure_constant(scs[id].network), minimum(ks), maximum(ks),
+     pt === nothing ? "no" : @sprintf("yes: α = %.4g, κ = %.4g", pt.α, pt.κ))
+end
+mdtable(["scenario", "K = K_ψ(1)", "min K_ψ on [0.2, 1]", "max K_ψ on [0.2, 1]", "Poisson type (ψ′ = αψ^κ)"],
+        [pt_row(id) for id in sir_ids])
+```
+
+The equivalence "K_ψ ≡ κ on an interval ⇔ ψ′ = αψ^κ there" (for ψ > 0 with the stated
+derivatives) is a theorem, and so is the dynamic consequence in one direction: for a Poisson-type
+ψ (ψ′ = αψ^κ, ψ > 0 on a convex set of θ with non-empty interior), and for every T_EB reaction list,
+π^PW is a local semiconjugacy from the edge-based model onto the pairwise model with the constant
+closure κ.
+
+```{julia}
+lean_cite("NEP.pt_iff_const_closure")
+```
+
+```{julia}
+lean_cite("NEP.eb_to_pws_pt_any")
+```
+
+The converse for the dynamics (a non-Poisson-type ψ makes the constant closure inexact along
+some trajectory) is not formalised; the numbers below show it on the two non-PT networks.
+
+## Against simulation
+
+For each scenario we solve three models: the edge-based model, the S-anchored pairwise model with
+the PGF closure, and the full heterogeneous pairwise model with the constant closure K (the
+NodeBasedModels default on a configuration network):
+
+```{julia}
+function three_curves(id)
+    s = scs[id]
+    e  = model_curves(eb[id], solve_epidemic(eb[id], s); t = s.tgrid, label = "edge-based")
+    ps = node_based(s.model, s.network; closure = PGFClosure(), level = :s_anchored)
+    p  = model_curves(ps, solve_epidemic(ps, s); t = s.tgrid, label = "pairwise, PGF closure")
+    pc = node_based(s.model, s.network)                                  # constant K
+    c  = model_curves(pc, solve_epidemic(pc, s); t = s.tgrid,
+                      label = @sprintf("pairwise, constant K = %.3g", closure_constant(s.network)))
+    (e, p, c)
+end
+curves3 = Dict(id => three_curves(id) for id in ids)
+refs = Dict(id => scenario_summary(scs[id]) for id in ids)
+Markdown.MD([reference_note(scs[id], refs[id]) for id in ids])
+```
+
+```{julia}
+#| fig-height: 5.5
+comparisonplot(refs[:sir_bim], curves3[:sir_bim]...; observables = [:I, :cumulative])
+```
+
+```{julia}
+#| fig-height: 5.5
+comparisonplot(refs[:sir_pl], curves3[:sir_pl]...; observables = [:I, :cumulative])
+```
+
+```{julia}
+#| fig-height: 5.5
+comparisonplot(refs[:sir_nb4], curves3[:sir_nb4]...; observables = [:I, :cumulative])
+```
+
+```{julia}
+function cmp_rows(id)
+    c = compare(refs[id], curves3[id]...)
+    rows = map(collect(curves3[id])) do d     # a vector of rows (curves3[id] is a tuple)
+        r = c[d.label, :cumulative]
+        lo, hi = r.ΔR∞_ci
+        se = (hi - lo) / (2 * 1.96)          # SE of the ensemble mean, read off its 95% CI
+        (string("`:", id, "`"), d.label, c[d.label, :I].D∞, c[d.label, :I].z∞, r.ΔR∞,
+         @sprintf("[%.4f, %.4f]", lo, hi), r.ΔR∞ / se)
+    end
+    return rows
+end
+mdtable(["scenario", "model", "D∞(I)", "z∞(I)", "ΔR∞", "95% CI of ΔR∞", "ΔR∞ / SE"],
+        reduce(vcat, [cmp_rows(id) for id in ids]))
+```
+
+On the four Poisson-type scenarios (including SEAIR on Poisson(5)) the three models coincide and
+all agree with the ensembles. On `:sir_bim` and `:sir_pl` the edge-based and PGF-closure models
+still agree with the ensembles, while the constant closure overestimates the final size by
+tens of standard errors of the ensemble mean (the last column, with SE read off the 95% CI). The deterministic differences, without simulation noise:
+
+```{julia}
+bias_rows = [(string("`:", id, "`"), maximum(abs.(curves3[id][2][:I] .- curves3[id][1][:I])),
+              maximum(abs.(curves3[id][3][:I] .- curves3[id][1][:I])),
+              curves3[id][3][:cumulative][end] - curves3[id][1][:cumulative][end]) for id in ids]
+mdtable(["scenario", "max ΔI, PGF closure − EB", "max ΔI, constant K − EB", "ΔR∞, constant K − EB"], bias_rows)
+```
+
+Differences of 10⁻⁵ or less are the tolerance of the two ODE solvers. On the two non-PT networks the
+constant closure is off by 0.034 and 0.068 in the final size.
+
+## The constant-closure bias does not go away with N
+
+On the power-law network the edge-based error shrinks with N towards the Monte Carlo floor (E03),
+while the constant closure's error stays put, because it is a property of the closure, not of the
+finite graph:
+
+```{julia}
+nids = [:sir_pl_N1000, :sir_pl, :sir_pl_N100000]
+nrefs = Dict(id => scenario_summary(scenario(id)) for id in nids)
+Markdown.MD([reference_note(scenario(id), nrefs[id]) for id in nids])
+```
+
+```{julia}
+e_pl, _, c_pl = curves3[:sir_pl]
+nrows = map(nids) do id
+    c = compare(nrefs[id], e_pl, c_pl)
+    (nrefs[id].N, c[e_pl.label, :I].D∞, c[c_pl.label, :I].D∞, c[e_pl.label, :cumulative].ΔR∞, c[c_pl.label, :cumulative].ΔR∞)
+end
+mdtable(["N", "D∞(I) edge-based", "D∞(I) constant K", "ΔR∞ edge-based", "ΔR∞ constant K"], nrows)
+```
+
+```{julia}
+Ns = [r[1] for r in nrows]
+plot(Ns, [r[2] for r in nrows]; xscale = :log10, yscale = :log10, marker = :circle, label = "edge-based",
+     xlabel = "N", ylabel = "D∞(I) against the ensemble mean", title = ":sir_pl, N × runs = 2·10⁶")
+plot!(Ns, [r[3] for r in nrows]; marker = :square, label = c_pl.label)
+```
+
+## References
+
+::: {#refs}
+:::

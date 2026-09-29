@@ -1,9 +1,26 @@
 project:
   type: default
+  # Only the index and the E01–E16 pages are rendered; nothing else in this directory is a page.
+  render:
+    - index.qmd
+    - "E*/index.qmd"
 
 engine: julia
 
+# Rendered pages are frozen; `_freeze/` and the rendered outputs are kept (DESIGN §F rule 6).
 freeze: auto
+
+bibliography: references.bib
+
+filters:
+  - _shared/qmd-links.lua
+
+execute:
+  fig-format: png
+  fig-dpi: 150
+  fig-width: 7
+  fig-height: 4.5
+  warning: true
 
 format:
   html:
@@ -11,14 +28,30 @@ format:
     code-fold: false
     theme: cosmo
     embed-resources: true
+    html-math-method: mathjax
+  # PDF: STIX Two Text has no ∞, ≈, ≤, ⟨⟩, →, … and Fira Code no ′, ″, ⇔, so both get glyph fallbacks
+  # (luaotfload fallback chains need lualatex). Long code and output lines wrap at the margin (fvextra),
+  # in a slightly smaller monospaced font.
   pdf:
-    pdf-engine: xelatex
+    pdf-engine: lualatex
     mainfont: "STIX Two Text"
+    mainfontfallback: ["STIX Two Math:mode=harf;", "Menlo:mode=harf;", "Segoe UI:mode=harf;"]
+    sansfont: "STIX Two Text"          # headings and title (KOMA sets them in the sans family)
+    sansfontfallback: ["STIX Two Math:mode=harf;", "Menlo:mode=harf;", "Segoe UI:mode=harf;"]
     mathfont: "STIX Two Math"
-    monofont: "Fira Code"
+    monofont: "Menlo"
+    monofontoptions: ["Scale=0.82"]
+    monofontfallback: ["STIX Two Math:mode=harf;", "Segoe UI:mode=harf;"]
+    code-overflow: wrap
+    include-in-header:
+      text: |
+        \usepackage{fvextra}
+        \fvset{breaklines=true,breakanywhere=true}
+        \DefineVerbatimEnvironment{verbatim}{Verbatim}{breaklines,breakanywhere}
     toc: true
   gfm:
     toc: true
 
 julia:
   project: "."
+  env: ["NETEPI_STRICT_CACHE=1", "GKSwstype=100"]

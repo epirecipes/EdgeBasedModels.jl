@@ -12,5 +12,4 @@ proofs/.lake/
 # Documenter build output
 docs/build/
 docs/Manifest.toml
-vignettes/_freeze/
 vignettes/.quarto/

@@ -1,0 +1,239 @@
+# SA-PASS claim registry fragment: group MethodOfStages
+# Source module: EBCMCategory/MethodOfStages.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# All natural-language claims in this module are '/-! ## Result N: ... -/' section blocks placed
+# immediately before an undocumented theorem; ids 'R<N>' / 'R<N>a,b,...' follow those labels.
+- id: MethodOfStages.R87
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 31-33
+  text: 'Result 87: Erlang(1,γ) is Exponential(γ) When n=1, the sub-stage rate is 1·γ = γ, recovering the exponential.'
+  kind: algebraic-identity
+  impl:
+  - erlang_one_is_exponential
+  supporting: []
+  impl_note: 'impl: ((1 : ℕ) : ℝ) * γ = γ (ring); the hypothesis 0 < γ is unused. No probability distribution appears in the statement (Mathlib has ProbabilityTheory.gammaMeasure / gammaPDFReal / exponentialPDFReal, unused); the identity is pure real arithmetic. Erlang(1,γ) = Exponential(γ) as distributions is not stated.'
+  required: true
+  status: implemented
+  notes: 'Section text ''/-! ## Result 87 ... -/'' (the theorem has no docstring).'
+- id: MethodOfStages.R88
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 38-40
+  text: 'Result 88: Mean sojourn time preserved E[Erlang(n,nγ)] = n/(nγ) = 1/γ for all n ≥ 1.'
+  kind: algebraic-identity
+  impl:
+  - erlang_mean_preserved
+  supporting: []
+  impl_note: 'impl: n/(n·γ) = 1/γ for n > 0, γ > 0. No probability distribution appears in the statement (Mathlib has ProbabilityTheory.gammaMeasure / gammaPDFReal / exponentialPDFReal, unused); the identity is pure real arithmetic. The expectation of an Erlang(n, nγ) law is not computed.'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: MethodOfStages.R89a
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 49-49
+  text: Var[Erlang(n,nγ)] = n/(nγ)² = 1/(nγ²).
+  kind: algebraic-identity
+  impl:
+  - erlang_variance
+  supporting: []
+  impl_note: 'impl: n/(nγ)² = 1/(nγ²). No probability distribution appears in the statement (Mathlib has ProbabilityTheory.gammaMeasure / gammaPDFReal / exponentialPDFReal, unused); the identity is pure real arithmetic.'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: MethodOfStages.R89b
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 47-47
+  text: 'Result 89: Variance decreases with stages'
+  kind: inequality
+  impl: []
+  supporting:
+  - erlang_variance
+  - erlang_variance_limit
+  impl_note: Monotonicity of 1/(nγ²) in n is not stated by any theorem.
+  required: false
+  status: missing
+  notes: Section heading.
+- id: MethodOfStages.R90a
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 59-59
+  text: CV² = Var/Mean² = (1/(nγ²))/(1/γ)² = 1/n,
+  kind: algebraic-identity
+  impl:
+  - erlang_cv_squared
+  supporting: []
+  impl_note: 'impl: (1/(nγ²))/(1/γ)² = 1/n. No probability distribution appears in the statement (Mathlib has ProbabilityTheory.gammaMeasure / gammaPDFReal / exponentialPDFReal, unused); the identity is pure real arithmetic.'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: MethodOfStages.R90b
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 57-57
+  text: 'Result 90: CV = 1/√n'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - erlang_cv_squared
+  impl_note: No statement with Real.sqrt; only CV² = 1/n is proved.
+  required: false
+  status: missing
+  notes: Section heading (repeated as 'so CV = 1/√n' in line 57).
+- id: MethodOfStages.R91a
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 67-69
+  text: 'Result 91: Variance vanishes as n → ∞ The variance 1/(nγ²) → 0 as n → ∞,'
+  kind: limit
+  impl:
+  - erlang_variance_limit
+  supporting: []
+  impl_note: 'Good match: Filter.Tendsto (fun n : ℕ => 1/(n·γ²)) atTop (nhds 0) for γ > 0 (the ''variance'' is the explicit expression).'
+  required: true
+  status: implemented
+  notes: Section text.
+- id: MethodOfStages.R91b
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 69-69
+  text: meaning Erlang(n,nγ) → Dirac(1/γ).
+  kind: limit
+  impl: []
+  supporting:
+  - erlang_variance_limit
+  impl_note: Weak convergence of gammaMeasure n (nγ) to Measure.dirac (1/γ) is not stated.
+  required: false
+  status: missing
+  notes: Section text.
+- id: MethodOfStages.R92
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 83-86
+  text: 'Result 92: ODE dimension counting For a model with k stages where stage i has nᵢ sub-stages, total dimension = Σᵢ nᵢ + 2 (the +2 is for θ and R).'
+  kind: structural
+  impl:
+  - ode_dimension
+  supporting: []
+  impl_note: 'impl: stages.sum + 2 = (stages.map id).sum + 2 — a tautology (List.map id = id); no model and no dimension notion.'
+  required: true
+  status: implemented
+  notes: Vacuous. The count '+2 for θ and R' is also questionable for a staged EBCM (each infected sub-stage typically needs a φ variable and a population variable).
+- id: MethodOfStages.R93a
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 96-96
+  text: 'Result 93: Transmissibility changes with the number of stages'
+  kind: other
+  impl: []
+  supporting:
+  - transmissibility_n_one
+  impl_note: No theorem.
+  required: false
+  status: missing
+  notes: 'FALSE if read as ''T_n does not depend on n'': with β = γ = 1, T_1 = 1/2, T_2 = 5/9, T_3 = 37/64, T_∞ = 1 − e^{−1} (sympy). Only the mean infectious period is preserved. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Result 93: Transmissibility preserved across stages -- Now implementable: erlangTransmissibility_one_lt_two, erlangTransmissibility_values (candidate impl).'
+- id: MethodOfStages.R93b
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 98-99
+  text: For Erlang(n, nγ) infectious period with transmission rate β, the transmissibility T_n = 1 - (nγ/(β+nγ))^n.
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - transmissibility_n_one
+  impl_note: No theorem computes T_n = 1 − E[e^{−βτ}] for τ ~ Erlang(n, nγ).
+  required: false
+  status: missing
+  notes: Formula is correct (Laplace transform of the Erlang law).
+- id: MethodOfStages.R93c
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 104-104
+  text: 'For n=1: T₁ = 1 - γ/(β+γ) = β/(β+γ) — standard Markovian result.'
+  kind: algebraic-identity
+  impl:
+  - transmissibility_n_one
+  supporting: []
+  impl_note: Good match for the arithmetic identity 1 − γ/(β+γ) = β/(β+γ) (β, γ > 0); T₁ itself is not defined.
+  required: true
+  status: implemented
+  notes: Section text.
+- id: MethodOfStages.R94a
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 138-140
+  text: 'Result 94: Limiting transmissibility As n→∞, T_n = 1-(nγ/(β+nγ))^n → 1-exp(-β/γ).'
+  kind: limit
+  impl: []
+  supporting:
+  - transmissibility_ratio
+  impl_note: The limit is not stated (formalisable with Filter.Tendsto and Real.exp).
+  required: false
+  status: missing
+  notes: Mathematically correct (sympy limit).
+- id: MethodOfStages.R94b
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 142-142
+  text: 'We verify the intermediate identity: nγ/(β+nγ) = 1/(1+β/(nγ)).'
+  kind: algebraic-identity
+  impl:
+  - transmissibility_ratio
+  supporting: []
+  impl_note: Good match (n > 0, β > 0, γ > 0).
+  required: true
+  status: implemented
+  notes: Section text.
+# ---------------------------------------------------------------------------
+# Undocumented theorems: every theorem in the module lacks a docstring (erlang_one_is_exponential,
+#   erlang_mean_preserved, erlang_variance, erlang_cv_squared, erlang_variance_limit, ode_dimension,
+#   transmissibility_n_one, transmissibility_ratio); their text is the preceding section block.
+# Unused structure: ErlangParams (no docstring, referenced by no theorem).
+# Module header sentence 'An Erlang(n, nγ) distribution is implemented as n sequential sub-stages each with
+#   rate nγ.' (lines 6-8) describes the modelling technique (definitional); not registered.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: MethodOfStages.erlangTransmissibilityOneLtTwo
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 117-118
+  text: '**Result 93 (corrected).** Staging changes the transmissibility: T₁ < T₂ for all β, γ > 0, since T₂ − T₁ = β²γ/((β+γ)(β+2γ)²).'
+  kind: inequality
+  impl:
+  - erlangTransmissibility_one_lt_two
+  supporting: []
+  impl_note: 0 < β → 0 < γ → erlangTransmissibility β γ 1 < erlangTransmissibility β γ 2, with erlangTransmissibility β γ n = 1 − (nγ/(β+nγ))^n over ℝ.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MethodOfStages.erlangTransmissibilityValues
+  group: MethodOfStages
+  source:
+    file: EBCMCategory/MethodOfStages.lean
+    lines: 133-133
+  text: 'At β = γ = 1: T₁ = 1/2 and T₂ = 5/9.'
+  kind: algebraic-identity
+  impl:
+  - erlangTransmissibility_values
+  supporting: []
+  impl_note: erlangTransmissibility 1 1 1 = 1/2 ∧ erlangTransmissibility 1 1 2 = 5/9.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

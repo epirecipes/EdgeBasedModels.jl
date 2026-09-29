@@ -1,0 +1,38 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "analysis"
+columns = []
+description = "correlated_R0 for neutral and assortative CorrelatedPGFs"
+generated_by = "test/golden/generate.jl"
+issues = ["E20"]
+kind = "scalars"
+name = "correlated_analysis"
+notes = "E20: assortative_correlated_pgf adds r·δ_kk to rows with p_k = 0, so zero-padding above kmax creates a spurious eigenvalue r(k-1) (padded 2-regular with r = 0.8 below)."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.1.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "2689d4910c3f1c600e43ff8681335d7e0516a4c3"
+julia = "1.12.7"
+
+[scalars]
+R0_assortative_r05_T04 = 0.6214737739536993
+R0_assortative_r1_T04 = 0.8
+R0_neutral_T04 = 0.5333333333333334
+R0_padded_reg2_r08_T1 = 3.2
+R0_poisson4_truncated_neutral_T03 = 1.1999999503352172
+
+[setup]
+pk = [0.0, 0.2, 0.5, 0.3]
+poisson_kmax = 20
+poisson_mean = 4.0
+
+[structure]

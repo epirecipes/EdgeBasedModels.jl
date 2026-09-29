@@ -1,0 +1,203 @@
+# SA-PASS claim registry fragment -- group MarginalisationFunctor
+# Source module: EBCMCategory/MarginalisationFunctor.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: MarginalisationFunctor.header.exactMarginalises
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 15-16
+  text: For the **exact** (unclosed) CTMC moments, one always has `M · x₄_exact(t) = x₃_exact(t)` by definition of induced subgraphs.
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: No CTMC, exact moment or induced-subgraph count is formalised; ClosedSystem.F_exact is an unconstrained field.
+  required: false
+  status: missing
+  notes: ''
+- id: MarginalisationFunctor.header.closedNeedNotCommute
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 17-28
+  text: |-
+    For the **closed** dynamics (e.g., Kirkwood at order 4 vs order 3), the diagram
+    [...]
+    need not commute,
+  kind: existence
+  impl:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  supporting:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  impl_note: 'Implemented in Obstructions (T2): ∃ u : Idx4 → ℚ, M_witness (F4_Kirkwood u) ≠ F3_Kirkwood (M_witness u) for a 2-dim surrogate over ℚ -- not for the motif spaces V4/V3 of this file.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationFunctor.header.T1
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 28-34
+  text: 'we prove (Theorem T1) the precise dynamical characterisation, for systems with global flows `φ₄`, `φ₃` and unique solutions of `F₃`: *Trajectory-level marginalisation* `M ∘ φ₄(·,t) = φ₃(M·, t)` for all `(u, t)` is **equivalent** to *infinitesimal* marginalisation `M ∘ F₄ = F₃ ∘ M`.'
+  kind: equivalence
+  impl:
+  - EBCMCategory.Marginalisation.dynamic_marginalisation_iff_equivariance
+  supporting: []
+  impl_note: 'impl adds hypotheses absent from the text: M continuous linear between real normed spaces, global flows φ₄, φ₃ exist (IsFlow, all t ∈ ℝ) and solutions of F₃ are unique (UniqueFlow).'
+  required: true
+  status: implemented
+  notes: 'Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there. So T1 cannot be instantiated at the intended Kirkwood example. WP4b (TRIAGE P1.4/P2): text corrected; previous text: we prove (Theorem T1) the precise dynamical characterisation: *Trajectory-level marginalisation* `M ∘ φ₄(·,t) = φ₃(M·, t)` for all `(u, t)` is **equivalent** to *infinitesimal* marginalisation `M ∘ F₄ = F₃ ∘ M`.'
+- id: MarginalisationFunctor.header.scaffolding
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 41-44
+  text: This file provides the equivariance theorem T1 and the flow and solution predicates it uses. The motif shapes, state classes, order-k variable types and `ClosedSystem` below are declared for documentation only; no theorem uses them.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'MotifShape, V3/V4 and ClosedSystem are never used by any theorem; no marginalisation map V4 → V3 is defined. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file provides the abstract scaffolding (motif shapes, state spaces, linear marginalisation, closed systems, flow predicate) and the equivariance theorem T1.'
+- id: MarginalisationFunctor.table.M1
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 52-52
+  text: '| M1 | pushforward of a flow of `F₄` solves `F₃` if the RHS commute |'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'Conflicts with the docstrings: "Result M1" is pushforward_isSolution. The table arrows "M2 (←)" / "M3 (→)" (lines 46-47) are the reverse of the docstrings "M2 (→)" / "M3 (←)". WP4b (TRIAGE P1.4/P2): text corrected; previous text: | M1 | `IsFlow` predicate |'
+- id: MarginalisationFunctor.uniqueFlow.c1
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 142-143
+  text: Holds for `C¹` (in particular polynomial) `F` by Mathlib's `ODE_solution_unique`.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: No theorem instantiates UniqueFlow for any F.
+  required: false
+  status: missing
+  notes: Mathlib's ODE_solution_unique needs a (global) Lipschitz hypothesis; polynomial F are only locally Lipschitz, so a local-uniqueness variant plus a gluing argument is required. True mathematically for C¹ F on finite-dimensional spaces.
+- id: MarginalisationFunctor.RM1
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 165-167
+  text: '**Result M1.** Pushing a flow of `F₄` through a continuous linear `M` gives a solution of `F₃` through `M u` whenever the RHS commute. It is *the* solution only if solutions of `F₃` are unique.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.Marginalisation.pushforward_isSolution
+  supporting: []
+  impl_note: 'impl: (∀u, M (F₄ u) = F₃ (M u)) → IsFlow F₄ φ₄ → IsSolution F₃ (M u) (t ↦ M (φ₄ u t)). The conclusion is "a solution of F₃ from M u", not "the flow of F₃", and there is NO hypothesis that a flow of F₃ exists (impl has fewer hypotheses than the text).'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result M1.** Pushing a flow of `F₄` through a continuous linear `M` gives the flow of `F₃` whenever the RHS commute, *provided* a flow of `F₃` is already known to exist.'
+- id: MarginalisationFunctor.RM2
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 180-181
+  text: '**Result M2 (→).** Infinitesimal commutation `M ∘ F₄ = F₃ ∘ M` and a unique flow for `F₃` imply trajectory commutation.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.Marginalisation.traj_commute_of_rhs_commute
+  supporting: []
+  impl_note: impl also assumes IsFlow for both F₄ and F₃ (existence of global flows) plus UniqueFlow F₃, with M continuous linear.
+  required: true
+  status: implemented
+  notes: 'Header table (line 46) labels this direction "(←)". Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there.'
+- id: MarginalisationFunctor.RM3
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 200-201
+  text: '**Result M3 (←).** Trajectory commutation implies infinitesimal commutation, by differentiating at `t = 0`.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.Marginalisation.rhs_commute_of_traj_commute
+  supporting: []
+  impl_note: impl assumes IsFlow for F₄ and F₃ (global flows); proof differentiates at t = 0.
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationFunctor.RM4a
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 224-235
+  text: |-
+    **Result M4 — Theorem T1 (Equivariance).** The diagram
+    [...]
+    commutes infinitesimally **iff** it commutes along all trajectories (under the standing flow / uniqueness hypotheses).
+  kind: equivalence
+  impl:
+  - EBCMCategory.Marginalisation.dynamic_marginalisation_iff_equivariance
+  supporting: []
+  impl_note: 'impl: IsFlow F₄ φ₄ → IsFlow F₃ φ₃ → UniqueFlow F₃ → ((∀u, M (F₄ u) = F₃ (M u)) ↔ ∀ u t, M (φ₄ u t) = φ₃ (M u) t).'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationFunctor.RM4b
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 237-239
+  text: 'The intended use is contrapositive: **failure** of trajectory marginalisation `M · u₄(t) = u₃(t)` is detectable from the algebraic failure of `M ∘ F₄ = F₃ ∘ M`, which is checked by Theorem T2.'
+  kind: structural
+  impl:
+  - EBCMCategory.Marginalisation.rhs_commute_of_traj_commute
+  supporting:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  impl_note: 'The contrapositive of rhs_commute_of_traj_commute (¬ infinitesimal ⇒ ¬ trajectory) needs IsFlow for both systems; T2 is stated over ℚ for M_witness : U4 → U3 (not a continuous linear map on a normed space), so T1 and T2 are never formally composed.'
+  required: true
+  status: implemented
+  notes: 'Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there.'
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented theorems: none.
+# Header table rows M2-M4 (lines 46-48) restate RM2-RM4 (with reversed arrow labels); only the
+# conflicting row M1 is registered (table.M1).
+# Definitions/structures (vocabulary, see Alignment/DataTypes/MarginalisationFunctor.md):
+#   MotifShape, MotifShape.order, MotifShape.isOrder3, MotifShape.isOrder4, stateClassCount (opaque),
+#   Order3Var, Order4Var, V3, V4, ClosedSystem, IsFlow, IsSolution, UniqueFlow (docstring claim: uniqueFlow.c1).
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: MarginalisationFunctor.rhsCommuteOfLocalTrajCommute
+  group: MarginalisationFunctor
+  source:
+    file: EBCMCategory/MarginalisationFunctor.lean
+    lines: 252-255
+  text: '**Result M3, local form.** If local solutions `ψ₄` of `F₄` through `u` and `ψ₃` of `F₃` through `M u` satisfy `M (ψ₄ t) = ψ₃ t` for all `|t| < δ` (with `δ > 0`), then `M (F₄ u) = F₃ (M u)`. No global flow and no uniqueness is assumed.'
+  kind: dynamical
+  impl:
+  - EBCMCategory.Marginalisation.rhs_commute_of_local_traj_commute
+  supporting: []
+  impl_note: IsLocalSolution F₄ u δ₄ ψ₄ → IsLocalSolution F₃ (M u) δ₃ ψ₃ → 0 < δ → (∀ t, |t| < δ → M (ψ₄ t) = ψ₃ t) → M (F₄ u) = F₃ (M u); M continuous linear.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

@@ -12,48 +12,56 @@ Violations of these assumptions do NOT necessarily break the EBCM *framework*
 — they change its mathematical character:
 
 ### Network structure (assumption 1)
-Not an obstruction at all — just a dimension cost:
-* **Clustering** (triangles): Triangle EBCM of Koch & Britton (2018)
-  tracks joint triangle-neighbour states φ_{XY}. Adds ~10 ODE variables.
+For the specific network classes below an EBCM variant is known, at a
+dimension cost; this is a literature summary, not a statement about network
+structure in general:
+* **Clustering** (triangles): the triangle EBCM of Volz, Miller, Galvani &
+  Meyers (2011) tracks line states φ_X and triangle states φ_{XY} on
+  configuration-model networks with triangles; their system has 7 ODEs.
 * **Degree correlations**: Multi-type EBCM of Miller & Volz (2013)
   with mixing matrix. Still an ODE system.
 * **Population structure**: Multi-type EBCM with biased mixing.
 
 ### Non-Markovian dynamics (assumption 2)
 Changes the *type* of system, not an absolute obstruction:
-* Sherborne, Kiss et al. (2018, J. Math. Biol.) proved the non-Markovian
-  EBCM is equivalent to message passing for general τ(a), q(a).
+* Sherborne, Miller, Blyuss & Kiss (2018, J. Math. Biol. 76, 755–778)
+  proved the non-Markovian EBCM is equivalent to message passing for
+  general τ(a), q(a).
 * The system becomes a **PDE** (von Foerster age-structured equation)
   rather than an ODE, with infinite-dimensional state space.
 * For Markovian dynamics, the PDE collapses back to the standard ODE.
-* The ODE approximation via n-stage Erlang gives 2+n variables.
+* The ODE approximation via n-stage Erlang needs 2n + 2 variables in the
+  counting convention of `extensionDim` (θ, n edge stages φ_{I_j}, n node
+  stages I_j, and R): 4 for n = 1 and 6 for n = 2.
 
 ### Localised initial conditions (assumption 3)
-The only **genuine** obstruction to all EBCM variants. When initial
-infections are spatially correlated, edge states are correlated through
-shared proximity to the seed, breaking the factorisation that all
-EBCM variants (ODE and PDE) require.
+Among the three standard assumptions, only localised seeding has no EBCM
+variant. When initial infections are spatially correlated, edge states are
+correlated through shared proximity to the seed, breaking the factorisation
+that all EBCM variants (ODE and PDE) require. In Lean this holds by
+definition: `ebcmExists` is `init = .uniform`.
 
 ## Key results
 
 | Result | Statement                                              |
 |--------|--------------------------------------------------------|
 | 17     | Standard ODE EBCM valid under all three assumptions     |
-| 18     | Clustering: standard fails, triangle EBCM works (ODE)   |
+| 18     | Triangle clustering: standard fails, triangle EBCM (ODE) |
 | 19     | Non-Markovian: ODE fails, PDE EBCM works (exact)        |
 | 20     | Localised initials: genuine obstruction (all variants)   |
 | 21     | Degree correlations: multi-type EBCM works (ODE)        |
-| 22     | Dimension cost of network structure extensions           |
-| 23     | System type classification: ODE vs PDE vs impossible     |
-| 24     | Erlang approximation: n-stage gives 2+n ODE variables    |
+| 22     | Hard-coded counts: clustered (13) > 3·standard (4) − 1   |
+| 23     | `systemRequired` is ODE, PDE or impossible as tabulated  |
+| 24     | Erlang staging needs more variables than Markovian       |
 
 ## References
 
-* Sherborne, Kiss, Simon (2018). Bursting endemic bubbles in an
-  adaptive network. J. Math. Biol. 76, 1467–1493.
+* Sherborne, Miller, Blyuss, Kiss (2018). Mean-field models for
+  non-Markovian epidemics on networks. J. Math. Biol. 76, 755–778.
   DOI: 10.1007/s00285-017-1155-0
-* Koch, Britton (2018). An edge-based model of SEIR epidemics on
-  static and dynamic networks. Bull. Math. Biol. 80, 3052–3097.
+* Volz, Miller, Galvani, Meyers (2011). Effects of heterogeneous and
+  clustered contact patterns on infectious disease dynamics.
+  PLoS Comput. Biol. 7(6): e1002042.
 * Miller, Volz (2013). Incorporating disease and population structure
   into models of SIR disease in contact networks. PLoS ONE 8(8): e69162.
 * Miller (2009). Spread of infectious disease through clustered
@@ -156,8 +164,8 @@ theorem multiplex_ebcm_exists :
 /-- **Result 19.** Non-Markovian dynamics change the system type from ODE
     to PDE, but the EBCM framework still works exactly.
 
-    Sherborne, Kiss et al. (2018) proved the non-Markovian EBCM (system 8
-    in their paper) is equivalent to message passing for general τ(a), q(a).
+    Sherborne, Miller, Blyuss & Kiss (2018) proved the non-Markovian EBCM
+    is equivalent to message passing for general τ(a), q(a).
     The von Foerster equation (∂/∂t + ∂/∂a)φ_I = -[ζ(a)+ρ(a)]φ_I tracks
     the infection-age distribution, giving an infinite-dimensional state. -/
 theorem nonmarkov_requires_pde :
@@ -174,17 +182,19 @@ theorem erlang_is_ode :
     systemRequired .erlangStaged .uniform = .ode :=
   rfl
 
-/-- Markovian is always ODE. -/
+/-- Markovian dynamics with uniform initial infection give an ODE system. -/
 theorem markov_is_ode :
     systemRequired .markovian .uniform = .ode :=
   rfl
 
 /-! ## Localised initials: the genuine obstruction -/
 
-/-- **Result 20.** Localised initial conditions are the ONLY genuine
-    obstruction. They break ALL EBCM variants (ODE and PDE alike)
+/-- **Result 20.** Among the three standard assumptions, only localised
+    seeding has no EBCM variant. They break ALL EBCM variants (ODE and PDE alike)
     because edge states become correlated through shared proximity
-    to the seed, breaking the factorisation that underpins all EBCMs. -/
+    to the seed, breaking the factorisation that underpins all EBCMs.
+    The Lean statement holds by definition of `ebcmExists`; it records the
+    classification, it does not derive it. -/
 theorem localised_genuine_obstruction (net : NetworkType) (trans : TransitionType) :
     ¬ ebcmExists net trans .localised := by
   intro h
@@ -214,8 +224,11 @@ def extensionDim (net : NetworkType) (trans : TransitionType) : ℕ :=
     | .degreeCorrelated   => 12
     | .multiplexStaticDyn => 22
 
-/-- **Result 22.** Handling clustering costs ~3× the variables of the
-    standard EBCM. This is the price of tracking joint triangle states. -/
+/-- **Result 22.** In the hard-coded table `extensionDim`, the
+    triangle-clustered EBCM has 13 variables, more than 3·4 − 1 for the
+    standard EBCM. This is the price of tracking joint triangle states.
+    The counts are labels, not derived here; Volz et al. (2011) give a
+    7-ODE system for triangle-clustered networks. -/
 theorem clustering_dimension_cost :
     extensionDim .clusteredTriangles .markovian >
     3 * extensionDim .configurationModel .markovian - 1 := by
@@ -230,8 +243,8 @@ theorem standard_most_compact (net : NetworkType) :
 
 /-- **Result 24.** The Erlang approximation turns the PDE into an ODE
     at the cost of extra variables. For an n-stage Erlang infectious period
-    on a configuration model, the standard 4 variables become 2+n
-    (θ plus n φ-stages plus R).
+    on a configuration model, the standard 4 variables become 2n + 2
+    (θ, n edge stages φ_{I_j}, n node stages I_j, and R).
 
     Here we show the Erlang variant always needs more variables than
     the Markovian variant on the same network. -/
@@ -244,7 +257,7 @@ theorem erlang_costs_more (net : NetworkType) :
 /-- **Result 23.** Complete classification of what system type is needed.
     * Uniform + Markovian/Erlang → ODE (always works)
     * Uniform + general non-Markov → PDE (always works, infinite-dim)
-    * Localised → impossible (no EBCM variant works) -/
+    * Localised → impossible (by definition of `systemRequired`) -/
 theorem system_classification (trans : TransitionType) (init : InitCondType) :
     (init = .uniform ∧ (trans = .markovian ∨ trans = .erlangStaged) →
       systemRequired trans init = .ode) ∧
@@ -259,8 +272,10 @@ theorem system_classification (trans : TransitionType) (init : InitCondType) :
 
 /-! ## Marginalisation obstruction (Theorem T2)
 
-The closed pairwise/Kirkwood moment hierarchy at order 4 does **not** project
-consistently to the closed hierarchy at order 3 under subgraph-marginalisation.
+For a two-variable surrogate of a closed order-4 moment system and a
+one-variable surrogate of a closed order-3 system (defined below), the closed
+dynamics do **not** project consistently under the surrogate
+marginalisation `M(a,b) = a + b`.
 
 Concretely, with `Mat_3from4 : ℝ^{n_4} → ℝ^{n_3}` the linear marginalisation
 map and `F_k_Kirkwood` the Kirkwood-closed RHS at order `k`, the diagram
@@ -273,26 +288,28 @@ map and `F_k_Kirkwood` the Kirkwood-closed RHS at order `k`, the diagram
    V₃ ─────────────► V₃
        F_3_Kirkwood
 
-does **not** commute. By Theorem T1
-(`dynamic_marginalisation_iff_equivariance` in `MarginalisationFunctor.lean`),
-non-commutation of the RHS implies that `M · u₄(t) = u₃(t)` cannot hold
-identically along the closed trajectories — matching the empirical finding
-in NodeBasedModels.jl.
+does **not** commute at the witness state. Theorem T1
+(`dynamic_marginalisation_iff_equivariance` in `MarginalisationFunctor.lean`)
+needs global flows of both systems, and the order-3 surrogate `c ↦ c²/4` has
+none (`no_flow_F3Kℝ`), so T1 does not apply to this witness. The local
+statement does hold: for any local solutions of the two surrogate systems
+from `u` and `M u`, `M · u₄(t) ≠ u₃(t)` for all small `t > 0`
+(`MarginalisationDynamicalGap.witness_localGap_ge`).
 
-The proof exhibits a **concrete ℚ-valued miniature** of the C₄ SISI
-configuration. We use a 2-dim order-4 surrogate (with abstract entries
-`a = (C₄, SISI)` and `b = (C₄, SSSS)`) and a 1-dim order-3 surrogate
-(`c = (P₃, SIS)`); the marginalisation `M(a,b) = a + b` collapses the two
-order-4 entries onto the unique order-3 class reachable by deleting one
-vertex of `C₄ SISI`. The closed RHS at order 4 has the bilinear form
-characteristic of a Kirkwood pairwise closure (`F₄(a,b) = (a·b, b)`),
-and the closed RHS at order 3 has the quadratic-rational form
-(`F₃(c) = c²/4`) of the analogous order-3 Kirkwood closure on the
-collapsed variable.
+The proof uses a **concrete ℚ-valued surrogate**. We use a 2-dim order-4
+surrogate (with mnemonic labels `a = (C₄, SISI)` and `b = (C₄, SSSS)`) and
+a 1-dim order-3 surrogate (`c = (P₃, SIS)`), with `M(a,b) = a + b`.
+The labels are mnemonic only: `M` is not the subgraph marginalisation of
+these classes (deleting a vertex of C₄ SISI gives P₃ SIS or P₃ ISI, and
+deleting a vertex of C₄ SSSS gives P₃ SSS).
+The surrogate right-hand sides are chosen, not derived from a closure:
+`F₄(a,b) = (a·b, b)` is bilinear, as a pair-Kirkwood closure is, and
+`F₃(c) = c²/4` is quadratic.
 
-This is the smallest faithful arithmetic witness of the structural
-failure: a bilinear order-4 RHS cannot survive linear pushforward
-followed by a quadratic-rational order-3 RHS. -/
+This is one arithmetic witness for one pair of surrogate fields, not a
+general law: with `M = id` a quadratic field commutes with itself, and at
+the witness state the quadratic field `c ↦ 3c²/8` agrees with `M ∘ F₄`
+(both give 6; `MarginalisationDynamicalGap.kirkwoodForm_matches_at_witness`). -/
 
 namespace MarginalisationObstruction
 
@@ -331,8 +348,9 @@ def F3_Kirkwood (v : U3) : U3 := fun _ => (v .c) ^ 2 / 4
     Witness: `u = (a ↦ 1, b ↦ 3)`.
     * `M (F₄_Kirkwood u) (c) = 1·3 + 3 = 6`.
     * `F₃_Kirkwood (M u) (c) = (1+3)² / 4 = 4`.
-    The diagram fails by `6 ≠ 4`. By T1, dynamic marginalisation
-    `M · u₄(t) = u₃(t)` cannot hold along the closed trajectories. -/
+    The diagram fails by `6 ≠ 4`. T1 does not apply here (the order-3
+    field has no global flow); the local consequence, `M · u₄(t) ≠ u₃(t)`
+    for small `t > 0`, is `MarginalisationDynamicalGap.witness_localGap_ge`. -/
 theorem kirkwood_marginalisation_obstruction :
     ∃ (u : U4), M_witness (F4_Kirkwood u) ≠ F3_Kirkwood (M_witness u) := by
   refine ⟨fun i => (match i with | .a => 1 | .b => 3 : ℚ), ?_⟩
@@ -342,11 +360,10 @@ theorem kirkwood_marginalisation_obstruction :
   norm_num at h_c
 
 /-- The witness explicitly evaluated: the LHS minus the RHS is a fixed
-    nonzero rational. Useful as a *numeric oracle* for cross-checking
-    the Julia implementation: any correct evaluation of
-    `Mat_3from4 · F_4_Kirkwood(u) - F_3_Kirkwood(Mat_3from4 · u)` at the
-    analogous SISI configuration must be **nonzero**, never within
-    floating-point tolerance of zero. -/
+    nonzero rational. The value 2 is a property of the two surrogate
+    fields only. Nothing links it to the order-3 and order-4 moment
+    equations of the Julia implementation, so it is not a test oracle for
+    them. -/
 theorem kirkwood_obstruction_witness_value :
     let u : U4 := fun i => match i with | .a => 1 | .b => 3
     M_witness (F4_Kirkwood u) Idx3.c - F3_Kirkwood (M_witness u) Idx3.c = 2 := by

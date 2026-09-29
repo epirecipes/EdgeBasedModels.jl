@@ -1,0 +1,381 @@
+# SA-PASS claim registry fragment: group GaloisPair
+# Source module: EBCMCategory/GaloisPair.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: GaloisPair.header.idempotency
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 9-9
+  text: F ∘ G ∘ F = F and G ∘ F ∘ G = G (idempotency)
+  kind: categorical
+  impl:
+  - F_G_F_eq_F
+  - G_F_G_eq_G
+  supporting: []
+  impl_note: Both pointwise equations hold by rfl for all arguments (Results 12 and 13).
+  required: true
+  status: implemented
+  notes: Module-header bullet; restates Results 12-13.
+- id: GaloisPair.header.FGPreservesR0
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 10-10
+  text: F ∘ G preserves R₀ exactly
+  kind: structural
+  impl:
+  - FG_preserves_R0
+  supporting: []
+  impl_note: (coarseGrain (poissonLift n)).R0 = n.R0 by rfl.
+  required: true
+  status: implemented
+  notes: Module-header bullet; restates Result 15.
+- id: GaloisPair.header.GFLossy
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 11-11
+  text: G ∘ F ≠ id (G ∘ F sets every dimension to 4)
+  kind: structural
+  impl:
+  - GF_ne_id
+  supporting: []
+  impl_note: ∃ e, poissonLift (coarseGrain e) ≠ e.
+  required: true
+  status: implemented
+  notes: 'Module-header bullet; restates Result 14. WP4b (TRIAGE P1.4/P2): text corrected; previous text: G ∘ F ≠ id (the connection is lossy)'
+- id: GaloisPair.header.galoisConnection
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 13-15
+  text: 'F and G are not a Galois connection for the dimension preorder: for E = ⟨10, r⟩ and N = ⟨3, r⟩, F(E) ≤ N holds but E ≤ G(N) fails (`not_galoisConnection_coarseGrain_poissonLift`).'
+  kind: categorical
+  impl: []
+  supporting:
+  - poissonLift_mono
+  - coarseGrain_mono
+  impl_note: 'No ''distribution-space preorder'' is defined and no GaloisConnection theorem exists. On the EpiModel dim-preorder actually used, the connection is false: E = ⟨10, r⟩, N = ⟨3, r⟩ gives F(E) ≤ N (3 ≤ 3) but not E ≤ G(N) (10 ≤ 4).'
+  required: false
+  status: missing
+  notes: 'Module-header claim. The next sentence (''Here we prove the combinatorial/dimensional shadow of these properties'') concedes the gap. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The mathematical Galois connection F(E) ≤ N ↔ E ≤ G(N) holds on the distribution-space preorder (where ≤ is "can be recovered from"). -- Now implementable: not_galoisConnection_coarseGrain_poissonLift (candidate impl; status could become implemented).'
+- id: GaloisPair.table.R9
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 25-25
+  text: '| 9 | G is monotone |'
+  kind: categorical
+  impl:
+  - poissonLift_mono
+  supporting: []
+  impl_note: Monotone poissonLift (4 ≤ 4).
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R9.
+- id: GaloisPair.table.R10
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 26-26
+  text: '| 10 | Counit: F(G(N)).dim = 3 |'
+  kind: structural
+  impl:
+  - counit_dim
+  supporting: []
+  impl_note: (coarseGrain (poissonLift n)).dim = 3 by rfl.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R10.
+- id: GaloisPair.table.R11
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 27-27
+  text: '| 11 | G(F(E)).dim = 4 for all E |'
+  kind: structural
+  impl:
+  - unit_dim
+  supporting: []
+  impl_note: (poissonLift (coarseGrain e)).dim = 4 by rfl.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R11.
+- id: GaloisPair.table.R12
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 28-28
+  text: '| 12 | Idempotency: F ∘ G ∘ F = F |'
+  kind: categorical
+  impl:
+  - F_G_F_eq_F
+  supporting: []
+  impl_note: Pointwise F ∘ G ∘ F = F by rfl.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R12.
+- id: GaloisPair.table.R13
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 29-29
+  text: '| 13 | Idempotency: G ∘ F ∘ G = G |'
+  kind: categorical
+  impl:
+  - G_F_G_eq_G
+  supporting: []
+  impl_note: Pointwise G ∘ F ∘ G = G by rfl.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R13.
+- id: GaloisPair.table.R14
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 30-30
+  text: '| 14 | G ∘ F ≠ id (G ∘ F forgets the dimension) |'
+  kind: structural
+  impl:
+  - GF_ne_id
+  supporting: []
+  impl_note: ∃ e, poissonLift (coarseGrain e) ≠ e.
+  required: true
+  status: implemented
+  notes: 'Header-table row; same content as R14a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 14 | G ∘ F ≠ id (lossy) |'
+- id: GaloisPair.table.R15
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 31-31
+  text: '| 15 | Round-trip preserves R₀ |'
+  kind: structural
+  impl:
+  - FG_preserves_R0
+  supporting: []
+  impl_note: Only F ∘ G is covered (the row says 'Round-trip' without direction; G ∘ F also preserves R₀ by rfl but no theorem states it).
+  required: true
+  status: implemented
+  notes: Header-table row; see R15.
+- id: GaloisPair.poissonLiftPoisson
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 36-38
+  text: 'The Poisson lift G: Node → Edge. Embeds a node model into the canonical 4D edge model with Poisson degree distribution.'
+  kind: structural
+  impl: []
+  supporting:
+  - node_lifts_to_edge
+  - poisson_R0_agree
+  impl_note: Docstring of def poissonLift. poissonLift n := ⟨4, n.R0⟩ carries no PGF, and no theorem relates it to edgeModel · (PGFData.poisson κ _); e.g. poissonLift (nodeModel p κ) = edgeModel p (PGFData.poisson κ hκ) would follow from EpiCategory Result 1 but is not stated.
+  required: false
+  status: missing
+  notes: Definitional intent that is checkable (and true for node models of the form nodeModel p κ).
+- id: GaloisPair.R9
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 45-45
+  text: '**Result 9.** G is (trivially) monotone.'
+  kind: categorical
+  impl:
+  - poissonLift_mono
+  supporting: []
+  impl_note: impl proves Monotone poissonLift; poissonLift has constant dim 4, so every instance is 4 ≤ 4. Faithful (the text itself says 'trivially').
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R10
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 53-53
+  text: '**Result 10.** Counit: F(G(N)).dim = 3.'
+  kind: structural
+  impl:
+  - counit_dim
+  supporting: []
+  impl_note: impl proves (coarseGrain (poissonLift n)).dim = 3 by rfl; matches the displayed equation. The word 'Counit' is not backed by a natural transformation or an inequality F(G(N)) ≤ N.
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R11
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 58-58
+  text: '**Result 11.** G(F(E)).dim = 4 for all E.'
+  kind: structural
+  impl:
+  - unit_dim
+  supporting: []
+  impl_note: impl proves (poissonLift (coarseGrain e)).dim = 4 by rfl, for all e. Faithful. (The theorem name unit_dim suggests a unit E ≤ G(F(E)), which fails for E.dim > 4.)
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R12
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 63-63
+  text: '**Result 12.** F ∘ G ∘ F = F (left idempotency).'
+  kind: categorical
+  impl:
+  - F_G_F_eq_F
+  supporting: []
+  impl_note: impl proves coarseGrain (poissonLift (coarseGrain e)) = coarseGrain e for all e (pointwise form of the function equation), by rfl.
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R13
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 68-68
+  text: '**Result 13.** G ∘ F ∘ G = G (right idempotency).'
+  kind: categorical
+  impl:
+  - G_F_G_eq_G
+  supporting: []
+  impl_note: impl proves poissonLift (coarseGrain (poissonLift n)) = poissonLift n for all n, by rfl.
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R14a
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 73-73
+  text: '**Result 14.** G ∘ F ≠ id: G ∘ F sets the dimension of every record to 4.'
+  kind: structural
+  impl:
+  - GF_ne_id
+  supporting: []
+  impl_note: impl proves ∃ e, poissonLift (coarseGrain e) ≠ e (pointwise non-identity, equivalent to G ∘ F ≠ id as functions).
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 14.** G ∘ F ≠ id: the connection is **lossy**.'
+- id: GaloisPair.R14b
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 74-75
+  text: 'Witness: a record of dimension 10 maps to dimension 3 via F and back to dimension 4 via G.'
+  kind: structural
+  impl: []
+  supporting:
+  - GF_ne_id
+  - unit_dim
+  impl_note: The statement of GF_ne_id is existential and mentions no dimension; the witness ⟨10,1⟩ occurs only in the proof. EpiModel has no notion of 'multi-type'.
+  required: false
+  status: missing
+  notes: 'Proof-witness description. WP4b (TRIAGE P1.4/P2): text corrected; previous text: A 10D multi-type model maps to dim 3 via F, then lifts to dim 4.'
+- id: GaloisPair.R14c
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 76-77
+  text: '`EpiModel` stores only a dimension and an R₀, so this says nothing about what the lost state variables describe.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Interpretive; EpiModel dims are bare naturals with no semantics.
+  required: false
+  status: informal
+  notes: 'Arithmetic aside: 10 − 4 = 6 counts dimensions lost by G ∘ F; F alone loses 7. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The 6 lost dimensions encode multi-type edge correlations.'
+- id: GaloisPair.coarseGrainR0
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 86-86
+  text: F preserves R₀.
+  kind: structural
+  impl:
+  - coarseGrain_R0
+  supporting:
+  - coarseGrain_preserves_R0
+  impl_note: impl proves (coarseGrain e).R0 = e.R0 by rfl. Faithful (definitional).
+  required: true
+  status: implemented
+  notes: Duplicate of CoarseGrain.coarseGrainPreservesR0.
+- id: GaloisPair.poissonLiftR0
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 90-90
+  text: G preserves R₀.
+  kind: structural
+  impl:
+  - poissonLift_R0
+  supporting: []
+  impl_note: impl proves (poissonLift n).R0 = n.R0 by rfl. Faithful (definitional).
+  required: true
+  status: implemented
+  notes: ''
+- id: GaloisPair.R15
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 94-94
+  text: '**Result 15.** The round-trip F ∘ G preserves R₀ exactly.'
+  kind: structural
+  impl:
+  - FG_preserves_R0
+  supporting: []
+  impl_note: impl proves (coarseGrain (poissonLift n)).R0 = n.R0 by rfl. Faithful.
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered: header intro 'satisfy key adjunction-like properties' (vague) and
+#   'Here we prove the combinatorial/dimensional shadow of these properties' (meta).
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: GaloisPair.fgEqSelfOfDimThree
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 101-101
+  text: F ∘ G is the identity on records of dimension 3.
+  kind: algebraic-identity
+  impl:
+  - FG_eq_self_of_dim_three
+  supporting: []
+  impl_note: n.dim = 3 → coarseGrain (poissonLift n) = n.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: GaloisPair.notGaloisConnectionCoarseGrainPoissonLift
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 107-109
+  text: 'F and G are not a Galois connection for the dimension preorder on `EpiModel`: for E = ⟨10, 1⟩ and N = ⟨3, 1⟩, F(E) ≤ N holds but E ≤ G(N) fails.'
+  kind: categorical
+  impl:
+  - not_galoisConnection_coarseGrain_poissonLift
+  supporting: []
+  impl_note: ¬ GaloisConnection coarseGrain poissonLift (Mathlib GaloisConnection on the EpiModel preorder).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: GaloisPair.notGaloisConnectionPoissonLiftCoarseGrain
+  group: GaloisPair
+  source:
+    file: EBCMCategory/GaloisPair.lean
+    lines: 117-118
+  text: 'G and F are not a Galois connection in the other order either: for E = N = ⟨3, 1⟩, E ≤ F(N) holds but G(E) ≤ N fails.'
+  kind: categorical
+  impl:
+  - not_galoisConnection_poissonLift_coarseGrain
+  supporting: []
+  impl_note: ¬ GaloisConnection poissonLift coarseGrain.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

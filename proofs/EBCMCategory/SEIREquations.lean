@@ -20,8 +20,8 @@ where only the I stage has positive transmission rate.
 | SEIR2  | E does not contribute to the edge hazard |
 | SEIR3  | S + E + I + R = 1 (conservation, excluding seed) |
 | SEIR4  | θ only decreases from I-edges (not E-edges) |
-| SEIR5  | SEIR final size ≤ SIR final size (latent period delays, doesn't amplify) |
-| SEIR6  | SEIR peak I ≤ SIR peak I (at same R₀) |
+| SEIR5  | SEIR final size = SIR final size at the same β, γ (the latent period delays the epidemic but does not change T = β/(β+γ)) |
+| SEIR6  | SEIR peak I ≤ SIR peak I (at same R₀): expected from simulations, not proved here |
 
 ## Motivation
 
@@ -33,8 +33,9 @@ produce SIR-like trajectories with no visible latent period effect.
 
 ## References
 
-* Koch & Britton (2018). An edge-based model of SEIR epidemics
-  on static random networks. Bull. Math. Biol.
+* Miller & Volz (2013). Incorporating disease and population structure
+  into models of SIR disease in contact networks. PLoS ONE 8(8): e69162
+  (§2.2.5, multiple infectious stages, including a latent stage).
 -/
 
 /-! ## SEIR state -/
@@ -133,9 +134,10 @@ theorem seir_theta_nonincreasing (s : SEIRState) (p : SEIRParams)
 
 /-! ## Peak comparison -/
 
-/-- **SEIR5.** At the same incidence, SEIR's I growth rate is lower than
-    SIR's because SEIR's inflow to I comes from E (rate σ·E) rather than
-    directly from incidence. This bounds the peak. -/
+/-- **SEIR5 (auxiliary; not a peak bound).** If σ·pop_E ≤ pop_E + pop_I,
+    then dI/dt ≤ pop_E + pop_I − γ·pop_I. Since dI/dt = σ·pop_E − γ·pop_I,
+    this only restates the hypothesis; it does not compare SEIR with SIR,
+    and σ·pop_E can exceed the SIR incidence. No bound on the SEIR peak follows. -/
 theorem seir_I_growth_bounded (s : SEIRState) (p : SEIRParams)
     (hE_bound : p.σ * s.pop_E ≤ s.pop_E + s.pop_I) :
     s.dI p ≤ s.pop_E + s.pop_I - p.γ * s.pop_I := by

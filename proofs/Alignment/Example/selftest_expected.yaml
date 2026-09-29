@@ -1,0 +1,158 @@
+# Expected audit outcome for every EXAMPLE.* / SELFTEST.* claim (checked by
+# `bash scripts/sa_pass.sh --self-test`). Every such claim registered in Lean must appear here,
+# and every entry must match exactly: `flags` (set of registration inconsistencies), `forward`
+# (statuses by shadow index), `backward`, and optionally `sa_pass`, `soft`, `shadow_question`,
+# `offenders_include` (substrings that must occur in the offenders of a check), `hints` (exact set
+# of unscored hints), `flag_details_include` / `flag_details_exclude` (substrings of a flag's
+# details), `trusted_free` (review status of each content-free shadow, by index), `tautological`
+# (likewise for tautological shadows), `unused_shadows` (backward check), and bridge and refuter
+# statuses.
+claims:
+  # --- worked example: must pass ---------------------------------------------------------------
+  # S2 is redundant given S1 (the Poisson mean is κ by definition): the backward check uses S1 only
+  EXAMPLE.poissonVariance:
+    {flags: [], forward: [pass, pass], backward: pass, sa_pass: 1, soft: 1.0,
+     hints: [backward_unused_shadows], unused_shadows: [2], trusted_free: {}, tautological: {}}
+  EXAMPLE.transmissibilityRange:
+    {flags: [], forward: [pass, pass], backward: pass, sa_pass: 1, soft: 1.0, hints: [],
+     unused_shadows: [], trusted_free: {}, tautological: {}}
+  # the shared IsFlow hypotheses have an @[sa_witness] certificate, so no witness_missing hint
+  EXAMPLE.trajectoryGapZero:
+    {flags: [], forward: [pass], backward: pass, sa_pass: 1, soft: 1.0, hints: [], trusted_free: {}, tautological: {}}
+
+  # --- vacuity guard ---------------------------------------------------------------------------
+  SELFTEST.vacuousIgnore:   {flags: [], forward: [vacuous], backward: missing, sa_pass: 0, soft: 0.0}
+  SELFTEST.vacuousBeta:     {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousAndLeft:  {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousAuxLemma: {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousEval:     {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousConst:    {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousMatch:    {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousExistsElim: {flags: [], forward: [vacuous], backward: missing}
+  SELFTEST.vacuousDataArg:  {flags: [], forward: [vacuous], backward: missing}
+
+  # --- structural rule -------------------------------------------------------------------------
+  SELFTEST.automationSimp:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [of_eq_true]}}
+  SELFTEST.automationRing:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [Mathlib.Tactic.Ring]}}
+  SELFTEST.automationOmega:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: ["Int."]}}
+  SELFTEST.helperAutomation:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [Mathlib.Tactic.Ring]}}
+  SELFTEST.proofField:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [PGFData.mean_pos]}}
+  SELFTEST.decideCheck:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [of_decide_eq_true]}}
+  SELFTEST.implInBackward:
+    {flags: [], forward: [missing], backward: audit_violation,
+     offenders_include: {backward: ["SIRParams.transmissibility_pos [implementation theorem"]}}
+
+  # --- bridges ---------------------------------------------------------------------------------
+  SELFTEST.unreviewedBridge:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [unreviewed bridge]}}
+  SELFTEST.staleBridge:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [stale bridge]}}
+  SELFTEST.launderingBridge:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [invalid bridge]}}
+  SELFTEST.rejectedBridge:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [rejected bridge]}}
+  SELFTEST.forgedReview:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [unreviewed bridge]}}
+  SELFTEST.outOfScopeBridge:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [bridge registered for another claim]}}
+  SELFTEST.invalidBridges:
+    {flags: [], forward: [audit_violation], backward: missing,
+     offenders_include: {forward1: [invalid bridge]}}
+
+  # --- statements, sorry, missing checks, recorded failures ------------------------------------
+  SELFTEST.mismatch:          {flags: [], forward: [fail], backward: missing}
+  SELFTEST.sorryCheck:        {flags: [], forward: [sorry], backward: missing}
+  SELFTEST.missingCheck:
+    {flags: [], forward: [pass, missing], backward: pass, sa_pass: 0, soft: 0.75}
+  SELFTEST.incompleteShadows:
+    {flags: [incomplete], forward: [pass], backward: pass, sa_pass: 0, soft: 0.0}
+  SELFTEST.recordedFail:
+    {flags: [], forward: [fail], backward: missing, shadow_question: [1]}
+
+  # --- registration consistency ----------------------------------------------------------------
+  SELFTEST.implUntrusted:     {flags: [impl_untrusted], forward: [missing], backward: missing}
+  SELFTEST.implUnsound:       {flags: [impl_unsound, impl_untrusted], forward: [missing], backward: missing}
+  SELFTEST.gap:               {flags: [gap], forward: [missing], backward: missing}
+  SELFTEST.duplicate:         {flags: [duplicate], forward: [missing], backward: missing}
+  "SELFTEST.bad id!":         {flags: [invalid_id], forward: [missing], backward: missing}
+  SELFTEST.unlisted:          {flags: [unlisted], forward: [missing], backward: missing}
+  SELFTEST.textMismatch:      {flags: [text_mismatch], forward: [missing], backward: missing}
+  SELFTEST.groupMismatch:     {flags: [group_mismatch], forward: [missing], backward: missing}
+  SELFTEST.requiredMismatch:  {flags: [required_mismatch], forward: [missing], backward: missing}
+  SELFTEST.implMismatch:      {flags: [impl_mismatch], forward: [missing], backward: missing}
+  SELFTEST.shadowReuse:       {flags: [shadow_mismatch], forward: [missing, missing], backward: missing}
+
+  # --- content-free shadows (spot-check bypass 1: ClosureTheorem.table.R59) -------------------
+  SELFTEST.trustedFreeShadow:
+    {flags: [shadow_trusted_free], forward: [pass], backward: pass, sa_pass: 0, soft: 0.0,
+     trusted_free: {1: unreviewed}}
+  SELFTEST.trustedFreeReviewed:
+    {flags: [], forward: [pass], backward: pass, sa_pass: 1, soft: 1.0, trusted_free: {1: reviewed}}
+  SELFTEST.trustedFreeStale:
+    {flags: [shadow_trusted_free], forward: [pass], backward: pass, sa_pass: 0,
+     trusted_free: {1: stale}}
+  # evasions of the syntactic rule found by the review of the fixes
+  SELFTEST.unusedBinderShadow:
+    {flags: [shadow_trusted_free], forward: [missing], backward: missing,
+     trusted_free: {1: unreviewed}, tautological: {}}
+  SELFTEST.tautologyShadow:
+    {flags: [shadow_tautology], forward: [missing], backward: missing,
+     trusted_free: {}, tautological: {1: unreviewed}}
+
+  # --- vacuous shared hypotheses (spot-check bypass 2: Docs.ms.T5-rateTwo) --------------------
+  SELFTEST.refutedHypothesis:
+    {flags: [hypothesis_refuted], forward: [pass], backward: pass, sa_pass: 0, soft: 0.0, hints: [],
+     flag_details_include: {hypothesis_refuted: [no_flow_F3Kℝ, "AlignmentRefuter.refuter ", "h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃"]},
+     flag_details_exclude: {hypothesis_refuted: [unsoundRefuter, notARefuter]}}
+  SELFTEST.witnessMissing:
+    {flags: [], forward: [pass], backward: pass, sa_pass: 1, hints: [witness_missing]}
+  SELFTEST.witnessInvalid:
+    {flags: [witness_invalid], forward: [pass], backward: pass, sa_pass: 0}
+  # an impossibility theorem is not refuted by its own content (and needs no witness)
+  SELFTEST.impossibilityImpl:
+    {flags: [impl_untrusted], forward: [pass], backward: pass, sa_pass: 0, hints: []}
+
+  # --- vacuous backward checks (spot-check bypass 3: MDG.fibreCollapseObstruction) ------------
+  SELFTEST.backwardVacuous:
+    {flags: [], forward: [pass], backward: vacuous, sa_pass: 0, soft: 0.5, unused_shadows: [1]}
+  SELFTEST.backwardVacuousEval:
+    {flags: [], forward: [pass], backward: vacuous, sa_pass: 0, soft: 0.5}
+  # the backward guard fails closed when the normaliser exhausts its budget
+  SELFTEST.backwardBudget:
+    {flags: [], forward: [pass], backward: audit_violation, sa_pass: 0, soft: 0.5,
+     offenders_include: {backward: [normalisation budget exhausted]}}
+
+bridges:
+  Alignment.Example.PoissonVariance.bridge_variance: reviewed
+  Alignment.Example.SelfTest.UnreviewedBridge.bridge: unreviewed
+  Alignment.Example.SelfTest.ForgedReview.bridge: unreviewed
+  Alignment.Example.SelfTest.StaleBridge.bridge: stale
+  Alignment.Example.SelfTest.RejectedBridge.bridge: rejected
+  Alignment.Example.SelfTest.LaunderingBridge.bridge: invalid
+  Alignment.Example.SelfTest.InvalidBridges.closedConj: invalid
+  Alignment.Example.SelfTest.InvalidBridges.natHead: invalid
+  Alignment.Example.SelfTest.InvalidBridges.closedRhs: invalid
+
+refuters:
+  EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ: valid
+  Alignment.Example.SelfTest.AlignmentRefuter.refuter: valid
+  Alignment.Example.SelfTest.AlignmentRefuter.unsoundRefuter: invalid
+  Alignment.Example.SelfTest.AlignmentRefuter.notARefuter: invalid

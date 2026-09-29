@@ -4,15 +4,17 @@ import Mathlib.Tactic
 /-!
 # VolzMeyersEquations — Equation-level properties of the neighbour-exchange EBCM
 
-This file formalises the **Volz–Meyers (2007) neighbour-exchange (NE) model**
-at the ODE equation level, providing machine-checked guarantees about
-conservation laws, limiting behaviour, and initial-condition consistency.
+This file states scalar identities motivated by the **Volz–Meyers (2007)
+neighbour-exchange (NE) model**: sign conditions and conservation
+identities for pointwise right-hand-side expressions, and initial-condition
+bookkeeping. No full ODE system is formalised: only the θ, pop_I and
+pop_R right-hand sides are defined, as scalar expressions of a state
+record; the P_S, P₁ and M₁ equations are not, and nothing is proved about
+solutions.
 
-These equation-level proofs complement the structural proofs in
-`DynamicLimits.lean` (dimensions, R₀ independence) by verifying the
-actual ODE system — the kind of properties that catch bugs in the Julia
-implementation (wrong PGF evaluation point, IC mismatch, edge-state
-partition violations).
+These identities complement the structural records in `DynamicLimits.lean`
+(dimensions and stored R₀ values). No link to the Julia implementation is
+formalised.
 
 ## Volz–Meyers Table 4 system
 
@@ -38,9 +40,9 @@ Susceptible fraction: S = ψ(θ)
 | VM3    | Population conservation: d(pop_I + pop_R)/dt = incidence |
 | VM4    | S is non-increasing (follows from VM1 and PGF monotonicity) |
 | VM5    | Static limit (ρ=0): θ̇ = −β P₁ θ reduces to static EBCM |
-| VM6    | Fast-mixing limit (ρ→∞): P₁→M₁, P_S→ψ'(θ)/ψ'(1) |
-| VM7    | IC consistency: S(0) + pop_I(0) + pop_R(0) ≤ 1 |
-| VM8    | Mass-action recovery: for ψ(x)=x (k=1), VM = standard SIR |
+| VM6    | Swap term ρ(M₁ − P₁) vanishes at P₁ = M₁ (fast-mixing motivation) |
+| VM7    | IC bookkeeping: with S(0) = ψ(1) = 1, S(0) + pop_I(0) + pop_R(0) = 1 + sf |
+| VM8    | Mass-action recovery for ψ(x)=x (k=1) in the fast-mixing limit |
 
 ## References
 
@@ -84,7 +86,10 @@ def edgeHazard (s : VMState) (p : VMParams) : ℚ := p.β * s.P₁
 /-- dθ/dt = −β·P₁·θ -/
 def dθ (s : VMState) (p : VMParams) : ℚ := -(p.β * s.P₁ * s.θ)
 
-/-- Incidence = β·P₁·θ·κ (for Poisson, ψ'(θ) = κ·ψ(θ)). -/
+/-- The Lean incidence β·P₁·θ·κ. The Volz–Meyers incidence is
+    β·P₁·θ·ψ'(θ); for Poisson, ψ'(θ) = κ·ψ(θ), so it is β·P₁·θ·κ·ψ(θ).
+    This definition drops the factor ψ(θ) and agrees with the model only
+    while ψ(θ) = 1, i.e. at θ = 1. -/
 def incidence (s : VMState) (p : VMParams) : ℚ := p.β * s.P₁ * s.θ * p.κ
 
 /-- d(pop_I)/dt = incidence − γ·pop_I -/
@@ -115,14 +120,18 @@ theorem edge_partition (s : VMState) :
   simp only [VMState.P_R]; ring
 
 /-- **VM3.** Population dynamics: d(I + R)/dt = incidence.
-    This is the influx of newly infected from the susceptible pool. -/
+    This is the influx of newly infected from the susceptible pool, with
+    the Lean incidence (which drops the factor ψ(θ); see
+    `VMState.incidence`). -/
 theorem population_influx (s : VMState) (p : VMParams) :
     s.dI p + s.dR p = s.incidence p := by
   simp only [VMState.dI, VMState.dR, VMState.incidence]; ring
 
 /-- **VM4.** S is non-increasing (for Poisson PGF, S = exp(κ(θ-1))).
     Since θ is non-increasing (VM1) and exp is monotone, S is non-increasing.
-    Formalised as: dS/dt = κ·S·dθ/dt ≤ 0 when κ > 0. -/
+    Motivated by: dS/dt = κ·S·dθ/dt ≤ 0 when κ > 0. The Lean statement is
+    only κ·dθ/dt ≤ 0 (the factor S ≥ 0 is omitted); nothing is proved about
+    S along solutions. -/
 theorem S_nonincreasing (s : VMState) (p : VMParams)
     (hP₁ : 0 ≤ s.P₁) (hθ : 0 ≤ s.θ) (hκ : 0 < p.κ) :
     p.κ * s.dθ p ≤ 0 := by
@@ -154,9 +163,10 @@ theorem static_theta_eq (s : VMState) (β γ κ : ℚ) (hβ : 0 < β) (hγ : 0 <
 /-- **VM6.** In the fast-mixing limit, P₁ → M₁ and P_S → ψ'(θ)/ψ'(1).
     For Poisson: ψ'(θ)/ψ'(1) = ψ(θ) = S (since ψ'(θ) = κ·ψ(θ) and ψ'(1) = κ).
 
-    Formalised as: the swap terms ρ(M₁ − P₁) and ρ(ψ'(θ)/ψ'(1) − P_S) drive
-    P₁ and P_S to their population-level values at rate ρ. At equilibrium:
-    P₁ = M₁ and P_S = ψ'(θ)/ψ'(1). -/
+    Motivated by: the swap terms ρ(M₁ − P₁) and ρ(ψ'(θ)/ψ'(1) − P_S) drive
+    P₁ and P_S to their population-level values at rate ρ. The Lean
+    statement is only that the swap term ρ(M₁ − P₁) vanishes when P₁ = M₁;
+    no limit ρ → ∞ is formalised. -/
 theorem fast_mixing_P1_equilibrium (s : VMState)
     (h : s.P₁ = s.M₁) (p : VMParams) :
     p.ρ * (s.M₁ - s.P₁) = 0 := by
@@ -164,7 +174,10 @@ theorem fast_mixing_P1_equilibrium (s : VMState)
 
 /-! ## Initial conditions -/
 
-/-- Standard VM initial conditions with node-level seed fraction sf. -/
+/-- Standard VM initial conditions with node-level seed fraction sf.
+    With θ(0) = 1 the susceptible fraction is S(0) = ψ(1) = 1, so
+    S(0) + I(0) + R(0) = 1 + sf, which overcounts by sf. A consistent
+    initial condition uses S(0) = (1 − sf)·ψ(θ(0)) or θ(0) = 1 − ε. -/
 def vmInitialState (sf : ℚ) : VMState where
   θ   := 1
   P₁  := sf
@@ -191,9 +204,11 @@ theorem ic_theta (sf : ℚ) :
 /-! ## Mass-action recovery -/
 
 /-- **VM8.** For a homogeneous network with ψ(x) = x (every node has
-    degree 1, κ=1), the VM model at any ρ reduces to the standard SIR.
+    degree 1, κ=1), the VM model reduces to the standard SIR in the
+    fast-mixing limit ρ → ∞. At ρ = 0 it describes isolated pairs, not
+    mass action.
 
-    In this case: S = θ, P₁ = I, and the equations become
+    In the fast-mixing limit: S = θ, P₁ = I, and the equations become
     dS/dt = −β·I·S, dI/dt = β·I·S − γ·I, dR/dt = γ·I.
 
     We verify that the incidence = β·P₁·θ·κ = β·I·S when κ=1 and P₁=I, θ=S. -/

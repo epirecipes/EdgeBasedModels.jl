@@ -4,9 +4,10 @@ import Mathlib.Tactic
 /-!
 # InvariantRegion — EBCM state variables remain in the physical region
 
-This file establishes that the state variables of the single-type static SIR
-edge-based compartmental model (EBCM) remain in a physically meaningful region
-for all t ≥ 0:
+The state variables of the single-type static SIR edge-based compartmental
+model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the
+correct field below; this is not proved here — the file records only
+pointwise sign conditions on the right-hand side):
 
   * θ ∈ [0, 1]          — edge survival probability
   * φ_I, φ_R ≥ 0        — excess-degree fractions
@@ -20,9 +21,14 @@ The expanded single-type SIR EBCM (Volz 2008, Miller 2011) has ODE variables
 θ, φ_I, φ_R, R with the vector field:
 
   dθ/dt   = −β φ_I
-  dφ_I/dt = (β φ_I / θ)(ψ′(θ) / ψ′(1)) − (β + γ) φ_I
+  dφ_I/dt = β φ_I ψ″(θ) / ψ′(1) − (β + γ) φ_I
   dφ_R/dt = γ φ_I
   dR/dt   = γ (1 − ψ(θ) − R)
+
+(The φ_I equation follows from φ_I = θ − φ_S − φ_R with φ_S = ψ′(θ)/ψ′(1);
+it is the form the Julia builders integrate. Several statements below were
+written for the incorrect form (β φ_I / θ)(ψ′(θ) / ψ′(1)) − (β + γ) φ_I; the
+corresponding statements for the correct form are `phi_I_dot_correct_*`.)
 
 Derived observables (algebraic, not ODE variables):
 
@@ -37,19 +43,20 @@ The proofs use three complementary arguments:
 1. **Algebraic identities**: S + I + R = 1 holds by the algebraic definition
    of I, requiring no ODE solution theory.
 
-2. **Sign/monotone conditions**: the vector field at each face of the invariant
-   region either vanishes or points strictly inward.  These are the hypotheses
-   needed for Nagumo's theorem (not yet in Mathlib), which we invoke
-   conditionally.
+2. **Sign/monotone conditions**: at each face of the region the component of
+   the vector field normal to the face is ≥ 0 (it vanishes or points inward),
+   given the constraints φ_I ≤ θ and S + R ≤ 1, which `EBCMRegion` omits.
+   These are the hypotheses of Nagumo's theorem (not in Mathlib); this file
+   does not invoke it.
 
 3. **PGF nonnegativity**: ψ(x) ≥ 0 for x ∈ [0, 1] when all coefficients of
    the degree distribution are nonneg.
 
-Full ODE invariance theory requires Nagumo's positive-invariance theorem,
-which is not yet formalised in Mathlib.  We therefore state the invariance
-theorems *conditionally*: given that a smooth solution exists, the stated sign
-conditions at the boundary guarantee the invariant region is positively
-invariant.
+No invariance theorem is stated here, conditionally or otherwise: the
+results are pointwise sign conditions on the right-hand side, and nothing is
+proved about solutions. (For this system invariance can also be shown without
+Nagumo's theorem: φ_I keeps its sign by an integrating factor, and
+S + I + R = 1 holds identically.)
 
 ## Results
 
@@ -63,6 +70,7 @@ invariant.
 | 118    | dφ_R/dt ≥ 0 whenever φ_I ≥ 0 (φ_R is non-decreasing)        |
 | 119    | dR/dt ≥ 0 whenever I ≥ 0 (R is non-decreasing)              |
 | 120    | S + I + R = 1 by algebraic definition                        |
+| 120b   | explicit seed convention starts with S(0)=1−ρ, I(0)=ρ       |
 | 121    | I ≥ 0 ↔ S + R ≤ 1 (immediate from algebraic definition)     |
 | 122    | dI/dt ≥ 0 at the I = 0 face (Nagumo tangency condition)      |
 | 123    | Combined boundary-condition summary for the invariant region |
@@ -153,7 +161,10 @@ theorem theta_dot_nonpos (p : EBCMParams) {φ_I : ℚ} (hφ : 0 ≤ φ_I) :
 
 /-- **Result 117.** When φ_I = 0, the full φ_I component of the EBCM vector
     field vanishes:
-      dφ_I/dt = (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I = 0.
+      dφ_I/dt = β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I = 0.
+    The Lean statement uses the incorrect form
+    (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I; the correct form is
+    `phi_I_dot_correct_zero_at_boundary`.
     Both terms are proportional to φ_I, so {φ_I = 0} is a positively
     invariant face — an absorbing wall. -/
 theorem phi_I_dot_zero_at_boundary (p : EBCMParams) (θ ψ'_θ ψ'_1 : ℚ) :
@@ -161,14 +172,30 @@ theorem phi_I_dot_zero_at_boundary (p : EBCMParams) (θ ψ'_θ ψ'_1 : ℚ) :
   ring
 
 /-- More general: when φ_I ≥ 0, the φ_I-derivative factors as
-    φ_I × (something), so its sign is the sign of φ_I.
+    φ_I × (something), so along a solution φ_I keeps its sign and
+    {φ_I = 0} is invariant; the sign of dφ_I/dt also depends on the second
+    factor.
     Concretely, for θ > 0 the derivative has the form φ_I * f(θ) for some f;
-    here we record the factorization that φ_I is the sole sign-determining factor. -/
+    here we record the factorization for the form
+    (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I used in this file (the correct
+    field is `phi_I_dot_correct_factors`). -/
 theorem phi_I_dot_factors
     (p : EBCMParams) (φ_I θ ψ'_θ ψ'_1 : ℚ) (hθ : 0 < θ) (hψ'_1 : 0 < ψ'_1) :
     p.β * φ_I / θ * (ψ'_θ / ψ'_1) - (p.β + p.γ) * φ_I =
     φ_I * (p.β * ψ'_θ / (θ * ψ'_1) - (p.β + p.γ)) := by
   field_simp [ne_of_gt hθ, ne_of_gt hψ'_1]
+
+/-- The correct φ_I field β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I vanishes at φ_I = 0. -/
+theorem phi_I_dot_correct_zero_at_boundary (p : EBCMParams) (ψ''_θ ψ'_1 : ℚ) :
+    p.β * (0 : ℚ) * (ψ''_θ / ψ'_1) - (p.β + p.γ) * (0 : ℚ) = 0 := by
+  ring
+
+/-- The correct φ_I field factors as φ_I · (β ψ″(θ)/ψ′(1) − (β + γ)), with no
+    condition on θ: unlike the form with 1/θ, it is regular at θ = 0. -/
+theorem phi_I_dot_correct_factors (p : EBCMParams) (φ_I ψ''_θ ψ'_1 : ℚ) :
+    p.β * φ_I * (ψ''_θ / ψ'_1) - (p.β + p.γ) * φ_I =
+      φ_I * (p.β * ψ''_θ / ψ'_1 - (p.β + p.γ)) := by
+  ring
 
 /-- **Result 118.** dφ_R/dt = γ φ_I ≥ 0 when φ_I ≥ 0.
     φ_R is therefore monotone non-decreasing along every trajectory. -/
@@ -191,6 +218,27 @@ theorem SIR_conservation (S R : ℚ) :
     let I := 1 - S - R
     S + I + R = 1 := by
   ring
+
+/-- **Result 120b.** Under the explicit seed convention used by the Julia
+    builders, θ(0)=1 and the susceptible observable is `(1-ρ)ψ(θ)`.
+    Since every PGF satisfies ψ(1)=1, the initial observable values are
+    S(0)=1−ρ, I(0)=ρ, R(0)=0 and therefore conserve total population.
+
+    This identity records the arithmetic behind a regression in which the
+    expanded-form EBCM used `S = ψ(θ)` while still seeding `I(0)=ρ`, which
+    overcounted population by exactly ρ at t=0. It is not linked to the
+    Julia builders and cannot detect that regression. -/
+theorem explicit_seed_initial_conservation (ρ : ℚ) :
+    (1 - ρ) + ρ + 0 = 1 := by
+  ring
+
+/-- If the seed factor is omitted from `S(0)` while `I(0)=ρ`, the total is
+    `1+ρ`; for any nonzero seed this is not a conserved population. -/
+theorem missing_seed_factor_overcounts (ρ : ℚ) (hρ : ρ ≠ 0) :
+    1 + ρ + 0 ≠ 1 := by
+  intro h
+  have hzero : ρ = 0 := by linarith
+  exact hρ hzero
 
 /-- **Result 121.** I ≥ 0 is equivalent to S + R ≤ 1.
     This is immediate from the algebraic definition I = 1 − S − R. -/
@@ -226,7 +274,9 @@ theorem I_dot_nonneg_at_zero_boundary (p : EBCMParams) {φ_I ψ'_θ : ℚ}
   mul_nonneg (mul_nonneg (le_of_lt p.β_pos) hφ) hψ'
 
 /-- Alternative formulation: dI/dt = β φ_I ψ′(θ) − γ I.
-    When I = 0 the γ I term vanishes, leaving the nonneg inward term. -/
+    When I = 0 the γ I term vanishes, leaving the nonneg inward term.
+    **Tautological Lean statement:** both sides are the same expression, so
+    it holds by `rfl`; the case I = 0 is `I_dot_at_zero`. -/
 theorem I_dot_general (p : EBCMParams) (φ_I ψ'_θ I : ℚ) :
     p.β * φ_I * ψ'_θ - p.γ * I = p.β * φ_I * ψ'_θ - p.γ * I :=
   rfl
@@ -237,7 +287,10 @@ theorem I_dot_at_zero (p : EBCMParams) (φ_I ψ'_θ : ℚ) :
 
 /-! ## Combined invariant region -/
 
-/-- The invariant region for the single-type SIR EBCM. -/
+/-- The invariant region for the single-type SIR EBCM.
+    It omits the constraints φ_I ≤ θ and S + R ≤ 1 (i.e. I ≥ 0), which the
+    invariant region of the model also satisfies, so membership does not
+    imply I ≥ 0 (`I_nonneg_from_region` assumes S + R ≤ 1). -/
 structure EBCMRegion where
   θ   : ℚ
   φ_I : ℚ
@@ -260,25 +313,30 @@ theorem I_nonneg_from_region {n : ℕ} (ψ : PolyPGF n) (s : EBCMRegion)
     0 ≤ 1 - ψ.eval s.θ - s.R := by linarith
 
 /-- **Result 123 (Invariant Region Boundary Conditions).**
-    All vector field conditions needed for Nagumo's theorem hold at the
-    boundary faces of the EBCM invariant region:
+    Four sign conditions at the boundary faces of the EBCM region hold at
+    every point of `EBCMRegion`. They are the conditions Nagumo's theorem
+    would need, except that the θ = 0 face also needs φ_I ≤ θ, which
+    `EBCMRegion` omits:
 
     1. **θ face** (θ = 0 and θ = 1): θ is non-increasing since dθ/dt ≤ 0.
        This handles the upper face θ ≤ 1 automatically (θ starts at 1 and
        can only decrease).  The lower face θ = 0 requires the additional
        physical constraint φ_I ≤ θ (edge conservation), which holds in
-       the full bilinear model but is stated here as a hypothesis.
+       the full model; it is not a hypothesis of this theorem (see
+       `theta_lower_boundary_absorbing` and `phi_I_le_theta`).
 
     2. **φ_I face** (φ_I = 0): dφ_I/dt = 0 there — the face is absorbing.
+       In the Lean statement this conjunct is the placeholder `(0 : ℚ) = 0`;
+       the computation is `phi_I_dot_zero_at_boundary`.
 
     3. **φ_R face** (φ_R = 0): dφ_R/dt = γ φ_I ≥ 0 — inward pointing.
 
     4. **I face** (I = 0, equivalently S + R = 1):
        dI/dt = β φ_I ψ′(θ) ≥ 0 — the Nagumo tangency condition holds.
 
-    Together these four conditions satisfy the hypotheses of Nagumo's
-    positive-invariance theorem, which then guarantees that the invariant
-    region is forward-invariant under the EBCM flow. -/
+    Together with φ_I ≤ θ at the θ = 0 face, these conditions are the
+    hypotheses of Nagumo's positive-invariance theorem, which is not
+    formalised here; no forward-invariance statement is proved. -/
 theorem invariant_region_boundary_conditions
     (p : EBCMParams) {n : ℕ} (_ψ : PolyPGF n) (s : EBCMRegion)
     {ψ'_θ : ℚ} (hψ' : 0 ≤ ψ'_θ) :
@@ -301,11 +359,16 @@ The θ ≥ 0 face requires the *edge conservation* constraint φ_I ≤ θ:
 when θ = 0, we have φ_I ≤ θ = 0, so φ_I = 0, and therefore dθ/dt = 0
 (the wall is absorbing).
 
-This constraint follows from the bilinear coupling structure of the EBCM
-(the φ_I equation is singular at θ = 0 in the expanded formulation), but
-requires separate treatment.  In the limit θ → 0⁺ the excess-hazard term
-β φ_I/θ is bounded by β (since φ_I/θ ≤ 1 from the conservation identity),
-so the vector field extends continuously to θ = 0 with dθ/dt = 0 there. -/
+This constraint follows from θ = φ_S + φ_I + φ_R with φ_S, φ_R ≥ 0
+(`phi_I_le_theta`).
+The factor 1/θ in the φ_I equation used in this file is an artefact of an
+incorrect form; the correct equation dφ_I/dt = β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I
+has no singularity at θ = 0. -/
+
+/-- Edge conservation: θ = φ_S + φ_I + φ_R with φ_S, φ_R ≥ 0 gives φ_I ≤ θ. -/
+theorem phi_I_le_theta {θ φ_S φ_I φ_R : ℚ} (h : θ = φ_S + φ_I + φ_R)
+    (hS : 0 ≤ φ_S) (hR : 0 ≤ φ_R) : φ_I ≤ θ := by
+  linarith
 
 /-- Assuming the edge conservation identity φ_I ≤ θ (a physical constraint
     of the EBCM), the lower boundary θ = 0 is absorbing: dθ/dt = 0. -/

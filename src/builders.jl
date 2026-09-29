@@ -1,26 +1,79 @@
+# Owner: WP29 (DESIGN_NetworkEpiCore.md §A.3, §A.6, §A.7; work package in §G.2).
+#
+# The legacy (0.1) model types and the solve API of lowered systems. EdgeBasedModels 0.2 has no
+# legacy builder: every system is built by the per-reaction assembler (src/lift/assembler.jl) or a
+# descriptor lift that reuses it. What is left here:
+#
+# - the 0.1 model types `StaticConfigurationModel`, `DynamicConfigurationModel`,
+#   `MultiTypeConfigurationModel` and `ClusteredConfigurationModel`, kept as inputs (their
+#   `build_edge_system` entry points are in src/factories.jl: they forward to `edge_based`, or
+#   throw a migration error where the 0.1 model was wrong);
+# - small helpers on legacy PGFs and progressions that the legacy analysis functions use;
+# - the legacy R₀ of the static and clustered model types (verified issues E04, E10, E14, E17);
+# - `default_initial_conditions` and `solve_epidemic`, which dispatch on `metadata[:kind]`.
+
 using ModelingToolkit: t_nounits, D_nounits, Equation, System, mtkcompile
 using OrdinaryDiffEqDefault: ODEProblem, solve
 
+"""
+    StaticConfigurationModel(pgf::DegreePGF, progression::DiseaseProgression)
+
+The legacy (0.1) static configuration-model EBCM: a degree PGF and a disease progression.
+`build_edge_system(model)` is `edge_based(contact_model(model), ConfigurationNetwork(pgf))`; the
+legacy analysis functions (`final_size`, `epidemic_probability`, `confidence_bands`,
+`epidemic_threshold`, `basic_reproduction_number`, `disease_free_equilibrium`) accept it.
+"""
 struct StaticConfigurationModel
     pgf::DegreePGF
     progression::DiseaseProgression
 end
 
-struct EdgeModelSystem
-    system
-    variables::Dict{Symbol, Any}
-    observables::Dict{Symbol, Any}
-    metadata::Dict{Symbol, Any}
+"""
+    DynamicConfigurationModel(pgf, progression, η₁, η₂)
+
+The legacy (0.1) dynamic-network EBCM with edge formation rate η₁ and breaking rate η₂. Its
+builder was not the Miller–Slim–Volz dynamic fixed-degree model (verified issues E05, E06, E07:
+a Volz–Meyers equation with a typo, no seed factor q, η₁ unused and every model built as SIR), so
+`build_edge_system(::DynamicConfigurationModel)` throws a migration error naming the replacement,
+`edge_based(model, DynamicNetwork(ConfigurationNetwork(d), NeighbourExchange(η)))`. The type is
+kept so that such code fails with that message and `contact_model(m)` still converts it.
+"""
+struct DynamicConfigurationModel
+    pgf::DegreePGF
+    progression::DiseaseProgression
+    η₁  # edge formation rate
+    η₂  # edge breaking rate
 end
 
-EdgeModelSystem(system, variables::Dict{Symbol, Any}, observables::Dict{Symbol, Any}) =
-    EdgeModelSystem(system, variables, observables, Dict{Symbol, Any}())
+"""
+    MultiTypeConfigurationModel(types, pgfs, progression, contact_matrix)
 
-# --- Helpers for PGF evaluation ---
-
-function _eval_pgf(pgf::DegreePGF, x)
-    Symbolics.simplify(Symbolics.substitute(pgf.expression, Dict(pgf.variable => x)))
+The legacy (0.1) multitype EBCM (use the keyword constructor): one [`MultivariatePGF`](@ref) per
+node type, a disease progression shared by the types and per-(infector type, recipient type)
+multipliers of the transmission rate. `build_edge_system` forwards it, with a deprecation warning,
+to the multitype lift `edge_based(stratify(model, st; contact_rates), MultitypeNetwork(...))`.
+"""
+struct MultiTypeConfigurationModel
+    types::Vector{Symbol}
+    pgfs::Dict{Symbol, MultivariatePGF}
+    progression::DiseaseProgression
+    contact_matrix::Dict{Tuple{Symbol,Symbol}, Any}
 end
+
+"""
+    ClusteredConfigurationModel(pgf::ClusteredPGF, progression)
+
+The legacy (0.1) clustered EBCM: triangle degrees from the bivariate `pgf` and a disease
+progression. `build_edge_system` is `edge_based(contact_model(model), ClusteredNetwork(pgf))`,
+the Volz et al. (2011) model (verified issue E02); `basic_reproduction_number` is the
+tree-of-triangles R₀ (E04).
+"""
+struct ClusteredConfigurationModel
+    pgf::ClusteredPGF
+    progression::DiseaseProgression
+end
+
+# --- Helpers on legacy PGFs and progressions (used by the legacy analysis functions) ------------
 
 function _eval_pgf_deriv(pgf::DegreePGF, order::Integer, x)
     deriv = pgf_derivative(pgf, order)
@@ -49,196 +102,7 @@ function _to_float64(x)
     return value
 end
 
-function _is_zero_rate(rate)
-    isequal(rate, 0) || isequal(rate, 0.0)
-end
-
-function _transition_maps(prog::DiseaseProgression)
-    incoming = Dict(s.name => DiseaseTransition[] for s in prog.stages)
-    outgoing = Dict(s.name => DiseaseTransition[] for s in prog.stages)
-    for tr in prog.transitions
-        push!(incoming[tr.target], tr)
-        push!(outgoing[tr.source], tr)
-    end
-    return incoming, outgoing
-end
-
-function _recovered_stages(prog::DiseaseProgression, outgoing)
-    return [
-        stage.name for stage in prog.stages
-        if _is_zero_rate(stage.transmission_rate) && isempty(outgoing[stage.name])
-    ]
-end
-
-function _sum_expr(terms::Vector{Any})
-    return isempty(terms) ? 0 : foldl(+, terms)
-end
-
-function _sum_stage_populations(pop, stage_names)
-    return Symbolics.simplify(_sum_expr(Any[pop[name] for name in stage_names]))
-end
-
-function _population_stage_equations(prog::DiseaseProgression, pop, incidence, incoming, outgoing, D)
-    eqs = Equation[]
-    for stage in prog.stages
-        pop_var = pop[stage.name]
-
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            push!(inflow_terms, incidence)
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * pop[tr.source])
-        end
-        inflow = _sum_expr(inflow_terms)
-
-        outflow_terms = Any[]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * pop_var)
-        end
-        outflow = _sum_expr(outflow_terms)
-
-        push!(eqs, D(pop_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-    return eqs
-end
-
-function _compact_form_supported(prog::DiseaseProgression)
-    length(prog.stages) == 2 || return false
-
-    incoming, outgoing = _transition_maps(prog)
-    recovered = _recovered_stages(prog, outgoing)
-    length(recovered) == 1 || return false
-    prog.entry in recovered && return false
-    isempty(incoming[prog.entry]) || return false
-
-    entry_idx = findfirst(s -> s.name == prog.entry, prog.stages)
-    isnothing(entry_idx) && return false
-    entry_stage = prog.stages[entry_idx]
-    !_is_zero_rate(entry_stage.transmission_rate) || return false
-
-    entry_targets = Set(tr.target for tr in outgoing[prog.entry])
-    return entry_targets == Set(recovered)
-end
-
-function _require_compact_form_supported(prog::DiseaseProgression)
-    _compact_form_supported(prog) && return nothing
-    throw(ArgumentError(
-        "compact form only supports SIR-like progressions with a single infectious " *
-        "entry stage and a single recovered sink; use form = :expanded for multi-stage models",
-    ))
-end
-
-function _default_seed_metadata(entry_var, susceptible_expr)
-    return Dict{Symbol, Any}(
-        :seed_groups => Any[(; entry = entry_var, susceptible_expr = susceptible_expr)],
-    )
-end
-
-# --- Seed-fraction parameter ---
-#
-# We use Miller's standard "explicit ρ" convention for initial conditions:
-# fraction ρ of nodes are initially infected uniformly at random. With θ(0)=1,
-# this is encoded by multiplying every susceptible-side PGF term by (1-ρ):
-#
-#   S(t)   = (1-ρ)·ψ(θ(t))
-#   φ_S(t) = (1-ρ)·ψ'(θ)/ψ'(1)
-#
-# Initial conditions: θ(0)=1, φ_R(0)=0, φ_I(0)=ρ, pop_I(0)=ρ, pop_R(0)=0.
-# This is the *only* convention under which compact and expanded EBCM forms
-# agree exactly (Miller, 2011, J. Math. Biol.). Setting θ(0)<1 instead would
-# implicitly require φ_R(0)=γρ/β > 0, an unphysical initial condition.
-#
-# `ρ` is exposed as a symbolic model parameter so that users can override its
-# value at problem-construction time without rebuilding the symbolic system.
-function _seed_parameter()
-    only(@parameters ρ)
-end
-
-# --- Convenience constructors ---
-
-function build_sir(pgf::DegreePGF, β, γ;
-                   name::Symbol = :sir_ebm,
-                   form::Symbol = :expanded)
-    progression = DiseaseProgression(
-        [
-            DiseaseStage(:I; transmission_rate = β),
-            DiseaseStage(:R; transmission_rate = 0),
-        ],
-        [DiseaseTransition(:I, :R, γ)];
-        entry = :I,
-    )
-    return build_edge_system(
-        StaticConfigurationModel(pgf, progression);
-        name = name,
-        form = form,
-    )
-end
-
-function build_seir(pgf::DegreePGF, σ, β, γ;
-                    name::Symbol = :seir_ebm,
-                    form::Symbol = :expanded)
-    progression = DiseaseProgression(
-        [
-            DiseaseStage(:E; transmission_rate = 0),
-            DiseaseStage(:I; transmission_rate = β),
-            DiseaseStage(:R; transmission_rate = 0),
-        ],
-        [
-            DiseaseTransition(:E, :I, σ),
-            DiseaseTransition(:I, :R, γ),
-        ];
-        entry = :E,
-    )
-    return build_edge_system(
-        StaticConfigurationModel(pgf, progression);
-        name = name,
-        form = form,
-    )
-end
-
-function build_sis(pgf::DegreePGF, β, γ;
-                   name::Symbol = :sis_ebm)
-    # SIS: after recovery, the neighbor returns to susceptible. With explicit
-    # seed ρ (uniform-random initial infection), the susceptible-side PGF gets
-    # a (1-ρ) factor:
-    #   S(t)   = (1-ρ)·ψ(θ)
-    #   φ_S(t) = (1-ρ)·ψ'(θ)/ψ'(1)
-    # IC θ(0)=1 ⇒ φ_S(0) = 1-ρ, φ_I(0) = θ - φ_S = ρ, S(0) = 1-ρ, I(0) = ρ.
-    t = t_nounits
-    D = D_nounits
-
-    @variables θ(t) S(t) I(t)
-    ρ = _seed_parameter()
-    q = 1 - ρ
-
-    ψ_θ = _eval_pgf(pgf, θ)
-
-    ψ_prime_θ = _eval_pgf_deriv(pgf, 1, θ)
-    ψ_prime_1 = _eval_pgf_deriv(pgf, 1, 1)
-    ψ_double_θ = _eval_pgf_deriv(pgf, 2, θ)
-
-    phi_S = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
-    phi_I = Symbolics.simplify(θ - phi_S)
-
-    # SIS: θ̇ = −β·φ_I (transmission) + γ·(1 − θ) (recovery restores edges)
-    θ_dot = Symbolics.simplify(-β * phi_I + γ * (1 - θ))
-
-    eqs = Equation[
-        D(θ) ~ θ_dot,
-        S ~ q * ψ_θ,
-        I ~ 1 - S,
-    ]
-
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    variables = Dict{Symbol, Any}(:θ => θ)
-    observables = Dict{Symbol, Any}(:S => S, :I => I, :φ_S => phi_S, :φ_I => phi_I)
-
-    metadata = Dict{Symbol, Any}(:rho_param => ρ)
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
+_is_zero_rate(rate) = isequal(rate, 0) || isequal(rate, 0.0)
 
 function _is_sis_progression(prog::DiseaseProgression)
     length(prog.stages) == 1 || return false
@@ -249,1046 +113,101 @@ function _is_sis_progression(prog::DiseaseProgression)
     return tr.source == stage.name && tr.target == prog.susceptible
 end
 
-# --- Main builder ---
+# --- R₀ of the legacy model types ----------------------------------------------------------------
 
-function build_edge_system(model::StaticConfigurationModel;
-                           name::Symbol = :edge_based_model,
-                           form::Symbol = :expanded)
-    if _is_sis_progression(model.progression)
-        stage = only(model.progression.stages)
-        γ_val = only(model.progression.transitions).rate
-        # Prefer reinfection-counting (L=0) for SIS — it correctly handles
-        # repeated transmission (matches EoN compact pairwise to <1%).
-        # Falls back to the basic one-shot EBCM for symbolic PGFs.
-        mean_k = _maybe_to_float64(
-            Symbolics.simplify(_eval_pgf_deriv(model.pgf, 1, 1)))
-        if mean_k !== nothing
-            return build_sis_reinfection(model.pgf, stage.transmission_rate,
-                                         γ_val, 0; name = name)
-        else
-            return build_sis(model.pgf, stage.transmission_rate, γ_val;
-                             name = name)
-        end
-    end
-    if form === :compact
-        _require_compact_form_supported(model.progression)
-        return _build_compact(model; name = name)
-    elseif form === :expanded
-        return _build_expanded(model; name = name)
-    else
-        throw(ArgumentError("form must be :compact or :expanded, got :$form"))
-    end
-end
+"""
+    basic_reproduction_number(model::StaticConfigurationModel)
 
-# --- Compact Miller formulation ---
-# Two ODEs (θ, R) plus algebraic S, I.
-# From Miller (2011): θ̇ = −βθ + β·ψ'(θ)/ψ'(1) + γ(1−θ)
-
-function _build_compact(model::StaticConfigurationModel; name::Symbol)
-    prog = model.progression
-    t = t_nounits
-    D = D_nounits
-
-    entry_idx = findfirst(s -> s.name == prog.entry, prog.stages)
-    isnothing(entry_idx) && throw(ArgumentError("entry stage not found"))
-    β_val = prog.stages[entry_idx].transmission_rate
-
-    recovery_transitions = [tr for tr in prog.transitions if tr.source == prog.entry]
-    isempty(recovery_transitions) &&
-        throw(ArgumentError("compact form requires at least one recovery transition"))
-    γ_val = sum(tr.rate for tr in recovery_transitions)
-
-    @variables θ(t) R(t) S(t) I(t)
-    ρ = _seed_parameter()
-    q = 1 - ρ
-
-    ψ_θ = _eval_pgf(model.pgf, θ)
-    ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
-    ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
-
-    # Miller compact equation with explicit seed ρ:
-    #   θ̇ = −β·θ + β·(1-ρ)·ψ'(θ)/ψ'(1) + γ(1−θ)
-    # (recovers Miller 2011 eq. 7 in the limit ρ→0).
-    θ_dot = Symbolics.simplify(-β_val * θ + β_val * q * (ψ_prime_θ / ψ_prime_1) + γ_val * (1 - θ))
-    R_dot = Symbolics.simplify(γ_val * (1 - q * ψ_θ - R))
-
-    eqs = Equation[
-        D(θ) ~ θ_dot,
-        D(R) ~ R_dot,
-        S ~ q * ψ_θ,
-        I ~ 1 - S - R,
-    ]
-
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    variables = Dict{Symbol, Any}(:θ => θ, :R => R)
-    observables = Dict{Symbol, Any}(:S => S, :I => I, :ψ_θ => ψ_θ)
-
-    metadata = Dict{Symbol, Any}(:rho_param => ρ)
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
-
-# --- Expanded φ-variable formulation ---
-
-function _build_expanded(model::StaticConfigurationModel; name::Symbol)
-    prog = model.progression
-    t = t_nounits
-    D = D_nounits
-
-    θ = only(@variables θ(t))
-    ρ = _seed_parameter()
-    q = 1 - ρ
-
-    # Create φ variables for each non-susceptible stage
-    phi = Dict{Symbol, Any}()
-    for stage in prog.stages
-        varname = Symbol("phi_", stage.name)
-        phi[stage.name] = only(@variables $(varname)(t))
-    end
-
-    # Susceptible φ is algebraic: φ_S = (1-ρ)·ψ'(θ)/ψ'(1)
-    phi_S = only(@variables $(Symbol("phi_", prog.susceptible))(t))
-
-    # PGF evaluations
-    ψ_θ = _eval_pgf(model.pgf, θ)
-    ψ_prime_θ = _eval_pgf_deriv(model.pgf, 1, θ)
-    ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
-    ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
-
-    phi_S_expr = Symbolics.simplify(q * ψ_prime_θ / ψ_prime_1)
-
-    # Edge hazard: total transmission rate across test edge
-    edge_hazard = Symbolics.simplify(sum(
-        stage.transmission_rate * phi[stage.name] for stage in prog.stages
-    ))
-
-    # Excess hazard: edge_hazard · ψ''(θ)/ψ'(θ).  Used as an observable only.
-    excess_hazard = Symbolics.simplify(edge_hazard * ψ_double_θ / ψ_prime_θ)
-
-    # Pre-cancelled inflow term used in the φ-entry equation.
-    # excess_hazard * phi_S = edge_hazard · ψ''(θ)/ψ'(θ) · q · ψ'(θ)/ψ'(1)
-    #                      = edge_hazard · q · ψ''(θ) / ψ'(1)
-    # Computing this directly avoids depending on Symbolics.simplify cancelling
-    # the shared ψ'(θ) factor; for high-degree polynomial PGFs the unsimplified
-    # division by ψ'(θ) produces severe numerical errors.
-    entry_inflow_expanded = Symbolics.simplify(edge_hazard * q * ψ_double_θ / ψ_prime_1)
-
-    S_pop = only(@variables S(t))
-    I_pop = only(@variables I(t))
-    pop = Dict{Symbol, Any}()
-    for stage in prog.stages
-        pop[stage.name] = only(@variables $(Symbol("pop_", stage.name))(t))
-    end
-
-    incoming, outgoing = _transition_maps(prog)
-    recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
-    # Population incidence: -dS/dt = (1-ρ)·ψ'(θ)·edge_hazard
-    incidence = Symbolics.simplify(edge_hazard * q * ψ_prime_θ)
-
-    # Build equations
-    eqs = Equation[]
-
-    # φ_S algebraic constraint
-    push!(eqs, phi_S ~ phi_S_expr)
-
-    # θ ODE
-    push!(eqs, D(θ) ~ Symbolics.simplify(-edge_hazard))
-
-    # φ ODEs for each disease stage
-    for stage in prog.stages
-        φ_var = phi[stage.name]
-
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            push!(inflow_terms, entry_inflow_expanded)
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * phi[tr.source])
-        end
-        inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
-
-        outflow_terms = Any[stage.transmission_rate * φ_var]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * φ_var)
-        end
-        outflow = foldl(+, outflow_terms)
-
-        push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-
-    append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ ψ_θ)
-    push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
-
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    variables = Dict{Symbol, Any}(:θ => θ)
-    merge!(variables, Dict(Symbol("φ_", k) => v for (k, v) in phi))
-    merge!(variables, Dict(Symbol("pop_", k) => v for (k, v) in pop))
-    if length(recovered) == 1
-        variables[:R] = pop[only(recovered)]
-    end
-
-    observables = Dict{Symbol, Any}(
-        :S => S_pop,
-        :I => I_pop,
-        :φ_S => phi_S,
-        :edge_hazard => edge_hazard,
-        :excess_hazard => excess_hazard,
-    )
-
-    metadata = _default_seed_metadata(pop[prog.entry], ψ_θ)
-    metadata[:rho_param] = ρ
-    metadata[:edge_seed_groups] = Any[
-        (; entry = phi[prog.entry], theta = θ, phi_S_expr = phi_S_expr),
-    ]
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
-
-function _find_terminal_recovery_rate(prog::DiseaseProgression)
-    outgoing = Dict(s.name => DiseaseTransition[] for s in prog.stages)
-    for tr in prog.transitions
-        push!(outgoing[tr.source], tr)
-    end
-    non_transmitting = Set(s.name for s in prog.stages if _is_zero_rate(s.transmission_rate))
-    total = 0
-    for stage in prog.stages
-        for tr in outgoing[stage.name]
-            if tr.target in non_transmitting
-                total += tr.rate
-            end
-        end
-    end
-    return total
-end
-
-# --- R₀ computation ---
-# For single-stage SIR: R₀ = β/(β+γ) · ψ''(1)/ψ'(1)
-# For multi-stage: uses next-generation matrix approach.
-# The transmissibility T = P(transmission before recovery through a single edge)
-# is computed as the spectral radius of the edge-level transmission/transition system,
-# then multiplied by the excess degree ratio ψ''(1)/ψ'(1).
-
+R₀ = T·ψ''(1)/ψ'(1) of the legacy static model, where T is the probability that an infective
+transmits along one given edge, from the absorbing chain of the whole progression (branching,
+bypasses and revisited stages included; verified issue E14, where the 0.1 single-stage shortcut
+gave 2.5 instead of 1.25 for a progression with an E → R bypass). Symbol and Expr rates become
+parameters (E10), and the result is symbolic when a rate or the PGF is. A progression that
+returns nodes to the susceptible class (SIS, SIRS, reinfection-counting lifts) is refused with an
+`ArgumentError` (E17); a progression without a transmitting stage has R₀ = 0. For a lifted system
+use `basic_reproduction_number(sys; p)`.
+"""
 function basic_reproduction_number(model::StaticConfigurationModel)
     prog = model.progression
-
-    # Network factor: excess degree ratio
-    ψ_prime_1 = _eval_pgf_deriv(model.pgf, 1, 1)
-    ψ_double_1 = _eval_pgf_deriv(model.pgf, 2, 1)
-    excess_degree = Symbolics.simplify(ψ_double_1 / ψ_prime_1)
-
-    # Compute edge-level transmissibility T
-    # For a single infectious stage: T = β/(β+γ)
-    # For multi-stage (e.g., E->I->R): T is the probability of transmitting before
-    # leaving the infectious chain, computed via the product of survival probabilities.
-    infectious_stages = [s for s in prog.stages if !_is_zero_rate(s.transmission_rate)]
-
-    if length(infectious_stages) == 1
-        # Simple case: single infectious stage
-        stage = only(infectious_stages)
-        β_val = stage.transmission_rate
-        outgoing_rate = sum(tr.rate for tr in prog.transitions if tr.source == stage.name; init = 0)
-        total_exit_rate = β_val + outgoing_rate
-        T = Symbolics.simplify(β_val / total_exit_rate)
-    else
-        # Multi-stage: compute transmissibility as 1 - P(no transmission)
-        # For a linear chain of infectious stages, the probability of NOT transmitting
-        # through a test edge is the product over stages of P(progressing before transmitting).
-        # T = 1 - ∏_m [γ_m / (β_m + γ_m)]
-        T = _compute_multistage_transmissibility(prog)
-    end
-
-    return Symbolics.simplify(T * excess_degree)
+    _require_sir_type_analysis(prog, "basic_reproduction_number")
+    excess = Symbolics.simplify(_eval_pgf_deriv(model.pgf, 2, 1) / _eval_pgf_deriv(model.pgf, 1, 1))
+    return Symbolics.simplify(_edge_transmissibility(prog) * excess)
 end
 
-function _compute_multistage_transmissibility(prog::DiseaseProgression)
-    # Build the transition graph for infectious stages
-    # For each stage, compute the probability of NOT transmitting and moving to next stage
-    # T = 1 - ∏_stages P(not transmitting in that stage)
-    survival_product = 1  # P(no transmission through the entire chain)
+"""
+    basic_reproduction_number(model::ClusteredConfigurationModel; kind = :generation)
 
-    outgoing = Dict(s.name => DiseaseTransition[] for s in prog.stages)
-    for tr in prog.transitions
-        push!(outgoing[tr.source], tr)
-    end
-
-    for stage in prog.stages
-        β_m = stage.transmission_rate
-        if _is_zero_rate(β_m)
-            continue  # Non-infectious stage (E, R) - no transmission risk
-        end
-        # Total exit rate from this stage (progression + transmission)
-        progression_rate = sum(tr.rate for tr in outgoing[stage.name]; init = 0)
-        total_exit = β_m + progression_rate
-        # P(not transmitting in this stage) = progression_rate / total_exit
-        survival_product = survival_product * Symbolics.simplify(progression_rate / total_exit)
-    end
-
-    return Symbolics.simplify(1 - survival_product)
+The tree-of-triangles R₀ of Volz et al. (2011) for the legacy clustered model (verified issue
+E04, corrected fix: the 0.1 heuristic T·g_xx/g_x + 2T(1 + T)g_y/g_x gave 2.4375 instead of 2.0027
+for κ_s = 1, κ_t = 2, τ = 0.6, γ = 1): `_clustered_reproduction_number(contact_model(model),
+ClusteredNetwork(model.pgf); kind)`, see there (`kind = :clump` gives R_*). The clustered PGF
+must record its `ClusteredDegree` (`clustered_pgf`, `clustered_poisson_pgf`).
+"""
+function basic_reproduction_number(model::ClusteredConfigurationModel; kind::Symbol = :generation)
+    _require_sir_type_analysis(model.progression, "basic_reproduction_number")
+    return _clustered_reproduction_number(contact_model(model), ClusteredNetwork(model.pgf); kind)
 end
 
-# --- Default initial conditions ---
+# --- Default initial conditions and solving ---------------------------------------------------------
 
-function default_initial_conditions(model::EdgeModelSystem; ε = 1e-3, seed_fraction = ε)
-    ic = Dict{Any, Float64}()
-    # Set θ(0) = 1 (no transmission yet) and all population/edge stage
-    # variables to zero. Seed mass goes into the entry stage via metadata
-    # below, and ρ (the initial-infected fraction parameter) is set explicitly.
-    for (sym, var) in model.variables
-        if startswith(string(sym), "θ")
-            ic[var] = 1.0
-        else
-            ic[var] = 0.0
-        end
-    end
-    # ρ parameter: the canonical "initial infected fraction" embedded in the
-    # algebraic relations S = (1-ρ)·ψ(θ), φ_S = (1-ρ)·ψ'(θ)/ψ'(1).
-    if haskey(model.metadata, :rho_param)
-        ic[model.metadata[:rho_param]] = Float64(seed_fraction)
-    end
-    if haskey(model.metadata, :rho_params)
-        # Multi-type case: vector of (param, weight) pairs (or vector of params
-        # if uniform seeding). Each ρ_j is set to seed_fraction by default.
-        for entry in model.metadata[:rho_params]
-            param = entry isa Tuple ? entry[1] : entry
-            ic[param] = Float64(seed_fraction)
-        end
-    end
-    for group in get(model.metadata, :seed_groups, Any[])
-        ic[group.entry] = Float64(seed_fraction)
-    end
-    # Seed entry edge variable so transmission can start. Under the explicit-ρ
-    # convention with θ(0)=1, φ_S(0) = (1-ρ)·1 = 1-ρ, so φ_entry(0) = ρ.
-    for assignment in get(model.metadata, :explicit_assignments, Any[])
-        var, expr = assignment
-        substituted = Symbolics.simplify(Symbolics.substitute(expr, ic))
-        numeric = _maybe_to_float64(substituted)
-        if numeric !== nothing
-            ic[var] = numeric
-        end
-    end
-    for assignment in get(model.metadata, :seed_fraction_assignments, Any[])
-        ic[assignment.var] = Float64(assignment.value(seed_fraction))
-    end
-    for group in get(model.metadata, :edge_seed_groups, Any[])
-        # With θ(0)=1 and the (1-ρ) factor inside φ_S, φ_entry(0) reduces to ρ.
-        if haskey(group, :phi_S_expr)
-            phi_S_subst = Symbolics.simplify(Symbolics.substitute(group.phi_S_expr, ic))
-            phi_S_numeric = _maybe_to_float64(phi_S_subst)
-            θ_val = haskey(group, :theta) ? get(ic, group.theta, nothing) : nothing
-            if phi_S_numeric !== nothing && θ_val !== nothing
-                ic[group.entry] = max(0.0, θ_val - phi_S_numeric)
-            elseif phi_S_numeric !== nothing
-                ic[group.entry] = max(0.0, 1.0 - phi_S_numeric)
-            else
-                ic[group.entry] = Float64(seed_fraction)
-            end
-        else
-            # Dynamic model: φ_I(0) = ε (entry stage gets the seed fraction)
-            ic[group.entry] = Float64(seed_fraction)
-        end
-    end
-    return ic
-end
+"""
+    default_initial_conditions(sys::EdgeModelSystem; initial = nothing, ε = 1e-3, seed_fraction = ε, N = nothing)
 
-function compartment(sol, system::EdgeModelSystem, state::Symbol)
-    if haskey(system.observables, state)
-        return sol[system.observables[state]]
-    elseif haskey(system.variables, state)
-        return sol[system.variables[state]]
+The initial state (and the seed parameter values) of an edge-based system: θ(0) = 1, and the
+seeded fractions from `initial`, a NetworkEpiCore `SeedSpec` such as `SeedFraction(:I => 0.01)`
+(fractions of all nodes, design §J.6; a `SeedCount` or `SeedNodes` needs the population size
+`N`). Without `initial`, the unique entry state of the model is seeded with `seed_fraction`
+(design §E.2); a model with several entry states needs `initial`. The susceptible fraction of
+each node type is 1 − Σ_X seed_X within the type, so S(0) = 1 − ρ and φ_entry(0) = pop_entry(0)
+= ρ for SIR seeded with ρ. The result is a `Dict` from the system's variables and seed parameters
+to values, which `solve_epidemic(sys; init)` and `ODEProblem(sys.system, …)` accept. The method
+dispatches on `sys.metadata[:kind]` (`:assembled` for every system of EdgeBasedModels 0.2).
+"""
+default_initial_conditions(model::EdgeModelSystem; kw...) =
+    _default_initial_conditions(Val(_system_kind(model)), model; kw...)
+
+# The kind of a lowered system (design §A.3): `:assembled` for the per-reaction assembler and the
+# lifts that reuse it (every system of this version); a system built by hand records none.
+_system_kind(sys::EdgeModelSystem) = get(sys.metadata, :kind, :unknown)
+
+_default_initial_conditions(::Val{K}, model::EdgeModelSystem; kw...) where {K} =
+    throw(ArgumentError("default_initial_conditions: no method for edge-based systems of kind :$K " *
+                        "(build the system with edge_based)"))
+
+"""
+    solve_epidemic(sys::EdgeModelSystem; p = nothing, initial = nothing, tspan = (0.0, 100.0),
+                   init = nothing, solver = nothing, kwargs...)
+    solve_epidemic(sys::EdgeModelSystem, sc::Scenario; kwargs...)
+
+Solve an edge-based system. `p` gives parameter values by name (a `Dict{Symbol}` or a
+`NamedTuple`, e.g. `p = Dict(:τ => 0.3, :γ => 0.1)` for a model built with Symbol rates) or by
+symbolic parameter; an unknown name is an error, and so is a seed parameter `seed_<X>` (set the
+seeds with `initial`). A parameter that neither `p` nor `init` sets takes its value from
+[`parameter_defaults`](@ref)`(sys)` (the defaults of the lowered model, e.g. Catalyst's
+`@parameters τ = 0.3`): the precedence is p > init > defaults. The initial state is `init` (a full
+operating point, e.g. from [`default_initial_conditions`](@ref)) or, when `init` is not given,
+`default_initial_conditions(sys; initial)`. Other keywords (`saveat`, `reltol`, …) go to the ODE
+solver; `solver` selects the algorithm (the default chooses one automatically). The scenario form
+takes `p`, `initial`, `tspan` and `saveat` from the scenario. The method dispatches on
+`sys.metadata[:kind]` like `default_initial_conditions`.
+"""
+solve_epidemic(system::EdgeModelSystem; kw...) = _solve_epidemic(Val(_system_kind(system)), system; kw...)
+
+function _solve_epidemic(::Val, system::EdgeModelSystem;
+                         p = nothing, initial = nothing,
+                         tspan::Tuple{<:Real, <:Real} = (0.0, 100.0),
+                         init = nothing,
+                         solver = nothing,
+                         kwargs...)
+    if init === nothing
+        init = default_initial_conditions(system; initial)
+    elseif initial !== nothing
+        throw(ArgumentError("solve_epidemic: pass either `init` or `initial`, not both"))
     end
-    throw(ArgumentError("unknown compartment or observable: $state"))
-end
-
-# Argument-order parity with NodeBasedModels (system, sol, state).
-compartment(system::EdgeModelSystem, sol, state::Symbol) = compartment(sol, system, state)
-
-function compartments(sol, system::EdgeModelSystem, states::AbstractVector{Symbol})
-    return Dict(state => compartment(sol, system, state) for state in states)
-end
-compartments(system::EdgeModelSystem, sol, states::AbstractVector{Symbol}) =
-    compartments(sol, system, states)
-
-function population_fraction(sol, system::EdgeModelSystem, state::Symbol)
-    return compartment(sol, system, state)
-end
-population_fraction(system::EdgeModelSystem, sol, state::Symbol) =
-    population_fraction(sol, system, state)
-
-function solve_epidemic(system::EdgeModelSystem;
-                        tspan::Tuple{<:Real, <:Real} = (0.0, 100.0),
-                        init = default_initial_conditions(system),
-                        solver = nothing,
-                        kwargs...)
-    prob = ODEProblem(system.system, init, (Float64(tspan[1]), Float64(tspan[2])))
+    op = _with_parameter_values(system, init, p)
+    prob = ODEProblem(system.system, op, (Float64(tspan[1]), Float64(tspan[2])))
     if isnothing(solver)
         return solve(prob; kwargs...)
     end
     return solve(prob, solver; kwargs...)
-end
-
-# ==========================================================================
-# Dynamic network model (edge swapping / dormant contacts)
-# ==========================================================================
-
-# Serosorting function types: rates can depend on population state
-# η₁(π_S, π_I) = formation rate, η₂(π_S, π_I) = breaking rate
-# For simple case: η₁, η₂ are constants.
-
-"""
-    DynamicConfigurationModel(pgf, progression, η₁, η₂)
-
-Edge-rewiring EBCM with dormant stubs. The current implementation uses a
-random-rewiring closure: dormant stubs reconnect to compartments in proportion
-to current population fractions, and the active susceptible-edge fraction is
-approximated by `ψ'(θ)/ψ'(1)`. This is exact in the static limit `η₁ = η₂ = 0`
-and serves as a closure approximation away from that limit.
-"""
-struct DynamicConfigurationModel
-    pgf::DegreePGF
-    progression::DiseaseProgression
-    η₁  # Edge formation rate (scalar or function of dormant stub fractions)
-    η₂  # Edge breaking rate (scalar or function of active stub fractions)
-end
-
-function build_edge_system(model::DynamicConfigurationModel;
-                           name::Symbol = :dynamic_ebm)
-    return _build_dynamic_expanded(model; name = name)
-end
-
-function _build_dynamic_expanded(model::DynamicConfigurationModel; name::Symbol)
-    prog = model.progression
-    t = t_nounits
-    D = D_nounits
-
-    # Currently restricted to canonical SIR: S → I → R
-    incoming, outgoing = _transition_maps(prog)
-    recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
-    length(infected) == 1 && length(recovered) == 1 ||
-        throw(ArgumentError(
-            "DynamicConfigurationModel currently requires canonical SIR"))
-
-    β_sym = prog.stages[findfirst(
-        s -> !_is_zero_rate(s.transmission_rate), prog.stages)].transmission_rate
-    γ_sym = prog.transitions[1].rate
-
-    θ = only(@variables θ(t))
-
-    # Volz-Meyers (2007) Table 4 variables:
-    #   P₁  = frac of a susceptible ego's stubs pointing to infected
-    #   P_S = frac pointing to susceptible
-    #   M₁  = population-level frac of ALL stubs pointing to infected
-    P₁  = only(@variables P₁(t))
-    P_S = only(@variables P_S(t))
-    M₁  = only(@variables M₁(t))
-
-    pop_I = only(@variables pop_I(t))
-    pop_R = only(@variables pop_R(t))
-    S_pop = only(@variables S(t))
-    I_pop = only(@variables I(t))
-
-    # PGF at θ (standard — θ only changes from transmission)
-    ψ_θ        = _eval_pgf(model.pgf, θ)
-    ψ_prime_θ  = _eval_pgf_deriv(model.pgf, 1, θ)
-    ψ_prime_1  = _eval_pgf_deriv(model.pgf, 1, 1)
-    ψ_double_θ = _eval_pgf_deriv(model.pgf, 2, θ)
-
-    # Effective edge-swap rate.  For the dormant-edge API (η₁, η₂) the
-    # swap rate equals the breaking rate η₂ (edges break then reconnect
-    # to a random partner).  In the fast-reform limit η₁ ≫ η₂ this is
-    # exact; for finite η₁ it is a first-order approximation.
-    ρ_swap = model.η₂
-
-    # Excess-degree ratio: θ·g″(θ)/g′(θ)
-    excess_ratio = Symbolics.simplify(θ * ψ_double_θ / ψ_prime_θ)
-
-    eqs = Equation[]
-
-    # θ̇ = −β P₁ θ   (only transmission)
-    push!(eqs, D(θ) ~ Symbolics.simplify(-β_sym * P₁ * θ))
-
-    # Ṗ_S = β P_S P₁ (1 − excess_ratio) + ρ (g′(θ)/g′(1) − P_S)
-    push!(eqs, D(P_S) ~ Symbolics.simplify(
-        β_sym * P_S * P₁ * (1 - excess_ratio) +
-        ρ_swap * (ψ_prime_θ / ψ_prime_1 - P_S)))
-
-    # Ṗ₁ = β P₁ P_S excess_ratio − P₁(1−P₁)β − P₁ γ + ρ(M₁ − P₁)
-    push!(eqs, D(P₁) ~ Symbolics.simplify(
-        β_sym * P₁ * P_S * excess_ratio -
-        P₁ * (1 - P₁) * β_sym -
-        P₁ * γ_sym +
-        ρ_swap * (M₁ - P₁)))
-
-    # Ṁ₁ = −γ M₁ + β P₁ (θ² g″(θ) + θ g′(θ)) / g′(1)
-    push!(eqs, D(M₁) ~ Symbolics.simplify(
-        -γ_sym * M₁ +
-        β_sym * P₁ * (θ^2 * ψ_double_θ + θ * ψ_prime_θ) / ψ_prime_1))
-
-    # Population compartments
-    incidence = Symbolics.simplify(β_sym * P₁ * θ * ψ_prime_θ)
-    push!(eqs, D(pop_I) ~ Symbolics.simplify(incidence - γ_sym * pop_I))
-    push!(eqs, D(pop_R) ~ Symbolics.simplify(γ_sym * pop_I))
-
-    # Observables
-    push!(eqs, S_pop ~ ψ_θ)
-    push!(eqs, I_pop ~ pop_I)
-
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    variables = Dict{Symbol, Any}(
-        :θ => θ, :P₁ => P₁, :P_S => P_S, :M₁ => M₁,
-        :pop_I => pop_I, :R => pop_R)
-
-    observables = Dict{Symbol, Any}(:S => S_pop, :I => I_pop)
-
-    metadata = _default_seed_metadata(pop_I, ψ_θ)
-    # ICs matching the static EBCM convention: θ(0)=1, seed through P₁ and M₁.
-    # This ensures the VM model agrees with the static EBCM at ρ=0.
-    metadata[:seed_fraction_assignments] = Any[
-        (var = θ,      value = sf -> 1.0),
-        (var = P₁,     value = sf -> sf),
-        (var = P_S,    value = sf -> 1.0 - sf),
-        (var = M₁,     value = sf -> sf),
-        (var = pop_I,  value = sf -> sf),
-    ]
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
-
-# ==========================================================================
-# Multi-type configuration model
-# ==========================================================================
-
-struct MultiTypeConfigurationModel
-    types::Vector{Symbol}
-    pgfs::Dict{Symbol, MultivariatePGF}
-    progression::DiseaseProgression
-    contact_matrix::Dict{Tuple{Symbol,Symbol}, Any}
-end
-
-function MultiTypeConfigurationModel(;
-    types::Vector{Symbol},
-    pgfs::Dict{Symbol, MultivariatePGF},
-    progression::DiseaseProgression,
-    contact_matrix::Dict = Dict{Tuple{Symbol,Symbol}, Any}(),
-)
-    for type in types
-        haskey(pgfs, type) || throw(ArgumentError("missing PGF for type $type"))
-        Set(pgfs[type].types) == Set(types) ||
-            throw(ArgumentError("PGF for type $type must have variables for all types: $types"))
-    end
-    # Fill missing contact matrix entries with 1 (homogeneous mixing)
-    filled = Dict{Tuple{Symbol,Symbol}, Any}()
-    for j in types, l in types
-        filled[(j, l)] = get(contact_matrix, (j, l), 1)
-    end
-    return MultiTypeConfigurationModel(types, pgfs, progression, filled)
-end
-
-function build_edge_system(model::MultiTypeConfigurationModel;
-                           name::Symbol = :multitype_ebm)
-    return _build_multitype_expanded(model; name = name)
-end
-
-function _build_multitype_expanded(model::MultiTypeConfigurationModel; name::Symbol)
-    prog = model.progression
-    types = model.types
-    K = length(types)
-    t = t_nounits
-    D = D_nounits
-
-    # Per-type seed fraction parameters: ρ_j for j in types.
-    # Susceptible-side expressions for type j get a (1-ρ_j) factor.
-    rho = Dict{Symbol, Any}(j => only(@parameters $(Symbol("ρ_", j))) for j in types)
-    q = Dict{Symbol, Any}(j => 1 - rho[j] for j in types)
-    incoming, outgoing = _transition_maps(prog)
-    recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
-
-    # --- Create symbolic variables ---
-    # θ_{jl}(t) for each type pair: prob edge from l to j hasn't transmitted
-    theta = Dict{Tuple{Symbol,Symbol}, Any}()
-    for j in types, l in types
-        vname = Symbol("θ_", j, "_", l)
-        theta[(j, l)] = only(@variables $(vname)(t))
-    end
-
-    # φ_{stage,jl}(t) for each stage and type pair
-    phi = Dict{Tuple{Symbol,Symbol,Symbol}, Any}()
-    for stage in prog.stages, j in types, l in types
-        vname = Symbol("φ_", stage.name, "_", j, "_", l)
-        phi[(stage.name, j, l)] = only(@variables $(vname)(t))
-    end
-
-    # φ_S_{jl}(t) for susceptible (algebraic, but need a symbol for the equation)
-    phi_S = Dict{Tuple{Symbol,Symbol}, Any}()
-    for j in types, l in types
-        vname = Symbol("φ_S_", j, "_", l)
-        phi_S[(j, l)] = only(@variables $(vname)(t))
-    end
-
-    # Population-level variables per type
-    S_pop = Dict{Symbol, Any}()
-    I_pop = Dict{Symbol, Any}()
-    pop = Dict{Tuple{Symbol, Symbol}, Any}()
-    for l in types
-        S_pop[l] = only(@variables $(Symbol("S_", l))(t))
-        I_pop[l] = only(@variables $(Symbol("I_", l))(t))
-        for stage in prog.stages
-            pop[(stage.name, l)] = only(@variables $(Symbol("pop_", stage.name, "_", l))(t))
-        end
-    end
-
-    eqs = Equation[]
-    susceptible_partial = Dict{Tuple{Symbol, Symbol}, Any}()
-    phi_S_expr = Dict{Tuple{Symbol, Symbol}, Any}()
-
-    # --- PGF evaluations ---
-    # For each type j (the neighbor), substitute θ_{k,j} for all k into ψ_j
-    # θ_vec_j maps type k → θ_{kj}
-    ψ_at_theta = Dict{Symbol, Any}()  # ψ_j(θ_vec_j)
-    for j in types
-        sub = Dict{Symbol, Any}(k => theta[(k, j)] for k in types)
-        ψ_at_theta[j] = eval_multivariate_pgf(model.pgfs[j], sub)
-    end
-
-    # --- φ_S algebraic equations ---
-    # φ_{S,jl} = ∂ψ_j/∂x_l(θ_vec_j) / ∂ψ_j/∂x_l(1_vec)
-    # The neighbor is type j, reached via a type-l edge → differentiate ψ_j w.r.t. x_l
-    for j in types, l in types
-        pgf_j = model.pgfs[j]
-
-        # Numerator: ∂ψ_j/∂x_l evaluated at θ_vec_j
-        deriv_expr = partial_derivative(pgf_j, l, 1)
-        sub_theta = Dict{Any, Any}(
-            pgf_j.variables[findfirst(==(k), pgf_j.types)] => theta[(k, j)]
-            for k in types
-        )
-        numerator = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_expr, sub_theta)))
-        susceptible_partial[(j, l)] = numerator
-
-        # Denominator: ∂ψ_j/∂x_l evaluated at 1
-        sub_ones = Dict{Any, Any}(v => 1 for v in pgf_j.variables)
-        denominator = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_expr, sub_ones)))
-
-        push!(eqs, phi_S[(j, l)] ~ Symbolics.simplify(q[j] * numerator / denominator))
-        phi_S_expr[(j, l)] = Symbolics.simplify(q[j] * numerator / denominator)
-    end
-
-    # --- Edge hazard and excess hazard per type pair ---
-    # edge_hazard_{jl} = Σ_m β_{m,j} · contact[(j,l)] · φ_{I_m,jl}
-    # This is the rate at which edge (j→l) transmits disease from j to l
-    edge_hazard = Dict{Tuple{Symbol,Symbol}, Any}()
-    for j in types, l in types
-        h = sum(
-            stage.transmission_rate * model.contact_matrix[(j, l)] * phi[(stage.name, j, l)]
-            for stage in prog.stages;
-            init = 0
-        )
-        edge_hazard[(j, l)] = Symbolics.simplify(h)
-    end
-
-    # Excess hazard for neighbor j, reached via l-edge:
-    # Rate at which the type-j neighbor gets infected through its OTHER edges.
-    # excess_hazard_{jl} = Σ_k edge_hazard_{kj} · ∂²ψ_j/(∂x_l ∂x_k)(θ_vec_j) / ∂ψ_j/∂x_l(θ_vec_j)
-    excess_hazard = Dict{Tuple{Symbol,Symbol}, Any}()
-    # Pre-cancelled inflow term used in the φ-entry equation:
-    #   excess_hazard[(j,l)] * phi_S[(j,l)]
-    # = (Σ_k h_kj · ∂²ψ_j/∂x_l∂x_k(θ)) / ∂ψ_j/∂x_l(θ)  ·  q_j · ∂ψ_j/∂x_l(θ) / ∂ψ_j/∂x_l(1)
-    # = q_j · (Σ_k h_kj · ∂²ψ_j/∂x_l∂x_k(θ)) / ∂ψ_j/∂x_l(1)
-    # Computing this directly avoids the Symbolics.simplify cancellation of a
-    # shared partial-derivative factor, which fails for high-degree polynomial
-    # PGFs and produces severe numerical errors. See `build_sir_expanded`.
-    entry_inflow_expanded = Dict{Tuple{Symbol,Symbol}, Any}()
-    for j in types, l in types
-        pgf_j = model.pgfs[j]
-        sub_theta = Dict{Any, Any}(
-            pgf_j.variables[findfirst(==(k), pgf_j.types)] => theta[(k, j)]
-            for k in types
-        )
-
-        # ∂ψ_j/∂x_l at θ
-        deriv_l = partial_derivative(pgf_j, l, 1)
-        denom = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_l, sub_theta)))
-
-        # ∂ψ_j/∂x_l at 1 (used for the pre-cancelled inflow term)
-        sub_ones = Dict{Any, Any}(v => 1 for v in pgf_j.variables)
-        denom_at_1 = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(deriv_l, sub_ones)))
-
-        eh = 0
-        eh_pre = 0
-        for k in types
-            # ∂²ψ_j/(∂x_l ∂x_k) at θ
-            mixed = mixed_partial(pgf_j, l, k)
-            numer_k = _cleanup_exp_zero(Symbolics.simplify(Symbolics.substitute(mixed, sub_theta)))
-
-            # edge_hazard_{kj}: hazard from type-k stubs of the j-neighbor
-            # These stubs connect j to k, so the hazard is from k infecting j
-            h_kj = sum(
-                stage.transmission_rate * model.contact_matrix[(k, j)] * phi[(stage.name, k, j)]
-                for stage in prog.stages;
-                init = 0
-            )
-            eh += h_kj * numer_k
-            eh_pre += h_kj * numer_k
-        end
-        excess_hazard[(j, l)] = Symbolics.simplify(eh / denom)
-        entry_inflow_expanded[(j, l)] = Symbolics.simplify(q[j] * eh_pre / denom_at_1)
-    end
-
-    incidence = Dict{Symbol, Any}()
-    for l in types
-        incidence_terms = Any[]
-        for j in types
-            push!(incidence_terms, edge_hazard[(j, l)] * susceptible_partial[(l, j)])
-        end
-        # (1-ρ_l) factor: probability the type-l node being infected was
-        # initially susceptible (rather than seeded as initial infective).
-        incidence[l] = Symbolics.simplify(q[l] * _sum_expr(incidence_terms))
-    end
-
-    # --- θ ODEs ---
-    # dθ_{jl}/dt = -edge_hazard_{jl}
-    for j in types, l in types
-        push!(eqs, D(theta[(j, l)]) ~ Symbolics.simplify(-edge_hazard[(j, l)]))
-    end
-
-    # --- φ ODEs for each disease stage and type pair ---
-    for stage in prog.stages, j in types, l in types
-        φ_var = phi[(stage.name, j, l)]
-
-        # Inflow
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            # Infection of the j-neighbor through its OTHER edges.
-            # Use pre-cancelled form to avoid division by ∂ψ_j/∂x_l(θ).
-            push!(inflow_terms, entry_inflow_expanded[(j, l)])
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * phi[(tr.source, j, l)])
-        end
-        inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
-
-        # Outflow: transmission through this edge + progression
-        outflow_terms = Any[stage.transmission_rate * model.contact_matrix[(j, l)] * φ_var]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * φ_var)
-        end
-        outflow = foldl(+, outflow_terms)
-
-        push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-
-    # --- Population-level equations per type ---
-    for l in types
-        for stage in prog.stages
-            pop_var = pop[(stage.name, l)]
-
-            inflow_terms = Any[]
-            if stage.name == prog.entry
-                push!(inflow_terms, incidence[l])
-            end
-            for tr in incoming[stage.name]
-                push!(inflow_terms, tr.rate * pop[(tr.source, l)])
-            end
-            inflow = _sum_expr(inflow_terms)
-
-            outflow_terms = Any[]
-            for tr in outgoing[stage.name]
-                push!(outflow_terms, tr.rate * pop_var)
-            end
-            outflow = _sum_expr(outflow_terms)
-
-            push!(eqs, D(pop_var) ~ Symbolics.simplify(inflow - outflow))
-        end
-        push!(eqs, S_pop[l] ~ q[l] * ψ_at_theta[l])
-        push!(eqs, I_pop[l] ~ _sum_stage_populations(pop, [(stage, l) for stage in infected]))
-    end
-
-    # --- Build and compile system ---
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    # Collect variables and observables
-    variables = Dict{Symbol, Any}()
-    for j in types, l in types
-        variables[Symbol("θ_", j, "_", l)] = theta[(j, l)]
-    end
-    for stage in prog.stages, j in types, l in types
-        variables[Symbol("φ_", stage.name, "_", j, "_", l)] = phi[(stage.name, j, l)]
-    end
-    for stage in prog.stages, l in types
-        variables[Symbol("pop_", stage.name, "_", l)] = pop[(stage.name, l)]
-    end
-    if length(recovered) == 1
-        recovered_stage = only(recovered)
-        for l in types
-            variables[Symbol("R_", l)] = pop[(recovered_stage, l)]
-        end
-    end
-
-    observables = Dict{Symbol, Any}()
-    for j in types, l in types
-        observables[Symbol("φ_S_", j, "_", l)] = phi_S[(j, l)]
-        observables[Symbol("edge_hazard_", j, "_", l)] = edge_hazard[(j, l)]
-        observables[Symbol("excess_hazard_", j, "_", l)] = excess_hazard[(j, l)]
-    end
-    for l in types
-        observables[Symbol("S_", l)] = S_pop[l]
-        observables[Symbol("I_", l)] = I_pop[l]
-    end
-
-    metadata = Dict{Symbol, Any}(
-        :rho_params => Any[rho[j] for j in types],
-        :seed_groups => Any[
-            (; entry = pop[(prog.entry, l)], susceptible_expr = ψ_at_theta[l]) for l in types
-        ],
-        :edge_seed_groups => Any[
-            (; entry = phi[(prog.entry, j, l)], phi_S_expr = phi_S_expr[(j, l)])
-            for j in types for l in types
-        ],
-    )
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
-
-# ==========================================================================
-# Clustered configuration model (single-edges + triangles)
-# ==========================================================================
-# Following Volz (2011) "Effects of heterogeneous and clustered contact patterns"
-# and Miller (2009) "Spread of infectious disease through clustered populations"
-#
-# Key variables:
-#   θ₂(t) = P(haven't been infected through a single-edge partner)
-#   θ₃(t) = P(haven't been infected through a triangle-edge partner)
-
-struct ClusteredConfigurationModel
-    pgf::ClusteredPGF
-    progression::DiseaseProgression
-end
-
-function build_edge_system(model::ClusteredConfigurationModel;
-                           name::Symbol = :clustered_ebm)
-    return _build_clustered_expanded(model; name = name)
-end
-
-function _build_clustered_expanded(model::ClusteredConfigurationModel; name::Symbol)
-    prog = model.progression
-    t = t_nounits
-    D = D_nounits
-
-    incoming, outgoing = _transition_maps(prog)
-    recovered = _recovered_stages(prog, outgoing)
-    infected = [stage.name for stage in prog.stages if !_is_zero_rate(stage.transmission_rate)]
-
-    ρ = _seed_parameter()
-    q = 1 - ρ
-
-    # θ₂ = single-edge survivor, θ₃ = triangle-edge survivor
-    θ₂ = only(@variables θ₂(t))
-    θ₃ = only(@variables θ₃(t))
-
-    # φ variables for single-edges (subscript 2) and triangle-edges (subscript 3)
-    phi2 = Dict{Symbol, Any}()
-    phi3 = Dict{Symbol, Any}()
-    for stage in prog.stages
-        v2 = Symbol("φ2_", stage.name)
-        v3 = Symbol("φ3_", stage.name)
-        phi2[stage.name] = only(@variables $(v2)(t))
-        phi3[stage.name] = only(@variables $(v3)(t))
-    end
-
-    # φ_S for each edge type (algebraic)
-    φ2_S = only(@variables φ2_S(t))
-    φ3_S = only(@variables φ3_S(t))
-
-    # Population-level
-    S_pop = only(@variables S(t))
-    I_pop = only(@variables I(t))
-    pop = Dict{Symbol, Any}()
-    for stage in prog.stages
-        pop[stage.name] = only(@variables $(Symbol("pop_", stage.name))(t))
-    end
-
-    # PGF evaluations
-    # S(t) = g(θ₂, θ₃²) — the θ₃² accounts for both triangle partners
-    g_at_theta = _eval_clustered(model.pgf, θ₂, θ₃^2)
-
-    # φ2_S = g_x(θ₂, θ₃²) / g_x(1, 1) — excess degree for single edges
-    gx_theta = _eval_clustered_deriv(model.pgf, :single, 1, θ₂, θ₃^2)
-    gx_1 = _eval_clustered_deriv(model.pgf, :single, 1, 1, 1)
-    phi2_S_expr = Symbolics.simplify(q * gx_theta / gx_1)
-
-    # φ3_S = (1-ρ)·g_y(θ₂, θ₃²) · θ₃ / g_y(1, 1) — excess degree for triangle edges
-    # (chain rule: d/dθ₃ g(θ₂, θ₃²) = 2θ₃ g_y(θ₂, θ₃²))
-    gy_theta = _eval_clustered_deriv(model.pgf, :triangle, 1, θ₂, θ₃^2)
-    gy_1 = _eval_clustered_deriv(model.pgf, :triangle, 1, 1, 1)
-    phi3_S_expr = Symbolics.simplify(q * gy_theta * θ₃ / gy_1)
-
-    # Edge hazards
-    edge_hazard2 = Symbolics.simplify(sum(
-        stage.transmission_rate * phi2[stage.name] for stage in prog.stages))
-    edge_hazard3 = Symbolics.simplify(sum(
-        stage.transmission_rate * phi3[stage.name] for stage in prog.stages))
-
-    # Excess hazard for single edges (infection through OTHER edges of partner)
-    gxx_theta = _eval_clustered_deriv(model.pgf, :single, 2, θ₂, θ₃^2)
-
-    # Mixed partial g_xy at (θ₂, θ₃²)
-    gxy_expr = clustered_pgf_derivative(model.pgf, :single, 1)
-    Dy = Differential(model.pgf.triangle_var)
-    gxy_full = Symbolics.expand_derivatives(Dy(gxy_expr))
-    gxy_theta = Symbolics.simplify(Symbolics.substitute(gxy_full,
-        Dict(model.pgf.single_var => θ₂, model.pgf.triangle_var => θ₃^2)))
-
-    excess2 = Symbolics.simplify(
-        (edge_hazard2 * gxx_theta + edge_hazard3 * gxy_theta * 2θ₃) / gx_theta)
-
-    # Excess hazard for triangle edges
-    gyy_theta = _eval_clustered_deriv(model.pgf, :triangle, 2, θ₂, θ₃^2)
-
-    # g_yx at (θ₂, θ₃²)
-    gyx_expr = clustered_pgf_derivative(model.pgf, :triangle, 1)
-    Dx = Differential(model.pgf.single_var)
-    gyx_full = Symbolics.expand_derivatives(Dx(gyx_expr))
-    gyx_theta = Symbolics.simplify(Symbolics.substitute(gyx_full,
-        Dict(model.pgf.single_var => θ₂, model.pgf.triangle_var => θ₃^2)))
-
-    # Within-triangle transmission: the other triangle partner can infect through
-    # the third edge of the triangle. The 2*gy term keeps the chain-rule
-    # normalization for S(θ₂, θ₃) = g(θ₂, θ₃²) inside the same fraction.
-    excess3 = Symbolics.simplify(
-        (
-            edge_hazard2 * gyx_theta * 2θ₃ +
-            edge_hazard3 * (2 * gy_theta + 4 * θ₃^2 * gyy_theta)
-        ) / (gy_theta * 2θ₃),
-    )
-
-    incidence = Symbolics.simplify(q * (gx_theta * edge_hazard2 + 2 * θ₃ * gy_theta * edge_hazard3))
-
-    eqs = Equation[]
-
-    # Algebraic: φ_S
-    push!(eqs, φ2_S ~ phi2_S_expr)
-    push!(eqs, φ3_S ~ phi3_S_expr)
-
-    # θ ODEs
-    push!(eqs, D(θ₂) ~ Symbolics.simplify(-edge_hazard2))
-    push!(eqs, D(θ₃) ~ Symbolics.simplify(-edge_hazard3))
-
-    # φ₂ ODEs (single-edge)
-    for stage in prog.stages
-        φ_var = phi2[stage.name]
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            push!(inflow_terms, excess2 * φ2_S)
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * phi2[tr.source])
-        end
-        inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
-        outflow_terms = Any[stage.transmission_rate * φ_var]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * φ_var)
-        end
-        outflow = foldl(+, outflow_terms)
-        push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-
-    # φ₃ ODEs (triangle-edge)
-    for stage in prog.stages
-        φ_var = phi3[stage.name]
-        inflow_terms = Any[]
-        if stage.name == prog.entry
-            push!(inflow_terms, excess3 * φ3_S)
-        end
-        for tr in incoming[stage.name]
-            push!(inflow_terms, tr.rate * phi3[tr.source])
-        end
-        inflow = isempty(inflow_terms) ? 0 : foldl(+, inflow_terms)
-        outflow_terms = Any[stage.transmission_rate * φ_var]
-        for tr in outgoing[stage.name]
-            push!(outflow_terms, tr.rate * φ_var)
-        end
-        outflow = foldl(+, outflow_terms)
-        push!(eqs, D(φ_var) ~ Symbolics.simplify(inflow - outflow))
-    end
-
-    append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ q * g_at_theta)
-    push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
-
-    sys = System(eqs, t; name = name)
-    simplified = mtkcompile(sys)
-
-    variables = Dict{Symbol, Any}(:θ₂ => θ₂, :θ₃ => θ₃)
-    merge!(variables, Dict(Symbol("φ2_", k) => v for (k, v) in phi2))
-    merge!(variables, Dict(Symbol("φ3_", k) => v for (k, v) in phi3))
-    merge!(variables, Dict(Symbol("pop_", k) => v for (k, v) in pop))
-    if length(recovered) == 1
-        variables[:R] = pop[only(recovered)]
-    end
-
-    observables = Dict{Symbol, Any}(
-        :S => S_pop, :I => I_pop, :φ2_S => φ2_S, :φ3_S => φ3_S,
-        :edge_hazard2 => edge_hazard2, :edge_hazard3 => edge_hazard3,
-    )
-
-    metadata = _default_seed_metadata(pop[prog.entry], g_at_theta)
-    metadata[:rho_param] = ρ
-    metadata[:edge_seed_groups] = Any[
-        (; entry = phi2[prog.entry], theta = θ₂, phi_S_expr = phi2_S_expr),
-        (; entry = phi3[prog.entry], theta = θ₃, phi_S_expr = phi3_S_expr),
-    ]
-    return EdgeModelSystem(simplified, variables, observables, metadata)
-end
-
-function build_clustered_sir(pgf::ClusteredPGF, β, γ; name::Symbol = :clustered_sir)
-    progression = DiseaseProgression(
-        [DiseaseStage(:I; transmission_rate = β), DiseaseStage(:R; transmission_rate = 0)],
-        [DiseaseTransition(:I, :R, γ)]; entry = :I)
-    build_edge_system(ClusteredConfigurationModel(pgf, progression); name = name)
-end
-
-function build_clustered_seir(pgf::ClusteredPGF, σ, β, γ; name::Symbol = :clustered_seir)
-    progression = DiseaseProgression(
-        [DiseaseStage(:E; transmission_rate = 0),
-         DiseaseStage(:I; transmission_rate = β),
-         DiseaseStage(:R; transmission_rate = 0)],
-        [DiseaseTransition(:E, :I, σ), DiseaseTransition(:I, :R, γ)]; entry = :E)
-    build_edge_system(ClusteredConfigurationModel(pgf, progression); name = name)
-end
-
-# R₀ for clustered networks
-function basic_reproduction_number(model::ClusteredConfigurationModel)
-    prog = model.progression
-    pgf = model.pgf
-
-    # Compute transmissibility T
-    infectious_stages = [s for s in prog.stages if !_is_zero_rate(s.transmission_rate)]
-    if length(infectious_stages) == 1
-        stage = only(infectious_stages)
-        β_val = stage.transmission_rate
-        outgoing_rate = sum(tr.rate for tr in prog.transitions if tr.source == stage.name; init = 0)
-        T = Symbolics.simplify(β_val / (β_val + outgoing_rate))
-    else
-        T = _compute_multistage_transmissibility(prog)
-    end
-
-    # For clustered networks: R₀ = T · [excess_single + 2·excess_triangle·(1 + T)]
-    # The (1+T) factor accounts for within-triangle transmission
-    gx_1 = _eval_clustered_deriv(pgf, :single, 1, 1, 1)
-    gxx_1 = _eval_clustered_deriv(pgf, :single, 2, 1, 1)
-    gy_1 = _eval_clustered_deriv(pgf, :triangle, 1, 1, 1)
-
-    # excess single degree
-    excess_s = Symbolics.simplify(gxx_1 / gx_1)
-    # mean triangle degree from a single-edge neighbor
-    mean_tri = Symbolics.simplify(2 * gy_1 / gx_1)
-
-    # R₀ with triangle correction
-    Symbolics.simplify(T * excess_s + T * mean_tri * (1 + T))
 end

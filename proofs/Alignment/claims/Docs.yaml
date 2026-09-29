@@ -1,0 +1,971 @@
+# SA-PASS claim registry fragment: group Docs
+# Sources (paths relative to proofs/): categorical_foundations.md, EBCMCategory/MARGINALISATION_SPEC.md,
+#   ../README.md ('Lean proofs' section), ../vignettes/index.qmd (Lean-related feature line).
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: 'Docs.cf.*' (categorical_foundations.md), 'Docs.ms.*' (MARGINALISATION_SPEC.md),
+#   'Docs.readme.*', 'Docs.vignettes.*'.
+- id: Docs.cf.nodeCategory
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 25-34
+  text: |-
+    Objects are ODE systems on population-level state spaces.
+    [...]
+    **Morphisms:** ODE-system maps (h: X → X') such that h intertwines the vector fields: Dh ∘ f = f' ∘ h (semi-conjugacy).
+    [...]
+    This is a category we call **Node**
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: The Lean library has no ODE-system objects and no semi-conjugacy morphisms; 'node models' are EpiModel records (dim, R0) ordered by dim (EpiCategory).
+  required: false
+  status: missing
+  notes: ''
+- id: Docs.cf.edgeCategory
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 39-52
+  text: |-
+    Objects are ODE systems on edge-probability state spaces, parameterised by a probability generating function (PGF).
+    [...]
+    **Morphisms:** not yet specified. Candidate: maps of edge-state spaces that preserve the ODE structure and are compatible with the PGF data.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: 'Not formalised; ''edge models'' are EpiModel records built by edgeModel p ψ with ψ : PGFData (two moments).'
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Objects are ODE systems on edge-probability state spaces, parameterised by a probability generating function (PGF). [...] **Morphisms:** Maps of edge-state spaces that preserve the ODE structure and are compatible with the PGF data.'
+- id: Docs.cf.ambientODE
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 56-58
+  text: Both **Node** and **Edge** embed in the category **ODE** of smooth dynamical systems on compact manifolds with corners, with semi-conjugacies as morphisms.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: Docs.cf.coarseGrainDef
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 64-75
+  text: |-
+    Given an EBCM object (θ, φ, R, ψ), define F on objects by:
+    [...]
+    F(θ, φ, R, ψ) = (S, I, R) where S_l = ψ_l(θ_{1l}, …, θ_{Kl}) (evaluate PGF at θ-vector) R_l = R_l (identity) I_l = 1 - S_l - R_l (derived)
+    [...]
+    On morphisms, F is not yet defined: the formula ψ ∘ h ∘ ψ^{-1} does not type-check in general (h acts on (θ, φ, R), ψ only on θ), so F is a map on objects only.
+  kind: structural
+  impl: []
+  supporting:
+  - coarseGrain_preserves_R0
+  impl_note: coarseGrain only sets dim := 3 and copies R0; no PGF evaluation and no action on morphisms exist.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Given an EBCM object (θ, φ, R, ψ), define F on objects by: [...] F(θ, φ, R, ψ) = (S, I, R) where S_l = ψ_l(θ_{1l}, …, θ_{Kl}) (evaluate PGF at θ-vector) R_l = R_l (identity) I_l = 1 - S_l - R_l (derived) [...] On morphisms, F sends an edge-level semi-conjugacy h to its induced population-level semi-conjugacy F(h) = ψ ∘ h ∘ ψ^{-1} (where defined).'
+- id: Docs.cf.prop3_1
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 79-81
+  text: '**Proposition 3.1.** F preserves the ODE structure: if (θ(t), φ(t), R(t)) solves the EBCM system, then (S(t), I(t), R(t)) := F(θ(t), φ(t), R(t)) satisfies a closed ODE system on the simplex.'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised (no trajectories in the library).
+  required: false
+  status: missing
+  notes: 'Doubtful as stated: dS/dt = −β ψ''(θ) φ_I with θ = ψ⁻¹(S), and φ_I is not a function of (S, I, R) in general, so the projection of a non-Poisson EBCM is not an autonomous ODE in (S, I, R); the sketch''s ''the right-hand side becomes a function of S, I, R alone'' is unjustified.'
+- id: Docs.cf.thm3_2
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 94-97
+  text: '**Theorem 3.2.** F is not injective on EBCM states: distinct EBCM states (θ, φ, R, ψ) can have the same image (S, I, R), because F forgets φ and all of ψ except its value at θ. Whether distinct EBCM *trajectories* can project to identical node-level trajectories is not established here.'
+  kind: structural
+  impl:
+  - coarseGrain_not_injective
+  supporting: []
+  impl_note: impl proves non-injectivity of coarseGrain on EpiModel records (objects), not non-faithfulness (a property of the action on morphisms) and nothing about trajectories.
+  required: true
+  status: implemented
+  notes: 'The proof sketch argues the two EBCMs ''differ in transient dynamics'', i.e. project to different node trajectories, which does not establish the theorem. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem 3.2.** F is not faithful: distinct EBCM trajectories can project to identical node-level trajectories.'
+- id: Docs.cf.thm3_3
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 103-109
+  text: '**Theorem 3.3 (Information loss characterisation; not proved here).** The fibre F⁻¹(S,I,R) over a node-level trajectory is parameterised by the space of PGFs ψ with: 1. ψ(1) = 1 (normalisation) 2. ψ''(1) = κ (mean degree) 3. S(t) = ψ(θ(t)) for all t (consistency) 4. θ(t) solves the EBCM θ-equation for ψ (dynamics)'
+  kind: structural
+  impl: []
+  supporting:
+  - lift_space_parameterised
+  impl_note: Not formalised; Hierarchy Result 28 (lift_space_parameterised) only asserts existence of one mean-κ PGFData.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem 3.3 (Information loss characterisation).** The fibre F⁻¹(S,I,R) over a node-level trajectory is parameterised by the space of PGFs ψ with: 1. ψ(1) = 1 (normalisation) 2. ψ''(1) = κ (mean degree) 3. S(t) = ψ(θ(t)) for all t (consistency)'
+- id: Docs.cf.thm3_3-lostInformation
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 111-113
+  text: 'The node-level trajectory does not determine ψ, but it retains more than the first moment: for instance its early growth rate depends on ψ''''(1)/ψ''(1). So the lost information is not simply the degree distribution beyond its mean.'
+  kind: structural
+  impl: []
+  supporting:
+  - coarseGrain_preserves_R0
+  impl_note: Not formalised. Under the library's coarseGrain the R₀ field T·ψ''(1)/ψ'(1) is preserved, so (given T) second-moment information is retained, contrary to 'precisely ... beyond its first moment'.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The **lost information** is precisely the degree distribution beyond its first moment — i.e., the variance, skewness, and all higher cumulants.'
+- id: Docs.cf.liftDef
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 119-124
+  text: |-
+    Given a node-based SIR model with mass-action rates β and γ (R₀ = β/γ), define G by:
+    [...]
+    G(S, I, R; β, γ) = EBCM(ψ_Poisson(κ), β̃, γ̃) where β̃ = β/κ, γ̃ = γ − β/κ, for any mean degree κ > R₀
+  kind: structural
+  impl: []
+  supporting:
+  - poisson_R0_agree
+  - node_lifts_to_edge
+  impl_note: poissonLift copies R0 and sets dim 4 without any PGF; nodeModel's R0 := T·κ matches R₀ = βκ/(β+γ).
+  required: false
+  status: missing
+  notes: 'βκ/(β+γ) is the Poisson-network (EBCM) R₀, not the mass-action SIR R₀ (βκ/γ with per-edge β), so the ''node-based SIR model'' is already network-calibrated. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Given a node-based SIR model with transmission rate β, recovery rate γ, and basic reproduction number R₀ = βκ/(β+γ), define G by: [...] G(S, I, R; β, γ) = EBCM(ψ_Poisson(κ), β, γ) where κ = R₀(β+γ)/β'
+- id: Docs.cf.poissonUniqueSection
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 132-135
+  text: This embeds the node-based model into an EBCM with the **Poisson PGF**, whose susceptible curve matches the node model's after this reparametrisation; the EBCM infected curve differs. Among PGFs, only the Poisson PGF gives mass-action dynamics for S (Theorem 4.3(c)).
+  kind: structural
+  impl: []
+  supporting:
+  - poisson_unique_exact_lift
+  - FG_preserves_R0
+  impl_note: No theorem characterises G by F ∘ G = id; poissonLift contains no PGF; Hierarchy Result 27 concludes only variance = κ.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This embeds the node-based model into an EBCM with the **Poisson PGF** — the unique PGF for which F ∘ G = id.'
+- id: Docs.cf.thm4_1
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 139-148
+  text: |-
+    **Theorem 4.1 (corrected).** F and G are not a Galois connection for the dimension preorder (M₁ ≤ M₂ iff dim M₁ ≤ dim M₂) used in the Lean library: the condition
+    [...]
+    F(E) ≤ N ⟺ E ≤ G(N)
+    [...]
+    fails for E = ⟨10, r⟩ and N = ⟨3, r⟩, where F(E) ≤ N holds but E ≤ G(N) does not (`not_galoisConnection_coarseGrain_poissonLift`).
+  kind: categorical
+  impl: []
+  supporting:
+  - poissonLift_mono
+  - coarseGrain_mono
+  impl_note: 'No GaloisConnection theorem exists. On the EpiModel dim-preorder of the library the connection is false (E = ⟨10, r⟩, N = ⟨3, r⟩: F(E) ≤ N but not E ≤ G(N)); the ''can be obtained by coarse-graining'' preorder is not defined.'
+  required: false
+  status: missing
+  notes: 'Stated as a theorem in the doc; see also GaloisPair.header.galoisConnection. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem 4.1.** (F, G) form a Galois connection on the preorder of epidemic models ordered by "refines" (i.e., M₁ ≤ M₂ iff M₁ can be obtained from M₂ by coarse-graining): [...] F(E) ≤ N ⟺ E ≤ G(N) [...] where ≤ means "is a coarse-graining of". -- Now implementable: GaloisPair not_galoisConnection_coarseGrain_poissonLift (candidate impl; status could become implemented).'
+- id: Docs.cf.cor4_2-FG
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 153-153
+  text: F ∘ G = id_Node (coarse-graining the Poisson lift recovers the original)
+  kind: categorical
+  impl:
+  - counit_dim
+  - FG_preserves_R0
+  supporting: []
+  impl_note: No theorem states F ∘ G = id. counit_dim gives (coarseGrain (poissonLift n)).dim = 3 and FG_preserves_R0 gives R0 equality, so F (G n) = n exactly when n.dim = 3, which is not stated (there is no Node subtype of EpiModel).
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.cf.cor4_2-GF
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 154-154
+  text: G ∘ F ≠ id_Edge (projecting then lifting forgets the original PGF)
+  kind: structural
+  impl:
+  - GF_ne_id
+  supporting: []
+  impl_note: 'impl: ∃ e, poissonLift (coarseGrain e) ≠ e, with a witness differing in dim (10 vs 4). EpiModel stores no PGF, so ''forgets the original PGF'' is not formalised.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: G ∘ F ≠ id_Edge (lifting then projecting forgets the original PGF)'
+- id: Docs.cf.cor4_2-GFG
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 155-155
+  text: G ∘ F ∘ G = G (the connection is idempotent)
+  kind: categorical
+  impl:
+  - G_F_G_eq_G
+  supporting: []
+  impl_note: Pointwise, by rfl. Faithful.
+  required: true
+  status: implemented
+  notes: Derived in the doc as a corollary of Theorem 4.1 (false in Lean's preorder); proved directly by rfl.
+- id: Docs.cf.cor4_2-FGF
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 156-156
+  text: F ∘ G ∘ F = F (the connection is idempotent)
+  kind: categorical
+  impl:
+  - F_G_F_eq_F
+  supporting: []
+  impl_note: Pointwise, by rfl. Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.cf.thm4_3
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 163-169
+  text: '**Theorem 4.3.** (a) ψ''''(1)/ψ''(1) = ψ''(1) (excess degree equals mean degree) iff the degree distribution has variance equal to its mean. (b) A Poisson degree distribution satisfies (a). (c) The EBCM has mass-action form for S iff ψ'' = κψ on [0, 1], i.e. iff the degree distribution is Poisson. (a) does not imply Poisson: ψ(u) = (1 + u²)/2 satisfies (a) and is not Poisson.'
+  kind: equivalence
+  impl:
+  - PGFData.poisson_excess_eq_mean
+  - PGFData.poisson_variance_eq_mean
+  - poisson_unique_exact_lift
+  - excess_degree_decomposition
+  supporting:
+  - ebcm_to_meanfield_exact_iff_poisson
+  impl_note: Only 2 ⇒ 3 (poisson_excess_eq_mean), 2 ⇒ 4 (poisson_variance_eq_mean) and (3 with mean = κ) ⇒ 4 (poisson_unique_exact_lift) are proved; 3 ⇔ 4 follows from excess_degree_decomposition but is not stated; item 1 is not formalised; 3 ⇒ 2 and 4 ⇒ 2 are false for genuine degree distributions and are only expressible in the two-moment PGFData record, where 'Poisson' collapses to secondFactorial = mean².
+  required: true
+  status: implemented
+  notes: 'Ill-posed as written: F ∘ G(N) involves no network, so item 1 cannot be equivalent to properties of ''the underlying network''. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem 4.3.** The following are equivalent: 1. F ∘ G(N) = N exactly (not just at equilibrium, but for all t) 2. The underlying network has a Poisson degree distribution 3. ψ''''(1)/ψ''(1) = ψ''(1) (excess degree equals mean degree) 4. The degree distribution has variance equal to its mean -- Replaces the false 4-way equivalence (P2.9). (a)/(b) at the level of two-moment records: PGFData.dispersionIndex_eq_one_iff, poisson_unique_exact_lift, poisson_excess_eq_mean; (c) is not formalised (P3.4).'
+- id: Docs.cf.thm4_3-massAction
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 173-176
+  text: (c) With S = ψ(θ), dS/dt = ψ'(θ)·dθ/dt = −β̃ψ'(θ)φ_I, which equals −(κβ̃)·S·φ_I iff ψ'(θ) = κψ(θ); then S(t) solves the mass-action equation with I := φ_I and rates β = κβ̃, γ = β̃ + γ̃ (Rempała 2023).
+  kind: dynamical
+  impl: []
+  supporting:
+  - poisson_R0_agree
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: 'Doubtful: for Poisson the EBCM gives dS/dt = −βκ·S·φ_I with φ_I ≠ I and R₀ = βκ/(β+γ) rather than βκ/γ; Miller & Volz (model hierarchies, papers/nihms406442.md §4) recover mass action only in the limit ⟨K⟩ → ∞ with β⟨K⟩ fixed. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The excess hazard term in the EBCM reduces to β·κ·φ_S, which is exactly the mass-action term β·S·I/N after rescaling.'
+- id: Docs.cf.pgfClosureTreeLike
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 196-196
+  text: S(t) = ψ(θ(t)) (exact on configuration-model networks as N → ∞, which are locally tree-like)
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: S(t) = ψ(θ(t)) (exact iff tree-like)'
+- id: Docs.cf.edgeTreeFunctor
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 211-214
+  text: '**Informal statement** (no category is defined): on configuration-model networks the map F yields a closed node-level ODE (Proposition 3.1). On clustered networks it does not without additional structure (triangle-closing terms, Volz''s clustering corrections).'
+  kind: categorical
+  impl: []
+  supporting:
+  - clustering_breaks_standard
+  - standard_ebcm_valid
+  impl_note: No subcategories or functor well-definedness are formalised; Obstructions only has the lookup-table predicate standardEbcmValid.
+  required: false
+  status: missing
+  notes: 'Calls clustering an obstruction (''Obstruction 1''), whereas Obstructions.lean says network structure is ''Not an obstruction at all — just a dimension cost''. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Formal statement:** Let **Edge_tree** be the full subcategory of **Edge** on configuration-model networks. The functor F: **Edge_tree** → **Node** is well-defined. The extension to **Edge_clustered** requires additional structure (triangle-closing terms, Volz''s clustering corrections) that changes the category.'
+- id: Docs.cf.nonMarkovObstruction
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 226-234
+  text: |-
+    The ODE system must be replaced by integro-differential equations or delay-differential equations.
+    [...]
+    These dynamics are outside the ODE-based **Edge** models, but they are not an obstruction to edge-based modelling: the non-Markovian EBCM is exact for general independent transmission and recovery processes (Sherborne, Miller, Blyuss & Kiss 2018).
+  kind: structural
+  impl:
+  - nonmarkov_requires_pde
+  supporting: []
+  impl_note: systemRequired .generalNonMarkov .uniform = .pde is a lookup-table fact; there is no Edge category from which objects could be excluded.
+  required: true
+  status: implemented
+  notes: 'The doc labels non-Markovian dynamics an obstruction; Obstructions.lean Result 19 says it is not an absolute obstruction (a PDE EBCM works). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The ODE system must be replaced by integro-differential equations or delay-differential equations. [...] The EBCM category **Edge** does not contain objects with these dynamics.'
+- id: Docs.cf.localisedObstruction
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 241-243
+  text: If the initial condition is spatially correlated (e.g., a localised outbreak), the factorisation θ(0) = 1 - ε breaks down for edges near the seed.
+  kind: structural
+  impl:
+  - localised_genuine_obstruction
+  supporting: []
+  impl_note: 'Definitional: ebcmExists _ _ .localised unfolds to .localised = .uniform, which is refuted; no factorisation or θ(0) is involved.'
+  required: true
+  status: implemented
+  notes: The doc's seed convention θ(0) = 1 − ε differs from the Lean VM initial state (θ(0) = 1 with I(0) = sf).
+- id: Docs.cf.subcategoryInclusions
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 259-260
+  text: Each restriction narrows the class of models (informally a subcategory inclusion; no category is defined).
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Each restriction defines a **subcategory inclusion** with a forgetful functor.'
+- id: Docs.cf.validityDomain
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 261-263
+  text: The ODE EBCM is exact for Markovian processes on configuration-model networks with uniform (independent) seeding; the non-Markovian (PDE) EBCM extends this to general independent transmission and recovery processes.
+  kind: equivalence
+  impl:
+  - standard_ebcm_valid
+  - clustering_breaks_standard
+  - degreeCorr_breaks_standard
+  supporting: []
+  impl_note: standardEbcmValid is defined as net = configurationModel ∧ trans = markovian ∧ init = uniform; the theorems give one positive and two negative instances, not the biconditional. The doc omits the uniform-initial-condition requirement that §5.3 and the Lean predicate include.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The EBCM is valid precisely in the subcategory of Markovian processes on configuration-model networks.'
+- id: Docs.cf.poissonEquivMassAction
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 254-254
+  text: Markovian on Poisson network ← same S(t) as mass-action SIR (after reparametrisation)
+  kind: equivalence
+  impl: []
+  supporting:
+  - poisson_R0_agree
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: 'Doubtful; see Docs.cf.thm4_3-massAction. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Markovian on Poisson network ← equivalent to mass-action SIR'
+- id: Docs.cf.conj6_1
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 306-317
+  text: '**Conjecture 6.1.** There exists a symmetric monoidal functor ``` F_open: Open(Edge) → Open(Node) ``` from the category of open EBCM systems to open node-based systems, such that: 1. F_open on closed systems (no boundary) agrees with F from §3 2. F_open preserves composition (is monoidal) 3. The Poisson section G lifts to G_open: Open(Node) → Open(Edge) 4. (F_open, G_open) form a monoidal Galois connection'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: Explicitly a conjecture; no open-system category, monoidal functor or G_open is formalised.
+  required: false
+  status: informal
+  notes: CategoricalComposition's axioms (ebcm_functor_identity, ebcm_functor_composition) concern a different (network → ODE) functor and do not address this conjecture.
+- id: Docs.cf.thm7_1
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 330-336
+  text: '**Theorem 7.1 (withdrawn).** It is not true that every SIR trajectory is reproduced exactly by EBCMs with arbitrary PGFs ψ with ψ''(1) = κ: an EBCM with given ψ has only two rates (β̃, γ̃), which cannot in general match an arbitrary curve S(t). The earlier proof defined θ(t) = ψ⁻¹(S(t)) but did not check that θ(t) solves the EBCM θ-equation. What does hold is the Poisson lift of §4.1: for Poisson ψ and κ > R₀ the EBCM reproduces the mass-action S(t) (Rempała 2023).'
+  kind: existence
+  impl: []
+  supporting:
+  - node_lifts_to_edge
+  - lift_space_parameterised
+  impl_note: Not formalised (no trajectories); Hierarchy Results 26/28 are R₀-level analogues.
+  required: false
+  status: missing
+  notes: 'The proof only sets θ(t) = ψ⁻¹(S(t)) and never checks that θ satisfies the EBCM θ-equation for the given β, γ; the family of PGFs with fixed mean is infinite-dimensional, not one-parameter. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem 7.1.** For any well-posed SIR trajectory with S(0) = 1-ε, there exists a one-parameter family of EBCMs indexed by PGFs ψ with ψ''(1) = κ that reproduce the trajectory exactly.'
+- id: Docs.cf.liftNotUnique
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 338-340
+  text: |-
+    **Caveat:** Even the Poisson lift is not unique: any mean degree κ > R₀ works, with β̃ = β/κ and γ̃ = γ − β/κ.
+    [...]
+    The Poisson lift is singled out by giving mass-action dynamics for S, not by any minimality property.
+  kind: existence
+  impl: []
+  supporting:
+  - lift_space_parameterised
+  impl_note: No theorem exhibits two distinct lifts or a minimality property of the Poisson lift.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Caveat:** The lift is not unique — the choice of ψ is free (subject to ψ''(1) = κ). [...] The Poisson lift is canonical (minimal information added).'
+- id: Docs.cf.thetaNonincreasing
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 349-350
+  text: In the EBCM, θ(t) is non-increasing (edges can only transmit, not "un-transmit").
+  kind: inequality
+  impl:
+  - InvariantRegion.theta_dot_nonpos
+  - theta_nonincreasing
+  supporting: []
+  impl_note: Both impls prove a sign condition on a θ rate expression at a state (−β·φ_I ≤ 0 for φ_I ≥ 0; −β·P₁·θ ≤ 0 for the VM model), not monotonicity of a solution θ(t).
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.cf.thm8_1
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 363-370
+  text: |-
+    **Theorem 8.1 (Degree-variance inequality).** Let ψ be any valid PGF with mean degree κ. Then:
+    [...]
+    ψ''(1)/ψ'(1) = κ + (σ² - κ)/κ = κ + (σ²/κ - 1)
+    [...]
+    where σ² = Var(degree).
+  kind: algebraic-identity
+  impl:
+  - excess_degree_decomposition
+  supporting: []
+  impl_note: impl is the same identity rearranged (excess = κ − 1 + σ²/κ; equal to κ + (σ²−κ)/κ, checked with sympy) over the two-moment PGFData record; 'any valid PGF' is modelled by PGFData, which does not require the moments to come from a distribution; no inequality is stated despite the name.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.cf.thm8_1-factor
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 370-371
+  text: The ratio of the EBCM excess degree to the mean degree is (ψ''(1)/ψ'(1))/κ = 1 + (σ²/κ - 1)/κ = (κ² − κ + σ²)/κ².
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - excess_degree_decomposition
+  impl_note: No theorem.
+  required: false
+  status: missing
+  notes: 'Algebraically FALSE: 1 + (σ²/κ − 1)/κ = σ²/κ² + (κ − 1)/κ (sympy); the ratio excess/κ equals (κ² − κ + σ²)/κ². WP4b (TRIAGE P1.4/P2): text corrected; previous text: The EBCM excess hazard exceeds the mass-action rate by a factor of (1 + (σ²/κ - 1)/κ) = σ²/κ².'
+- id: Docs.cf.thm8_1-poisson
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 373-373
+  text: 'σ² = κ (e.g. Poisson): excess degree = mean degree; exact equivalence of S(t) with mass action holds for Poisson degrees (Theorem 4.3(c)), not for every law with σ² = κ'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_decomposition
+  supporting:
+  - PGFData.poisson_excess_eq_mean
+  - poisson_unique_exact_lift
+  impl_note: The implication σ² = κ ⇒ excess = κ is not stated; it follows from excess_degree_decomposition. poisson_unique_exact_lift proves the converse direction; '(exact equivalence)' of models is not formalised.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: σ² = κ (Poisson): excess hazard = mass-action rate (exact equivalence)'
+- id: Docs.cf.thm8_1-overdispersed
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 374-374
+  text: 'σ² > κ (overdispersed): EBCM predicts faster epidemic, higher R₀'
+  kind: inequality
+  impl: []
+  supporting:
+  - excess_degree_decomposition
+  impl_note: No inequality theorem; the R₀ part would follow from excess_degree_decomposition and T > 0 (T·excess > T·κ); 'faster epidemic' is dynamical and not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: Docs.cf.thm8_1-underdispersed
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 375-375
+  text: 'σ² < κ (underdispersed): EBCM predicts slower epidemic, lower R₀'
+  kind: inequality
+  impl: []
+  supporting:
+  - excess_degree_decomposition
+  impl_note: As for thm8_1-overdispersed.
+  required: false
+  status: missing
+  notes: ''
+- id: Docs.cf.dispersionSingleScalar
+  group: Docs
+  source:
+    file: categorical_foundations.md
+    lines: 377-379
+  text: 'The correction involves the **index of dispersion** σ²/κ and the mean κ: ψ''''(1)/ψ''(1) = κ − 1 + σ²/κ. No single scalar measures how much information the EBCM adds over the node model.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Interpretive.
+  required: false
+  status: informal
+  notes: 'The excess degree κ − 1 + σ²/κ depends on κ as well as on σ²/κ, so σ²/κ alone does not determine the EBCM correction. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the **index of dispersion** (σ²/κ), and it is the single scalar that measures "how much information the EBCM adds over the node model."'
+- id: Docs.ms.marginalisationLinearMap
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 22-25
+  text: '**Marginalisation `M`** is *any* linear map. The numerical entries are abstracted: the only structural fact used is *linearity*. T1, T5 and T7 use a continuous linear map `M : V₄ →L[ℝ] V₃` between normed spaces; T3 and T4 use a linear map `M : V₄ →ₗ[ℝ] V₃` between ℝ-modules.'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Design statement. T1, T5 and T7 take M as a continuous linear map (→L[ℝ]) between arbitrary real normed spaces; T3/T4 use LinearMap (→ₗ[ℝ]).
+  required: false
+  status: informal
+  notes: 'Partly stale. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Marginalisation `M : V_4 →ₗ[ℝ] V_3`** is *any* linear map. The numerical entries are abstracted: the only structural fact used is *linearity*. We bundle `M` as a `LinearMap`.'
+- id: Docs.ms.flowDef
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 38-42
+  text: '**Flow:** `IsFlow F φ` ↔ `(∀ v, φ v 0 = v) ∧ ∀ v t, HasDerivAt (φ v) (F (φ v t)) t`. Existence and uniqueness are *hypotheses* on the systems, not derived. `IsFlow` asks for solutions on all of `ℝ`, so a field whose solutions blow up in finite time has no flow: `F3Kℝ` (`c ↦ c²/4`) has none (`no_flow_F3Kℝ`).'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Matches the Lean def IsFlow (bridge material).
+  required: false
+  status: informal
+  notes: 'Requiring a global-in-time flow makes the hypothesis unsatisfiable for vector fields with finite-time blow-up, e.g. F3Kℝ(v) = v²/4 used in T5-T7. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Flow:** `IsFlow F φ` ↔ `φ v 0 = v ∧ ∀ v t, HasDerivAt (φ v) (F (φ v t)) t`. Existence and uniqueness are *hypotheses* on the systems, not derived.'
+- id: Docs.ms.T1
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 52-61
+  text: |-
+    theorem dynamic_marginalisation_iff_equivariance (M : V₄ →L[ℝ] V₃) (F₄ : V₄ → V₄) (F₃ : V₃ → V₃) {φ₄ : V₄ → ℝ → V₄} {φ₃ : V₃ → ℝ → V₃} (h₄ : IsFlow F₄ φ₄) (h₃ : IsFlow F₃ φ₃) (uniq₃ : UniqueFlow F₃) : (∀ u, M (F₄ u) = F₃ (M u)) ↔ (∀ u t, M (φ₄ u t) = φ₃ (M u) t)
+    [...]
+    Plain math: for global flows, and unique solutions of `F₃`, along trajectories `M ∘ φ₄(·, t) = φ₃(M ·, t) ↔ RHS commute`.
+  kind: equivalence
+  impl:
+  - EBCMCategory.Marginalisation.dynamic_marginalisation_iff_equivariance
+  supporting:
+  - EBCMCategory.Marginalisation.traj_commute_of_rhs_commute
+  - EBCMCategory.Marginalisation.rhs_commute_of_traj_commute
+  impl_note: 'Same iff (RHS commute ↔ trajectories commute), but the Lean statement differs in form: M is a continuous linear map between arbitrary real normed spaces (not →ₗ between ClosedSystem V4/V3), F₄, F₃ are passed directly, and uniqueness is the global UniqueFlow F₃ instead of the spec''s uniq3; the spec''s `IsSolution S3.F ψ` has two arguments whereas the library''s IsSolution takes F, v₀, ψ.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: theorem dynamic_marginalisation_iff_equivariance (S4 : ClosedSystem V4) (S3 : ClosedSystem V3) (M : V4 →ₗ[ℝ] V3) (φ4 : V4 → ℝ → V4) (φ3 : V3 → ℝ → V3) (h4 : IsFlow S4.F φ4) (h3 : IsFlow S3.F φ3) (uniq3 : ∀ ψ, IsSolution S3.F ψ → ψ 0 = (M ∘ φ4 · 0) → ψ = φ3 ∘ M ∘ ·) : (∀ u, M (S4.F u) = S3.F (M u)) ↔ (∀ u t, M (φ4 u t) = φ3 (M u) t) [...] Plain math: along trajectories `M ∘ φ4(·, t) = φ3(M ·, t) ↔ RHS commute`.'
+- id: Docs.ms.T1-proofStatus
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 65-65
+  text: 'Proof status: both directions are proved; there is no `sorry`.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Meta-claim about the proof.
+  required: false
+  status: informal
+  notes: 'Stale: MarginalisationFunctor.lean contains no sorry. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Proof status: (←) **complete**; (→) reduces to two `HasDerivAt` facts plus the supplied `uniq3`. Some `LinearMap.hasDerivAt_comp` style glue uses `sorry` flagged in-source if Mathlib''s exact lemma name shifts; statements are correct.'
+- id: Docs.ms.T2
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 72-80
+  text: |-
+    theorem kirkwood_marginalisation_obstruction : ∃ (u4 : Order4Var → ℚ), M_Q (F4_Kirkwood u4) ≠ F3_Kirkwood (M_Q u4)
+    [...]
+    We use a **concrete ℚ-valued surrogate** with mnemonic labels: two order-4 entries (`a = C_4 SISI`, `b = C_4 SSSS` placeholder) and one order-3 entry (`c = P_3 SIS`); `M_Q(a,b) = a + b`; `F4_Kirkwood (a,b) = (a*b, b)`; `F3_Kirkwood c = c^2 / 4`. In Lean the index types are `Idx4 = {a, b}` and `Idx3 = {c}`, not `Order4Var`/`Order3Var`.
+  kind: existence
+  impl:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  supporting:
+  - MarginalisationObstruction.kirkwood_obstruction_witness_value
+  impl_note: 'Lean quantifies over u : Idx4 → ℚ (a separate two-label index type), not Order4Var → ℚ; entries a, b, c are bare labels unrelated to MotifShape/Order4Var. The surrogate M, F₄, F₃ match the description.'
+  required: true
+  status: implemented
+  notes: 'See Obstructions.header.witnessCollapse for the combinatorial doubt about summing C₄ SSSS into P₃ SIS. WP4b (TRIAGE P1.4/P2): text corrected; previous text: theorem kirkwood_marginalisation_obstruction : ∃ (u4 : Order4Var → ℚ), M_Q (F4_Kirkwood u4) ≠ F3_Kirkwood (M_Q u4) [...] We use a **concrete ℚ-valued miniature** of the C_4 SISI counterexample: two `Order4Var` entries (`a = C_4 SISI`, `b = C_4 SSSS` placeholder) and one `Order3Var` entry (`c = P_3 SIS`); `M_Q(a,b) = a + b`; `F4_Kirkwood (a,b) = (a*b, b)`; `F3_Kirkwood c = c^2 / 4`.'
+- id: Docs.ms.T2-smallestWitness
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 83-85
+  text: 'It is one arithmetic witness for one pair of fields, not a general law: with `M = id` a quadratic field commutes with itself, and at `u4 = (1, 3)` the quadratic field `c ↦ 3c²/8` agrees with `M ∘ F4_Kirkwood`.'
+  kind: structural
+  impl: []
+  supporting:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  - EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction
+  impl_note: '''smallest'' and the universal statement are not formalised; only one instance is proved.'
+  required: false
+  status: missing
+  notes: 'Same claim as Obstructions.header.smallestFaithfulWitness. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the smallest faithful arithmetic witness of the structural failure: a *bilinear* RHS at order 4 cannot survive linear pushforward followed by a quadratic-rational RHS at order 3.'
+- id: Docs.ms.T2-proofStatus
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 86-88
+  text: 'Witness: `u4 = (1, 3)`; `decide` / `norm_num` discharges the arithmetic. * Proof status: **complete, no `sorry`.**'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Meta-claim about the proof; consistent with the source.
+  required: false
+  status: informal
+  notes: ''
+- id: Docs.ms.T3
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 93-103
+  text: |-
+    theorem kirkwood_form_not_equivariant : ∃ (V₄ V₃ : Type) (_ : AddCommGroup V₄) (_ : AddCommGroup V₃) (_ : Module ℝ V₄) (_ : Module ℝ V₃) (M : V₄ →ₗ[ℝ] V₃) (C₄ : ClosureFamily V₄), C₄.IsKirkwoodForm ∧ ∀ (C₃ : ClosureFamily V₃), ¬ Equivariant M C₄.C C₃.C
+    [...]
+    Plain math: T3 is the existential statement T3b. There is a linear `M` and a non-additive order-4 field `C₄` such that no order-3 field `C₃` satisfies `M ∘ C₄ = C₃ ∘ M` (the witness of T2, over ℝ).
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4
+  impl_note: 'The spec states a universal theorem polynomial_kirkwood_not_equivariant (∀ Kirkwood-form C4, C3 with ¬ C4.IsLinear, for a given M); no such theorem exists. kirkwood_form_not_equivariant is existential: ∃ V₄ V₃ M C₄ (one concrete (2,1) ℝ-witness) with C₄.IsKirkwoodForm such that no C₃ is equivariant. IsKirkwoodForm is merely ''C is not additive''; no genericity of M, denominators or varieties appear.'
+  required: true
+  status: implemented
+  notes: 'Major quantifier gap (∀ in the spec, ∃ in Lean). WP4b (TRIAGE P1.4/P2): text corrected; previous text: theorem polynomial_kirkwood_not_equivariant (C4 : ClosureFamily 4) (C3 : ClosureFamily 3) (hC4 : C4.IsKirkwoodForm) (hC3 : C3.IsKirkwoodForm) (h_nonlin : ¬ C4.IsLinear) : ¬ Equivariant M (closedRHS C4) (closedRHS C3) ``` [...] Plain math: a nontrivial multiplicative-rational closure `C(x) = ∏_i x_{a_i}^{p_i} / ∏_j x_{b_j}^{q_j}` with positive total degree cannot satisfy `M ∘ N_4[C_5] = N_3[C_4] ∘ M` for a generic marginalisation `M`, because the LHS is a rational function in the `u_4`-coordinates whose denominator vanishes on a different variety from that of the RHS (the RHS denominator factors through `M`). -- The spec now quotes the actual statement of kirkwood_form_not_equivariant (the former polynomial_kirkwood_not_equivariant did not exist).'
+- id: Docs.ms.T3-proofStatus
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 114-114
+  text: 'Proof status: every statement above is proved; there is no `sorry`.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Meta-claim about the proof.
+  required: false
+  status: informal
+  notes: 'Stale: MarginalisationCharacterization.lean contains no sorry, and its T3b is a different (existential) statement proved by a fibre argument. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Proof status: **statement and a structured proof skeleton** with `sorry` at the algebraic-geometry step (variety inequality).'
+- id: Docs.ms.T3-linearEquivariant
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 111-113
+  text: For a linear `L₄` this reads `L₄(ker M) ⊆ ker M` (`linear_admits_equivariant_iff`), so linear closures are not equivariant for every `M`.
+  kind: equivalence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.linear_closure_equivariant
+  - EBCMCategory.MarginalisationCharacterization.isLinear_admits_equivariant
+  supporting: []
+  impl_note: 'linear_closure_equivariant: for linear L₄, L₃ with ∀ u, M (L₄ u) = L₃ (M u), concludes Equivariant M L₄ L₃ — its conclusion is its hypothesis. isLinear_admits_equivariant proves ∃ F₃, Equivariant M C₄.C F₃ ∨ True, trivially true via the ∨ True disjunct (vacuous). No biconditional between IsLinear and Equivariant is proved.'
+  required: true
+  status: implemented
+  notes: 'Vacuous implementation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The `IsLinear ↔ Equivariant for arbitrary M` direction is proved cleanly. -- Candidate impl: linear_admits_equivariant_iff (the former impl isLinear_admits_equivariant is vacuous).'
+- id: Docs.ms.T3-kkr
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 117-122
+  text: the Kiss–Kenah–Rempala conditions ensure `F_3` is exact at the *unclosed limit* (κ constant) but place no constraint on the order-4 closure used to define `F_4`. T3c records only that a degree record with `closureKappa = 1` can be paired with the non-equivariant surrogate of T3b; the two are unrelated data.
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  impl_note: 'impl: ∃ ψ with ψ.closureKappa = 1 (Poisson 1) together with the unrelated (2,1) witness (V₄, V₃, M, C₄) where no C₃ is equivariant; ψ enters neither the closure nor M, so the conjunction is a juxtaposition; ''necessary'' (theorem name) is not proved.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: the Kiss–Kenah–Rempala conditions ensure `F_3` is exact at the *unclosed limit* (κ constant) but place no constraint on the order-4 closure `C_5` used to define `F_4`. So even a KKR-exact pairwise closure is **not** automatically marginalisation-equivariant with any closed `F_4`.'
+- id: Docs.ms.flowHypothesised
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 133-135
+  text: '**ODE flow existence/uniqueness** is *hypothesised*, not derived. Picard–Lindelöf gives only local existence for `C¹` `F`; global flows (`IsFlow`) need not exist, and for `F3Kℝ` they do not (`no_flow_F3Kℝ`).'
+  kind: existence
+  impl: []
+  supporting: []
+  impl_note: No theorem.
+  required: false
+  status: missing
+  notes: 'False for global flows: Picard–Lindelöf gives only local existence for C¹ F; the IsFlow hypothesis (∀ t ∈ ℝ) fails for F3Kℝ(v) = v²/4 (finite-time blow-up), so T5/T7 applied to F3Kℝ are vacuous. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **ODE flow existence/uniqueness** is *hypothesised*, not derived. Mathlib''s `Picard-Lindelöf` would discharge it for `C¹` `F`,'
+- id: Docs.ms.realVsRational
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 138-139
+  text: '**Real vs Rational.** T1 uses `ℝ` (general dynamical statement); T2 uses `ℚ` (concrete computation); T3 is stated over ℝ-modules.'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Meta-claim about the formalisation.
+  required: false
+  status: informal
+  notes: 'Stale: T3 (MarginalisationCharacterization) is stated over ℝ-modules, not an abstract CommRing. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Real vs Rational.** T1 uses `ℝ` (general dynamical statement); T2 uses `ℚ` (concrete computation); T3 uses an abstract `[CommRing R]` and is independent.'
+- id: Docs.ms.T4
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 148-155
+  text: |-
+    theorem fibre_collapse_obstruction (M : V₄ →ₗ[ℝ] V₃) (F : V₄ → V₄) (u₁ u₂ : V₄) (h_fibre : M u₁ = M u₂) (h_split : M (F u₁) ≠ M (F u₂)) : ∀ (C₃ : ClosureFamily V₃), ¬ Equivariant M F C₃.C
+    [...]
+    Lifts the argument inlined in T3b to a reusable structural lemma.
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction
+  supporting: []
+  impl_note: Statement matches the spec (Lean additionally binds the AddCommGroup/Module instances). Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.ms.T4-companion
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 157-158
+  text: A companion theorem `kirkwood_not_equivariant_via_T4` re-derives T3b using T4.
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4
+  supporting:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  impl_note: impl proves ∀ C₃, ¬ Equivariant MℝLin F4Kℝ C₃.C for the concrete witness (the core of T3b), not the existential statement of kirkwood_form_not_equivariant including IsKirkwoodForm.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.ms.T5
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 170-174
+  text: 'theorem trajectoryGap_hasDerivAt_zero (M : V₄ →L[ℝ] V₃) (F₄ : V₄ → V₄) (F₃ : V₃ → V₃) {φ₄ : V₄ → ℝ → V₄} {φ₃ : V₃ → ℝ → V₃} (h₄ : IsFlow F₄ φ₄) (h₃ : IsFlow F₃ φ₃) (u : V₄) : HasDerivAt (trajectoryGap M φ₄ φ₃ u) (algebraicGap M F₄ F₃ u) 0'
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_hasDerivAt_zero
+  supporting: []
+  impl_note: Statement matches the Lean theorem. IsFlow requires global-in-time flows.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.ms.T5-witnessGap
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 180-181
+  text: '**Specialisation to the (2,1) witness** (`algebraicGap_at_witness`): `algebraicGap MℝLinCLM F4Kℝ F3Kℝ u₁ = fun _ => 2`.'
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  supporting: []
+  impl_note: algebraicGap_at_witness states exactly this equation. Faithful.
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Specialisation to the (2,1) witness** (`trajectoryGap_rate_two_at_witness`): `algebraicGap MℝLinCLM F4Kℝ F3Kℝ u₁ = fun _ => 2` -- impl should be algebraicGap_at_witness (the text now names it).'
+- id: Docs.ms.T5-rateTwo
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 184-187
+  text: For *any* local solutions ψ₄ of F4Kℝ from u₁ and ψ₃ of F3Kℝ from M u₁, the gap `t ↦ M(ψ₄ t) − ψ₃ t` has first-order rate exactly 2 (`witness_localGap_hasDerivAt`), and such local solutions exist (`witness_local_solutions_exist`).
+  kind: dynamical
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  impl_note: 'impl: IsFlow F4Kℝ φ₄ → IsFlow F3Kℝ φ₃ → HasDerivAt (trajectoryGap MℝLinCLM φ₄ φ₃ u₁) (fun _ => 2) 0, matching the text; but IsFlow F3Kℝ φ₃ is unsatisfiable: IsFlow demands a solution for all t ∈ ℝ, but v'' = v²/4 with v(0) = 4 has the unique solution 4/(1 − t), which blows up at t = 1. Hence the theorem is vacuously true.'
+  required: true
+  status: implemented
+  notes: 'Vacuous hypothesis (no flow of F3Kℝ exists). WP4b (TRIAGE P1.4/P2): text corrected; previous text: so for *any* flows φ₄ of F4Kℝ and φ₃ of F3Kℝ the gap has first-order rate exactly 2. -- P1.4: restated with local solutions. Candidate impl: witness_localGap_hasDerivAt (+ witness_local_solutions_exist as @[sa_witness]); the former impl trajectoryGap_rate_two_at_witness is vacuous (hypothesis_refuted).'
+- id: Docs.ms.T5-empiricalBridge
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 189-190
+  text: None of this is a formal bridge to the empirically observed `err_m4 − err_m3 ≈ 0.32` in the B(c) Gillespie testset.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Claim about empirical results.
+  required: false
+  status: informal
+  notes: 'Given the vacuous flow hypothesis, the ''bridge'' carries no information about actual trajectories. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the formal bridge from the Lean-certified `diff = 2` (T2) to the empirically observed `err_m4 − err_m3 ≈ 0.32` in the B(c) Gillespie testset.'
+- id: Docs.ms.T6
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 195-204
+  text: |-
+    theorem refinement_failure_exists : ∃ (F4_kirk : U4ℝ → U4ℝ) (F3_kirk : U3ℝ → U3ℝ) (F3_exact : U3ℝ → U3ℝ) (u₀ : U4ℝ), (ClosureFamily.mk F4_kirk).IsKirkwoodForm ∧ (ClosureFamily.mk F3_kirk).IsKirkwoodForm ∧ MℝLin (F4_kirk u₀) = F3_exact (MℝLin u₀) ∧ F3_kirk (MℝLin u₀) ≠ F3_exact (MℝLin u₀)
+    [...]
+    Witness: `F4_kirk = F4Kℝ`, `F3_kirk = F3Kℝ`, `F3_exact = const 6`, `u₀ = u₁`.
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  supporting: []
+  impl_note: Statement matches. F3_exact is chosen as the constant function 6 = M(F4Kℝ u₁), so 'M(F4 u₀) = F3_exact(M u₀)' holds by construction; F3_exact is not tied to any exact CTMC moment dynamics.
+  required: true
+  status: implemented
+  notes: 'Near-vacuous: the ''exact'' RHS is defined to match.'
+- id: Docs.ms.T6-values
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 205-206
+  text: '`M(F4Kℝ u₁)(c) = 1·3 + 3 = 6` — m=4 chain is **exact** at first order. * `F3Kℝ(M u₁)(c) = 4²/4 = 4 ≠ 6` — m=3 Kirkwood deviates by 2.'
+  kind: algebraic-identity
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  - EBCMCategory.MarginalisationDynamicalGap.refinement_failure_exists
+  supporting: []
+  impl_note: algebraicGap_at_witness gives the difference 2; the values 6 and 4 appear only inside proofs; 'exact at first order' is by the choice F3_exact = const 6.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.ms.T6-phaseReversal
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 208-212
+  text: Here "exact" means only agreement with the fitted constant `F3_exact = 6`. T6 is one surrogate witness and says nothing about the empirical phase reversal. T3b (via T4) shows that no order-3 field commutes with F4Kℝ under MℝLin at every state; at the single state u₁ the non-additive field `c ↦ 3c²/8` does match (`kirkwoodForm_matches_at_witness`).
+  kind: other
+  impl: []
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4
+  impl_note: Interpretive/empirical.
+  required: false
+  status: informal
+  notes: 'Overreach: T3b/T4 concern one surrogate witness, not all ''correct Kirkwood marginalisations''. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Together with T5 this confirms the empirical phase reversal: the m=4 ODE (correctly marginalised) has zero first-order error at u₁, while the m=3 Kirkwood closure has first-order error 2. T3b (via T4) certifies no correct Kirkwood marginalisation can fix this.'
+- id: Docs.ms.T7
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 218-230
+  text: |-
+    theorem trajectoryGap_norm_ge_half_eps_t (M : V₄ →L[ℝ] V₃) (F₄ : V₄ → V₄) (F₃ : V₃ → V₃) {φ₄ : V₄ → ℝ → V₄} {φ₃ : V₃ → ℝ → V₃} (h₄ : IsFlow F₄ φ₄) (h₃ : IsFlow F₃ φ₃) (u : V₄) {ε : ℝ} (hε : 0 < ε) (h_gap : ε ≤ ‖algebraicGap M F₄ F₃ u‖) : ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε * t / 2 ≤ ‖trajectoryGap M φ₄ φ₃ u t‖
+    [...]
+    Quantitative time-domain refinement of T5: if the algebraic gap has norm at least `ε`, then the trajectory gap grows at least linearly (at rate `ε/2`) for sufficiently small positive `t`.
+  kind: inequality
+  impl:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_norm_ge_half_eps_t
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_hasDerivAt_zero
+  impl_note: Statement matches the Lean theorem. Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: Docs.ms.T7-witness
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 234-238
+  text: At the (2,1) witness the global-flow form is vacuous (F3Kℝ has no global flow). The local form `localGap_norm_ge_half_eps_t` assumes only local solutions, and at the witness (`witness_localGap_ge`, ε = 2) it gives `‖M(ψ₄ t) − ψ₃ t‖ ≥ t` for all small `t > 0`, for any local solutions ψ₄ of F4Kℝ from u₁ and ψ₃ of F3Kℝ from M u₁.
+  kind: inequality
+  impl: []
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_norm_ge_half_eps_t
+  - EBCMCategory.MarginalisationDynamicalGap.algebraicGap_at_witness
+  impl_note: 'No specialised theorem. Any instantiation at F3Kℝ needs IsFlow F3Kℝ φ₃; IsFlow F3Kℝ φ₃ is unsatisfiable: IsFlow demands a solution for all t ∈ ℝ, but v'' = v²/4 with v(0) = 4 has the unique solution 4/(1 − t), which blows up at t = 1.'
+  required: false
+  status: missing
+  notes: 'U3ℝ is one-dimensional, so ‖(2,...,2)‖ = 2 and ε/2 = 1 exactly. WP4b (TRIAGE P1.4/P2): text corrected; previous text: At the (2,1) witness with `ε = ‖(2,2,...,2)‖ > 0`, this certifies that the marginalised m=4 trajectory **must** drift away from any m=3 closed trajectory at a rate bounded below by `ε/2 ≈ 1`, confirming the empirical B(c) Gillespie divergence is not a transient numeric artifact. -- P1.4: now implemented by witness_localGap_ge (candidate impl; status could become implemented).'
+- id: Docs.ms.overdetermined
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 242-245
+  text: 'Before writing code we re-checked: for any non-degenerate `M` of rank < dim V_4 and any *bilinear* (let alone multiplicative-rational) `F_4`, `M ∘ F_4 ≡ F_3 ∘ M` is an *overdetermined* polynomial identity in the `u_4` coordinates. Generic Kirkwood closures do not satisfy it.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Informal sanity remark.
+  required: false
+  status: informal
+  notes: ''
+- id: Docs.ms.exactInvariant
+  group: Docs
+  source:
+    file: EBCMCategory/MARGINALISATION_SPEC.md
+    lines: 26-28
+  text: The invariant `M · x_4_exact(t) = x_3_exact(t)` is asserted to hold for the unclosed CTMC moments by definition of `M`.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Motivation only; the exact CTMC is not formalised (ClosedSystem.F_exact is unused).
+  required: false
+  status: informal
+  notes: ''
+- id: Docs.readme.leanScope
+  group: Docs
+  source:
+    file: ../README.md
+    lines: 57-59
+  text: '`proofs/` contains Lean 4 statements about the model algebra: moment identities, sign conditions of the EBCM right-hand side, R₀ and threshold algebra, pairwise-closure weight lemmas, and general lemmas on marginalisation of flows (T1, T4, T5, T7).'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'WP4 (TRIAGE P2.1): new README "Lean proofs" wording. It replaces the retired claims Docs.readme.conservationLaws, .r0RewiringIndependence (a passing claim with false text), .pgfIdentities and .vmInvariants, whose source sentence was deleted. Meta description of the library content.'
+- id: Docs.readme.notSolutions
+  group: Docs
+  source:
+    file: ../README.md
+    lines: 59-60
+  text: They are not yet theorems about solutions of the ODEs the package integrates; see proofs/Alignment/SUMMARY.md.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'WP4 (TRIAGE P2.1): meta statement (true: no theorem quantifies over ODE solutions of the EBCM).'
+- id: Docs.readme.legacy
+  group: Docs
+  source:
+    file: ../README.md
+    lines: 61-62
+  text: 'The tree is legacy and not cited: theorems about the ODE systems are developed in `NetworkEpiCore.jl/proofs`.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'WP4: meta statement (design D.7: the legacy tree is frozen and not cited).'
+- id: Docs.vignettes.leanMarginalisation
+  group: Docs
+  source:
+    file: ../vignettes/index.qmd
+    lines: 42-43
+  text: Categorical composition and Lean-backed marginalisation results (T1--T7) documenting when closed dynamics commute with subgraph marginalisation.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Documentation pointer.
+  required: false
+  status: informal
+  notes: No vignette (vignettes/*/index.qmd) mentions T1-T7, marginalisation or Kirkwood (grep), so the listed feature is undocumented in the vignettes.
+# ---------------------------------------------------------------------------
+# Not registered (no checkable content, or definitional):
+#   categorical_foundations.md §1 intro, §2.2 state-space/PGF/dynamics bullets (definitions), §5.1 prose
+#   ('This is equivalent to requiring that the local neighbourhood of each node is tree-like'), §6.1-6.2
+#   (structured/decorated cospans, descriptive), §7.2 items 1 and 3 (lift failure modes, prose), references.
+#   MARGINALISATION_SPEC.md §1 definition bullets for MotifShape, stateClassCount, Order3Var/Order4Var,
+#   V_k, ClosedSystem (match the Lean defs up to presentation: Order3Var is a structure, ClosedSystem also
+#   has F_exact), §3 items 1-2 (assumptions), T5 def code for algebraicGap/trajectoryGap (definitions).
+#   proofs/README.md (rewritten in WP4): its status note, soundness bullets and commands restate results
+#   registered elsewhere (MarginalisationDynamicalGap.noFlowF3Real, the deleted axioms under
+#   ConvergenceTheorems.R106/R111a-c, CategoricalComposition.R95b/R95c/R99c and DegreeCorrelation.R81) or
+#   describe tooling, so they are not registered separately.

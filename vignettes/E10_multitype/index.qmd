@@ -1,0 +1,358 @@
+---
+title: "E10. Multitype populations, stratification and heterogeneous susceptibility"
+subtitle: "Typed edge-based models on stochastic block models and unstructured networks, reciprocity, the unit law, and susceptible classes"
+---
+
+## What this page shows
+
+A population split into types (age groups, risk groups) is described twice: in the **model**, by
+stratifying the reaction network over the types (`stratify`), and in the **network**, by a
+`MultitypeNetwork` that gives each type a joint degree law over partner types. The edge-based
+lift then has one θ for every (partner type, own type) pair
+[@miller2013incorporating]. This page:
+
+1. builds the stratified SIR on a two-block Poisson stochastic block model (`:sir_sbm2`) twice
+   and compares it with NetworkOutbreaks' typed simulation;
+2. shows the error for degree laws that no network can realise (edge reciprocity);
+3. checks the unit law: types that the network ignores give back the untyped model
+   (`:sir_unstr2` = `:sir_reg6`);
+4. models **heterogeneous susceptibility**: several susceptible classes sharing I and R
+   (`:sir_hetsus_bim`, `:seirv_hetsus_pois5`), against NetworkOutbreaks.
+
+Its NodeBasedModels mirror is page N04, on the same `:sir_sbm2` summary.
+
+## The shared first cell
+
+```{julia}
+#| label: shared-cell
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using Statistics
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+sir = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I        # contact: per-contact (per-edge) rate τ; S converted, I unchanged
+    γ, I --> R             # node-local transition
+end
+model = contact_model(sir)          # prints the typing report
+st    = strata([:a, :b]; sizes = [0.5, 0.5])
+model_ab = stratify(model, st)      # S_a + I_b → I_a + I_b, I_a → R_a, …
+sc    = scenario(:sir_sbm2)         # Poisson SBM, mean contacts [6 2; 2 4], τ calibrated to R₀ = 2
+@assert isequivalent(model_ab, sc.model)
+ref   = scenario_summary(sc)        # committed typed NetworkOutbreaks ensemble
+# --- EBM vignette ---------------------------------------------------------------
+using EdgeBasedModels
+net   = sbm_network(st; mean_contacts = [6.0 2.0; 2.0 4.0])
+sys   = edge_based(model_ab, net)                          # low level
+sysF  = edge_based(sc)                                     # scenario form (model and network from the registry)
+@assert vector_fields_equal(symbolic_ode(sys), symbolic_ode(sysF))
+lift_contributions(model_ab, net)                          # per-reaction terms on the typed network
+```
+
+`stratify` makes one copy of every species per stratum and one contact for every pair of strata
+(susceptible of type a, infector of type b). With the default `contact_rates = :same` every
+contact keeps the per-contact rate τ. What differs between the types is the *number* of contacts,
+and that lives in the network.
+
+## The typed network and its lifted equations
+
+```{julia}
+show(stdout, MIME"text/plain"(), net); println()
+println("mean contacts of an a-node: ", [mean_degree(net.degrees[1], b) for b in net.types])
+println("mean contacts of a b-node: ", [mean_degree(net.degrees[2], b) for b in net.types])
+```
+
+There are four θ's. `θ_b_a` belongs to an edge from a b-partner to an a-node, and the φ's are
+indexed the same way (`φ_I_b_a`: the b-partner is infected and has not yet transmitted). The
+node variables are per type:
+
+```{julia}
+symbolic_ode(sys)
+```
+
+An a-node is still susceptible with probability q_{S_a} ∏_c exp(μ_{ac}(θ_c_a − 1)), where μ_{ac}
+is its mean number of c-partners. That factor multiplies the gain terms of `φ_I_a_a` and
+`φ_I_a_b` alike: on independent Poisson blocks, the rate at which an a-partner is infected does
+not depend on the type of the node at the other end of the edge.
+
+### R₀ from the next-generation matrix
+
+τ was calibrated so that the spectral radius of the next-generation matrix is 2. On Poisson
+blocks the NGM is τ/(τ + γ) times the mean-contact matrix M, and ρ(M) = 7.236:
+
+```{julia}
+using LinearAlgebra
+M = [6.0 2.0; 2.0 4.0]
+T = sc.params[:τ] / (sc.params[:τ] + sc.params[:γ])
+(; τ = sc.params[:τ], ρM = maximum(abs.(eigvals(M))), T_ρM = T * maximum(abs.(eigvals(M))),
+   NEC = basic_reproduction_number(sc.model, sc.network, sc.params),
+   EBCM = basic_reproduction_number(sys; p = sc.params))
+```
+
+## Typed EBCM against typed simulation
+
+```{julia}
+sol = solve_epidemic(sys, sc)
+det = model_curves(sys, sol; t = sc.tgrid, label = "edge-based (multitype)")
+comparisonplot(ref, det; observables = [:I_a, :I_b, :cumulative])
+```
+
+```{julia}
+reference_note(sc, ref)
+```
+
+```{julia}
+compare(ref, det)
+```
+
+Block a has more contacts (6 + 2 against 2 + 4), so its epidemic peaks higher and earlier:
+
+```{julia}
+ia, ib = det[:I_a] ./ 0.5, det[:I_b] ./ 0.5          # within-type prevalence
+mdtable(["type", "peak within-type prevalence", "time of the peak", "final within-type size"],
+        [("a", maximum(ia), sc.tgrid[argmax(ia)], det[:R_a][end] / 0.5),
+         ("b", maximum(ib), sc.tgrid[argmax(ib)], det[:R_b][end] / 0.5)])
+```
+
+## Reciprocity: degree laws that no network realises
+
+Every edge between the types has one end in each. So the number of a→b edge ends,
+N n_a E[k_{a→b}], must equal the number of b→a ends, N n_b E[k_{b→a}]. A mean-contact matrix that
+breaks this describes no network, and the constructor says so:
+
+```{julia}
+try
+    sbm_network(st; mean_contacts = [6.0 3.0; 2.0 4.0])
+catch e
+    print(sprint(showerror, e))
+end
+```
+
+The same matrix is reciprocal for sizes 0.4 and 0.6 (0.4 × 3 = 0.6 × 2). That is the age-structured
+scenario `:sir_age2`:
+
+```{julia}
+st46 = strata([:y, :o]; sizes = [0.4, 0.6])
+sbm_network(st46; mean_contacts = [6.0 3.0; 2.0 4.0])
+```
+
+## The unit law: an unstructured typed network
+
+If the types are only labels, so that a node's partners are of type b with probability n_b
+whatever its own type, the typed model must reproduce the untyped one. This is morphism M10 in
+DESIGN §D.5. `unstructured(net, st)` builds that network. `:sir_unstr2` is the stratified SIR on
+an unstructured 6-regular network, and its aggregate should equal `:sir_reg6`:
+
+```{julia}
+su = scenario(:sir_unstr2)
+@assert isequivalent(model_ab, su.model)
+refu = scenario_summary(su)
+sysu = edge_based(model_ab, unstructured(ConfigurationNetwork(RegularDegree(6)), st))
+@assert vector_fields_equal(symbolic_ode(sysu), symbolic_ode(edge_based(su)))
+tol = (; reltol = 1e-10, abstol = 1e-12)
+solu = solve_epidemic(sysu, su; tol...)
+detu = model_curves(sysu, solu; t = su.tgrid, label = "edge-based (typed, unstructured)")
+
+s6 = scenario(:sir_reg6)
+@assert isequivalent(model, s6.model)
+sys6 = edge_based(model, s6.network)
+det6 = model_curves(sys6, solve_epidemic(sys6, s6; tol...); t = s6.tgrid, label = "edge-based (untyped, 6-regular)")
+(; max_S = maximum(abs.(detu[:S_a] .+ detu[:S_b] .- det6[:S])),
+   max_I = maximum(abs.(detu[:I_a] .+ detu[:I_b] .- det6[:I])),
+   max_cumulative = maximum(abs.(detu[:cumulative] .- det6[:cumulative])))
+```
+
+The typed and untyped curves agree to within the solver tolerance (10⁻¹⁰ relative), and both agree with their own ensembles:
+
+```{julia}
+reference_note(su, refu)
+```
+
+```{julia}
+compare(refu, detu; observables = [:I_a, :I_b, :infectious, :cumulative])
+```
+
+```{julia}
+ref6 = scenario_summary(s6)
+reference_note(s6, ref6)
+```
+
+```{julia}
+compare(ref6, det6; observables = [:I, :cumulative])
+```
+
+## Heterogeneous susceptibility
+
+Susceptibility often varies between people for reasons unrelated to their contacts (prior
+immunity, age, genetics). @miller2013incorporating [§2.2.2] model it with
+several susceptible classes sharing the same network. In NetworkEpiCore the classes are
+susceptible species labelled by the strata of `unstructured(net, st)`, and I and R are shared
+(unlabelled). EdgeBasedModels lifts them with its *heterogeneous* closure, which keeps one θ_a and one φ_{Y,a}
+per class a (the edge into a class-a node), not the K² edge types θ_{b→a} of the full multitype
+lift.
+
+### SIR on the bimodal network
+
+`:sir_hetsus_bim` has 40% of nodes with τ = 0.05 and 60% with τ = 0.3, on the bimodal {2, 10}
+network of `:sir_bim` (a non-Poisson-type network). The model is written with the direct
+constructor, since a species label is not a Catalyst concept:
+
+```{julia}
+lab(x, a) = SpeciesLabel(x; stratum = a)
+het = ContactModel(:sir_het;
+    contacts = [Contact(:S_lo, :I, :I, :τ_lo), Contact(:S_hi, :I, :I, :τ_hi)],
+    transitions = [NodeTransition(:I, :R, :γ)],
+    labels = Dict(:S_lo => lab(:S, :lo), :S_hi => lab(:S, :hi)))
+sh = scenario(:sir_hetsus_bim)
+@assert isequivalent(het, sh.model)
+refh = scenario_summary(sh)
+hs = strata([:lo, :hi]; sizes = [0.4, 0.6])
+bim = ConfigurationNetwork(EmpiricalDegree(2 => 5 / 6, 10 => 1 / 6))
+sysh = edge_based(het, bim, hs)                            # low level: model, base network, strata
+@assert vector_fields_equal(symbolic_ode(sysh), symbolic_ode(edge_based(sh)))   # scenario form
+lift_contributions(het, bim, hs)
+```
+
+The per-class entry factor is q_{S_a} ψ′(θ_a)/ψ′(1), and a class-a susceptible adds its node
+count n_a q_{S_a} ψ(θ_a) to S. A **negative control** is the homogeneous model with the
+class-averaged rate τ̄ = 0.4 · 0.05 + 0.6 · 0.3 = 0.2:
+
+The shared recipe `comparisonplot` styles every curve by its representation, so two edge-based
+curves would come out in the same colour. `style_curves!` gives each curve of a comparison figure its
+own colour and dash, in the order the curves were passed:
+
+```{julia}
+"""
+    style_curves!(p, styles) -> p
+
+Give the model curves of a `comparisonplot` figure `p` their own line colours and styles.
+`styles` holds one `(linecolor, linestyle)` pair per curve, in the order the curves were passed.
+The recipe draws the curves last in every panel, so they are the last `length(styles)` series of
+each subplot; the labels of the first panel are checked against `labels`.
+"""
+function style_curves!(p, styles, labels)
+    n = length(styles)
+    first_labels = [s[:label] for s in p.subplots[1].series_list[end-n+1:end]]
+    first_labels == collect(labels) ||
+        error("style_curves!: the last series of the first panel are $(first_labels), not $(labels)")
+    for sp in p.subplots, (k, (lc, ls)) in enumerate(styles)
+        s = sp.series_list[end-n+k]
+        s[:linecolor] = Plots.plot_color(lc)
+        s[:linestyle] = ls
+    end
+    return p
+end
+```
+
+```{julia}
+solh = solve_epidemic(sysh, sh)
+deth = model_curves(sysh, solh; t = sh.tgrid, label = "edge-based (heterogeneous τ)")
+τbar = 0.4 * sh.params[:τ_lo] + 0.6 * sh.params[:τ_hi]
+sysbar = edge_based(model, bim)
+solbar = solve_epidemic(sysbar; p = Dict(:τ => τbar, :γ => sh.params[:γ]), initial = sh.initial,
+                        tspan = sh.tspan, saveat = sh.tgrid)
+detbar = model_curves(sysbar, solbar; t = sh.tgrid, label = "homogeneous, τ̄ = $(τbar)")
+p = comparisonplot(refh, deth, detbar; observables = [:I, :cumulative], legend = :right)
+style_curves!(p, [(:royalblue, :solid), (:crimson, :dash)], [deth.label, detbar.label])
+```
+
+```{julia}
+reference_note(sh, refh)
+```
+
+```{julia}
+compare(refh, deth; observables = [:S_lo, :S_hi, :I, :cumulative])
+```
+
+```{julia}
+compare(refh, deth, detbar; observables = [:I, :cumulative])
+```
+
+```{julia}
+#| echo: false
+t1 = compare(refh, deth, detbar; observables = [:I])
+a, b = t1[deth.label, :I], t1[detbar.label, :I]
+Markdown.parse(@sprintf("With two classes the EBCM follows the simulation (D∞(I) = %.4f, ΔR∞ = %+.4f). The mean-susceptibility model misses it (D∞(I) = %.4f, ΔR∞ = %+.4f); its R₀ is compared with the heterogeneous one below.",
+    a.D∞, a.ΔR∞, b.D∞, b.ΔR∞))
+```
+
+The two R₀'s: the heterogeneous one is κ_ex Σ_a n_a T_a, where T_a = τ_a/(τ_a + γ), while the
+homogeneous one is κ_ex T(τ̄):
+
+```{julia}
+κ = excess_degree(bim)
+Tf(τ) = τ / (τ + sh.params[:γ])
+(; heterogeneous = κ * (0.4 * Tf(sh.params[:τ_lo]) + 0.6 * Tf(sh.params[:τ_hi])),
+   registry = sh.expected[:R0], EBCM = basic_reproduction_number(sysh; p = sh.params),
+   homogeneous_mean_τ = κ * Tf(τbar))
+```
+
+### The quotient of the stratified model (M10)
+
+The heterogeneous model is the quotient of the full multitype lift of the *stratified* model on
+the same unstructured network, where I and R are also split by class. The node totals therefore
+agree, to within the solver tolerance:
+
+```{julia}
+strat = stratify(model, hs; contact_rates = (a, b) -> a === :lo ? :τ_lo : :τ_hi)
+sysM = edge_based(strat, unstructured(bim, hs))
+solM = solve_epidemic(sysM; p = sh.params, initial = SeedFraction(:I_lo => 0.004, :I_hi => 0.006),
+                      tspan = sh.tspan, saveat = sh.tgrid, tol...)
+solh2 = solve_epidemic(sysh, sh; tol...)
+IM = compartment(sysM, solM, :I_lo) .+ compartment(sysM, solM, :I_hi)
+(; max_I = maximum(abs.(IM .- compartment(sysh, solh2, :I))),
+   max_S_lo = maximum(abs.(compartment(sysM, solM, :S_lo) .- compartment(sysh, solh2, :S_lo))),
+   coordinates_heterogeneous = length(symbolic_ode(sysh).states),
+   coordinates_multitype = length(symbolic_ode(sysM).states))
+```
+
+The 1% shared seeds in I are placed on every type in proportion to its size (§J.6), hence
+`:I_lo => 0.004, :I_hi => 0.006` in the stratified model.
+
+### SEIR with class-specific latency and vaccination
+
+`:seirv_hetsus_pois5` has class-specific latent stages E_lo, E_hi, a shared I and R, vaccination
+of the high-susceptibility class S_hi → V at rate ν, and removal of the vaccinated at rate μ, on
+Poisson(5):
+
+```{julia}
+sv = scenario(:seirv_hetsus_pois5)
+sv.model
+```
+
+```{julia}
+refv = scenario_summary(sv)
+sysv = edge_based(sv.model, ConfigurationNetwork(PoissonDegree(5)), hs)
+@assert vector_fields_equal(symbolic_ode(sysv), symbolic_ode(edge_based(sv)))
+detv = model_curves(sysv, solve_epidemic(sysv, sv); t = sv.tgrid, label = "edge-based (heterogeneous SEIR-V)")
+comparisonplot(refv, detv; observables = [:I, :V, :cumulative])
+```
+
+```{julia}
+reference_note(sv, refv)
+```
+
+```{julia}
+compare(refv, detv; observables = [:S_lo, :S_hi, :E_lo, :E_hi, :I, :V, :cumulative])
+```
+
+The exit from S_hi means there is no final-size fixed point, so R∞ is read from the ODE at the
+end of the time span. ΔR∞ above is that value minus the ensemble's mean final size.
+
+## Summary
+
+```{julia}
+rows = map([(ref, det, :I_a), (refu, detu, :I_a), (refh, deth, :I), (refv, detv, :I)]) do (r, c, X)
+    row = compare(r, c; observables = [X])[c.label, X]
+    (string("`:", r.id, "`"), string(X), row.D∞, row.z∞, row.ΔR∞)
+end
+mdtable(["scenario", "observable", "D∞", "z∞", "ΔR∞"], rows)
+```
+
+## Lean
+
+None of the multitype statements on this page is formalised.
+
+## References
+
+::: {#refs}
+:::

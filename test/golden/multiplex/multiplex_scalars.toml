@@ -1,0 +1,39 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "multiplex"
+columns = []
+description = "multiplex_R0 (and basic_reproduction_number(layers)) and susceptible_fraction"
+generated_by = "test/golden/generate.jl"
+issues = []
+kind = "scalars"
+name = "multiplex_scalars"
+notes = "Replaced by WP22 (E12 fix): multiplex_R0 is the spectral radius ρ(K) of the layer next-generation matrix (0.1 returned the sum of the layer R₀s, e.g. 1.5833 for reg3+pois5 instead of 1.7608); Poisson and single-layer values are unchanged. Validated in test/suites/multiplex.jl against NetworkEpiCore's NGM and the lifted ODE's linearisation."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.2.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "2689d4910c3f1c600e43ff8681335d7e0516a4c3"
+julia = "1.12.7"
+
+[scalars]
+R0_bim2_T010 = 0.925
+R0_pois3_pois2 = 3.583333333333333
+R0_reg3_pois5 = 1.7608086124677507
+R0_reg3x2_T022 = 1.1
+R0_single_poly = 1.0666666666666669
+S_pois3_pois2_at_08_09 = 0.4493289641172217
+S_pois3_pois2_at_08_09_seed001 = 0.44483567447604944
+brn_pois3_pois2 = 3.583333333333333
+
+[setup]
+layer_sets = ["reg3(0.15)+pois5(0.05), γ = 1/4", "pois3(0.3)+pois2(0.2), γ = 0.1", "poly[0,0.2,0.5,0.3](0.4), γ = 0.1", "reg3+reg3 at T = 0.22, γ = 1", "bimodal{1,7} x2 at T = 0.10, γ = 1"]
+
+[structure]

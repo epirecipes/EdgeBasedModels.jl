@@ -3,49 +3,59 @@ module EdgeBasedModels
 """
     EdgeBasedModels
 
-Edge-based compartmental models (EBCMs) for infectious-disease dynamics on networks.
+Edge-based compartmental models (EBCMs) for infectious-disease dynamics on networks: the exact
+large-population limits of Miller, Slim & Volz (2012) for epidemics on configuration-model
+random graphs, generated as ModelingToolkit systems.
 
-EdgeBasedModels.jl programmatically generates ODE systems based on the edge-based
-formulation of Miller (2011) and Miller & Volz (2013). Network structure is encoded
-through probability generating functions (PGFs); disease progression through
-`DiseaseProgression` graphs. The package supports:
-
-- Single- and multi-type configuration-model networks with arbitrary degree distributions
-- Clustered networks (triangle-aware EBCMs)
-- Multiplex networks (multiple edge layers sharing nodes)
-- Dynamic networks (random rewiring, dormant contacts)
-- Catalyst.jl integration for disease specifications
-- Stage-population observables for direct compartment tracking
-- Categorical composition (`OpenEBCM`, `tensor`, `compose`, `stratify`)
-- Symbolic R₀ computation, final-size, epidemic-probability, and confidence-band analytics
-
-Top-level workflow:
+EdgeBasedModels builds on NetworkEpiCore, whose objects it re-exports: a model is a
+`ContactModel` (contacts `S + I → 2I` at a per-contact rate τ and node transitions), written
+directly, with the canned `sir_model()` & co., or from Catalyst and ModelingToolkit through
+`contact_model`; a network is a `NetworkDescriptor` (`ConfigurationNetwork(PoissonDegree(5))`,
+`ClusteredNetwork`, …). The verb is [`edge_based`](@ref); the factories (`build_sir`,
+`build_seir`, …) are one-liners over it. The lift is exact and strictly partial: models with an
+arrow back into the susceptible class (SIS, SIRS) are refused, with the back ends that accept
+them named (NodeBasedModels, NetworkOutbreaks).
 
 ```julia
-pgf = poisson_pgf(5.0)
-prog = sir_model(; β = :β, γ = :γ)
-model = StaticConfigurationModel(pgf, prog)
-sys = build_edge_system(model)
-sol = solve_epidemic(sys; tspan = (0.0, 30.0))
+using EdgeBasedModels
+sys = edge_based(sir_model(; τ = 0.3, γ = 0.1), ConfigurationNetwork(PoissonDegree(5.0)))
+sol = solve_epidemic(sys; initial = SeedFraction(:I => 1e-3), tspan = (0.0, 30.0))
+R30 = compartment(sys, sol, :R)[end]              # 0.8806
+sysF = build_sir(PoissonDegree(5.0), :τ, :γ)       # the factory, with Symbol rates …
+solF = solve_epidemic(sysF; p = Dict(:τ => 0.3, :γ => 0.1), tspan = (0.0, 30.0))   # … set here
 ```
 
-See the vignettes under `vignettes/` for end-to-end examples.
+The legacy 0.1 types (`DegreePGF`, `DiseaseProgression`, `StaticConfigurationModel`, …) are kept
+and convert both ways; MIGRATION.md lists what changed. See the vignettes under `vignettes/`.
 """
 EdgeBasedModels
 
 using LinearAlgebra
+using Random
 using Symbolics
 using ModelingToolkit
-import Catalyst
+using ModelingToolkit: SciMLBase
 
+# NetworkEpiCore: EdgeBasedModels adds methods to its generics and re-exports every binding it
+# exports (the same bindings, so EdgeBasedModels, NodeBasedModels, NetworkOutbreaks and
+# NetworkEpiCore can be loaded together without ambiguity; design §A.7, §A.8).
+using NetworkEpiCore
+import NetworkEpiCore: basic_reproduction_number, final_size, epidemic_probability,
+                       epidemic_threshold, disease_free_equilibrium, default_initial_conditions,
+                       solve_epidemic, model_curves, compartment, compartments, population_fraction,
+                       mean_degree, pgf, pgf_derivative, clustering_coefficient, contact_model,
+                       stratify, with_reinfection_counting, reinfection_totals, canonical_text,
+                       degree_probabilities, is_poisson_type
+
+for name in names(NetworkEpiCore)
+    name === :NetworkEpiCore || @eval export $name
+end
+
+# EdgeBasedModels' own names. Every later file carries its own `export` lines (design §G.1).
 export DegreePGF,
     DiseaseProgression,
     DiseaseStage,
     DiseaseTransition,
-    sir_model,
-    seir_model,
-    sis_model,
-    sirs_model,
     ErlangStage,
     GammaApproxStage,
     expand_erlang_stages,
@@ -69,26 +79,13 @@ export DegreePGF,
     generate_clustered_sir,
     generate_clustered_seir,
     generate_multiplex_sir,
-    basic_reproduction_number,
-    final_size,
-    epidemic_probability,
-    epidemic_threshold,
-    disease_free_equilibrium,
-    default_initial_conditions,
-    compartment,
-    compartments,
-    population_fraction,
-    solve_epidemic,
     eval_multivariate_pgf,
     independent_pgf,
-    mean_degree,
     mean_single_degree,
     mean_triangle_degree,
-    clustering_coefficient,
     mixed_partial,
     multivariate_poisson_pgf,
     partial_derivative,
-    pgf_derivative,
     poisson_pgf,
     polynomial_pgf,
     clustered_pgf,
@@ -105,15 +102,12 @@ export DegreePGF,
     build_multiplex_sir,
     multiplex_R0,
     susceptible_fraction,
-    # Categorical composition framework
+    # The 0.1 categorical layer: deprecated shims and removed functions (src/deprecated.jl)
     Port,
     OpenEBCM,
     open_sir,
     open_seir,
-    compose,
     tensor,
-    stratify,
-    NaturalTransformation,
     to_mass_action,
     compare_models,
     EBCMFunctor,
@@ -122,28 +116,40 @@ export DegreePGF,
     edge_sis_model,
     edge_seir_model,
     edge_sirs_model,
-    # Reinfection counting (Keeling et al. 2016, Approx. 1)
-    with_reinfection_counting,
-    build_sis_reinfection,
-    base_compartment_of,
-    infection_count_of,
-    reinfection_totals
+    # Reinfection counting (Keeling et al. 2016, Approx. 1): removed, a migration error (src/deprecated.jl)
+    build_sis_reinfection
 
-include("pgf.jl")
-include("disease.jl")
-include("builders.jl")
-include("analysis.jl")
-include("multiplex.jl")
-include("categorical.jl")
-include("reinfection_counting.jl")
+# Include order: a file may use the types of every file included before it in signatures; function
+# bodies may call functions of any file.
+include("pgf.jl")               # DegreePGF <: DegreeDistribution, legacy PGF constructors
+include("disease.jl")           # legacy DiseaseProgression and friends
+include("system.jl")            # EdgeModelSystem
+include("builders.jl")          # legacy model types; default_initial_conditions, solve_epidemic
+include("compat.jl")            # converters ContactModel ⇄ legacy types; rate lifting (E10)
+include("lift/edge_based.jl")   # edge_based; parameters; observing solutions
+include("lift/assembler.jl")    # WP17
+include("lift/configuration.jl")    # WP17
+include("lift/wellmixed.jl")        # WP17
+include("lift/multitype.jl")        # WP17
+include("lift/clustered.jl")        # WP20
+include("lift/dynamic.jl")          # WP21
+include("lift/multiplex.jl")        # WP22
+include("lift/correlated.jl")       # WP36a
+include("lift/dormant.jl")          # WP36b
+include("lift/mfsh.jl")             # WP36c
+include("lift/clustered_general.jl")    # WP36d
+include("lift/heterogeneous.jl")        # WP36f
+include("factories.jl")         # build_* over edge_based; the legacy build_edge_system entry points
+include("analysis.jl")          # analysis of legacy models and lowered systems (WP19)
 
-# --- Disambiguating aliases for the cross-package `sir_model` collision ---
-const edge_sir_model  = sir_model
-const edge_sis_model  = sis_model
-const edge_seir_model = seir_model
-const edge_sirs_model = sirs_model
+"""
+    generate_multiplex_sir(layers; kw...)
 
-# multiplex parity alias (defined here because multiplex.jl loads after analysis.jl)
+Alias of [`build_multiplex_sir`](@ref) (the `generate_*` names mirror NodeBasedModels 0.1).
+"""
 const generate_multiplex_sir = build_multiplex_sir
+
+include("reverse.jl")           # WP18
+include("deprecated.jl")        # shims and migration errors (A.7)
 
 end

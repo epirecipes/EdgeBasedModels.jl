@@ -1,0 +1,599 @@
+# SA-PASS claim registry fragment: group DynamicLimits
+# Source module: EBCMCategory/DynamicLimits.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: DynamicLimits.header.staticLimitCollapse
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 12-13
+  text: '**Static limit (η → 0)**: Rewiring terms vanish; the dynamic EBCM collapses to the standard (static) EBCM.'
+  kind: limit
+  impl: []
+  supporting:
+  - R0_rewiring_independent
+  - static_limit_dim
+  impl_note: 'DynamicEBCM has only the fields disease : SIRParams and pgf : PGFData — no rewiring rates η₁, η₂, no ODE and no limit; staticLimit is defined to be edgeModel m.disease m.pgf, so the ''collapse'' holds by definition at the EpiModel level only.'
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: DynamicLimits.header.fastRewiringCollapse
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 16-20
+  text: '**Fast-rewiring limit (η → ∞)**: The network reshuffles so quickly that partnerships are fleeting. The system approaches the mean-field social-heterogeneity (MFSH) model of Miller, Slim & Volz (2012): nodes keep their degrees, so degree heterogeneity survives, and R₀ tends to (β/γ)⟨K²⟩/⟨K⟩.'
+  kind: limit
+  impl: []
+  supporting:
+  - fast_rewiring_dim
+  impl_note: 'DynamicEBCM has only the fields disease : SIRParams and pgf : PGFData — no rewiring rates η₁, η₂, no ODE and no limit; fastRewiringLimit is defined as ⟨3, T·κ⟩.'
+  required: false
+  status: missing
+  notes: 'Volz–Meyers (2007, eqs 2.22–2.23; papers/rspb20071159.md l.216-226) show the fast-mixing limit is a mass-action model that retains degree heterogeneity (Ṁ₁ = rM₁(θψ''(θ)+θ²ψ''''(θ))/ψ''(1) − μM₁), whose R₀ involves ψ''''(1)/ψ''(1). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Fast-rewiring limit (η → ∞)**: The network reshuffles so quickly that edge correlations are destroyed at each instant. The system collapses to a **mean-field** model — only population-level aggregates (S, I, R) remain. -- Candidate impl for the R₀ part: DynamicEBCM.R0_edgeSwap_tendsto_mfsh.'
+- id: DynamicLimits.header.interpolation
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 22-24
+  text: 'The dynamic model thus interpolates between two extremes: MFSH (dim 3 as recorded) ← fast rewiring — Dynamic (dim 5) — static → EBCM (dim 4)'
+  kind: inequality
+  impl:
+  - fast_rewiring_dim
+  - static_limit_dim
+  - full_tower
+  supporting: []
+  impl_note: Dimensions 3, 4 and the ordering 3 < 4 < 5 are proved; 'interpolates' (a family indexed by a rate) has no formal counterpart.
+  required: true
+  status: implemented
+  notes: 'Module-header summary. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The dynamic model thus interpolates between two extremes: Mean-field (dim 3) ← fast rewiring — Dynamic (dim 5) — static → EBCM (dim 4)'
+- id: DynamicLimits.table.R29
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 38-38
+  text: '| 29 | Static EBCM dim < Dynamic EBCM dim |'
+  kind: inequality
+  impl:
+  - static_lt_dynamic
+  supporting: []
+  impl_note: 4 < 5 by unfolding.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R29.
+- id: DynamicLimits.table.R30
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 39-39
+  text: '| 30 | Dynamic EBCM dim < Pair approximation dim (N ≥ 1) |'
+  kind: inequality
+  impl:
+  - dynamic_lt_pair
+  supporting: []
+  impl_note: 5 < 12·N for N ≥ 1 (literal 12 * N).
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R30.
+- id: DynamicLimits.table.R31
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 40-40
+  text: '| 31 | Static limit: dynamic → static (dim 5 → 4) |'
+  kind: limit
+  impl:
+  - static_limit_dim
+  supporting:
+  - static_lt_dynamic
+  impl_note: staticLimit.dim = 4; no limit.
+  required: true
+  status: implemented
+  notes: Header-table row; see R31a.
+- id: DynamicLimits.table.R32
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 41-41
+  text: '| 32 | Fast-rewiring limit record: dim 5 → 3 |'
+  kind: limit
+  impl:
+  - fast_rewiring_dim
+  supporting: []
+  impl_note: fastRewiringLimit.dim = 3; no limit.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R32a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 32 | Fast-rewiring limit: dynamic → mean-field (dim 5 → 3) |'
+- id: DynamicLimits.table.R33
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 42-42
+  text: '| 33 | `DynamicEBCM.R0` stores the static-limit R₀ only |'
+  kind: structural
+  impl:
+  - R0_rewiring_independent
+  supporting: []
+  impl_note: No rewiring rate exists; impl proves staticLimit.R0 = R0.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R33a. Miller–Slim–Volz (2012) dynamic-network EBCMs give per-edge transmission probability β/(β+γ+η₂) and an R₀ that depends on the edge-turnover rate (papers/1106.6320v1.md l.608, l.640). WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 33 | R₀ is independent of rewiring rate | -- Formerly a passing claim with false text (P2.3).'
+- id: DynamicLimits.table.R34
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 43-43
+  text: '| 34 | Coarse-graining commutes with static limit |'
+  kind: categorical
+  impl:
+  - coarseGrain_static_comm
+  supporting: []
+  impl_note: coarseGrain m.toEpiModel = coarseGrain m.staticLimit.
+  required: true
+  status: implemented
+  notes: Header-table row; see R34.
+- id: DynamicLimits.table.R35
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 44-44
+  text: '| 35 | Fast-rewiring record has the dimension of a coarse-graining |'
+  kind: categorical
+  impl:
+  - fast_rewiring_is_coarsegraining
+  supporting: []
+  impl_note: Only dimension equality; the R₀ fields differ in general (Result 37).
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R35b. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 35 | Fast-rewiring limit IS a coarse-graining |'
+- id: DynamicLimits.table.R36
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 45-45
+  text: '| 36 | For Poisson, the stored T·κ equals the static R₀ |'
+  kind: algebraic-identity
+  impl:
+  - fast_rewiring_R0_poisson
+  supporting: []
+  impl_note: T·κ = T·κ²/κ.
+  required: true
+  status: implemented
+  notes: 'Header-table row; same content as R36a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 36 | For Poisson, fast-rewiring R₀ = EBCM R₀ | -- Formerly a passing claim with false text (P2.3).'
+- id: DynamicLimits.table.R37
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 46-46
+  text: '| 37 | Some record has T·κ ≠ static R₀; MFSH R₀ > static R₀ |'
+  kind: inequality
+  impl:
+  - fast_rewiring_R0_differs
+  supporting: []
+  impl_note: Existential (one witness), not universal.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R37a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 37 | For non-Poisson, fast-rewiring R₀ ≠ EBCM R₀ | -- Candidate impl: fast_rewiring_R0_differs and DynamicEBCM.R0_static_lt_mfsh.'
+- id: DynamicLimits.table.R38
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 47-47
+  text: '| 38 | Dynamic refines static |'
+  kind: inequality
+  impl:
+  - dynamic_refines_static
+  supporting: []
+  impl_note: 4 ≤ 5.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R38.
+- id: DynamicLimits.table.R39
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 48-48
+  text: '| 39 | Fast-rewiring is coarser than static |'
+  kind: inequality
+  impl:
+  - fast_rewiring_coarser_than_static
+  supporting: []
+  impl_note: 3 ≤ 4.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R39.
+- id: DynamicLimits.table.R40
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 49-49
+  text: '| 40 | Full tower: mean-field < static < dynamic |'
+  kind: inequality
+  impl:
+  - full_tower
+  supporting: []
+  impl_note: 3 < 4 ∧ 4 < 5.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R40a.
+- id: DynamicLimits.R29
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 123-124
+  text: '**Result 29.** The static EBCM (dim 4) has fewer variables than the dynamic EBCM (dim 5).'
+  kind: inequality
+  impl:
+  - static_lt_dynamic
+  supporting: []
+  impl_note: 'impl: m.staticLimit.dim < m.toEpiModel.dim, i.e. 4 < 5 by unfolding. Faithful at the dimension level.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R30
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 129-130
+  text: '**Result 30.** The dynamic EBCM (dim 5) has fewer variables than pair approximation (dim 12N) for N ≥ 1.'
+  kind: inequality
+  impl:
+  - dynamic_lt_pair
+  supporting:
+  - edgeBased_lt_pair
+  impl_note: 'impl: 1 ≤ N → m.toEpiModel.dim < 12 * N. The pair-approximation dimension is the literal 12 * N, not Hierarchy''s levelDim .pairApproximation N (same value, but not linked).'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R31a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 14-138
+  text: |-
+    reducing the dimension by 1
+    [...]
+    **Result 31.** Static limit: the dimension drops from 5 to 4.
+  kind: limit
+  impl:
+  - static_limit_dim
+  supporting:
+  - static_lt_dynamic
+  impl_note: 'impl: m.staticLimit.dim = 4 only; the ''from 5'' part is m.toEpiModel.dim = 5 (definitional; cf. static_lt_dynamic). No limit is taken. First fragment is from the module header.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R31b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 13-140
+  text: |-
+    The dormant-edge variable φ_D decouples
+    [...]
+    When rewiring rates go to zero, the θ equation loses its η₁/η₂ terms and the φ_D equation decouples entirely (dφ_D/dt → 0).
+  kind: limit
+  impl: []
+  supporting:
+  - static_limit_dim
+  impl_note: 'DynamicEBCM has only the fields disease : SIRParams and pgf : PGFData — no rewiring rates η₁, η₂, no ODE and no limit; no θ or φ_D equation exists.'
+  required: false
+  status: missing
+  notes: First fragment is from the module header.
+- id: DynamicLimits.R32a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 145-145
+  text: '**Result 32.** Fast-rewiring limit: the dimension drops to 3.'
+  kind: limit
+  impl:
+  - fast_rewiring_dim
+  supporting: []
+  impl_note: 'impl: m.fastRewiringLimit.dim = 3 by rfl (definition). No limit is taken.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R32b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 146-148
+  text: When the network randomises infinitely fast, partnerships become fleeting and the model approaches MFSH (θ and R, with S = ψ(θ) and I = 1 − S − R), in which degree heterogeneity survives through ψ.
+  kind: limit
+  impl: []
+  supporting:
+  - fast_rewiring_dim
+  impl_note: No edge-state distribution, correlations or aggregates are formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: When the network randomises infinitely fast, the joint distribution over edge states factorises, destroying all pairwise correlations. Only population-level aggregates (S, I, R) survive.'
+- id: DynamicLimits.R33a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 76-154
+  text: |-
+    `DynamicEBCM` records no rewiring rate, so this is not the R₀ of the dynamic model.
+    [...]
+    **Result 33.** `DynamicEBCM` stores only the static-limit R₀: `DynamicEBCM.R0` is T·ψ''(1)/ψ'(1).
+  kind: structural
+  impl:
+  - R0_rewiring_independent
+  supporting: []
+  impl_note: 'DynamicEBCM has only the fields disease : SIRParams and pgf : PGFData — no rewiring rates η₁, η₂, no ODE and no limit; so independence from a rewiring rate holds vacuously by construction. The theorem actually proves m.staticLimit.R0 = m.R0 (R₀ unchanged by the static-limit map). First fragment is the docstring of def DynamicEBCM.R0.'
+  required: true
+  status: implemented
+  notes: 'Contradicts the literature: Miller–Slim–Volz (2012) dynamic-network EBCMs give per-edge transmission probability β/(β+γ+η₂) and an R₀ that depends on the edge-turnover rate (papers/1106.6320v1.md l.608, l.640). The claim should be restated as ''the static-limit model has the same R₀ as defined here''. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Key result**: R₀ does NOT depend on the rewiring rate. [...] **Result 33.** R₀ is independent of the rewiring rate. -- Formerly a passing claim with false text (P2.3: R₀ depends on η). impl R0_rewiring_independent (staticLimit.R0 = R0) matches only the corrected ''stores'' reading; the η-dependence is DynamicEBCM.R0_edgeSwap_zero / R0_edgeSwap_tendsto_mfsh / R0_static_lt_mfsh.'
+- id: DynamicLimits.R33b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 155-155
+  text: The static limit preserves R₀ exactly,
+  kind: algebraic-identity
+  impl:
+  - R0_rewiring_independent
+  supporting: []
+  impl_note: 'impl: m.staticLimit.R0 = m.R0, both T·ψ.secondFactorial/ψ.mean after unfolding. Faithful.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R33c
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 78-157
+  text: |-
+    In the edge-swapping EBCM, R₀ depends on η (Miller, Slim & Volz 2012, §3.2.1; `R0_edgeSwap`).
+    [...]
+    In the edge-swapping EBCM, R₀ depends on the rewiring rate η (Miller, Slim & Volz 2012, §3.2.1; see `R0_edgeSwap`).
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Explanatory; rewiring is not modelled. First fragment is the docstring of def DynamicEBCM.R0.
+  required: false
+  status: informal
+  notes: 'Miller–Slim–Volz (2012) dynamic-network EBCMs give per-edge transmission probability β/(β+γ+η₂) and an R₀ that depends on the edge-turnover rate (papers/1106.6320v1.md l.608, l.640). WP4b (TRIAGE P1.4/P2): text corrected; previous text: It depends only on transmissibility and the excess degree ratio, because rewiring preserves the degree distribution. [...] because rewiring preserves the degree distribution and hence the excess degree ratio.'
+- id: DynamicLimits.fastRewiringR0MeanDegree
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 98-100
+  text: Its R₀ is (β/γ)⟨K²⟩/⟨K⟩ = (β/γ)(ψ''(1)/ψ'(1) + 1) (`R0_mfsh`), which keeps degree heterogeneity. The R₀ stored here, T·ψ'(1) = βκ/(β+γ), is not that limit; it is kept for compatibility (Results 36, 37).
+  kind: limit
+  impl: []
+  supporting:
+  - fast_rewiring_R0_poisson
+  - fast_rewiring_R0_differs
+  impl_note: Docstring of def DynamicEBCM.fastRewiringLimit; the def sets R0 := T·κ, so this is definitional (bridge material), not a derived result.
+  required: false
+  status: informal
+  notes: 'Scientifically doubtful: in the Volz–Meyers (2007) fast-mixing limit the linearised growth rate is r(1 + ψ''''(1)/ψ''(1)) − μ, i.e. degree heterogeneity is retained (papers/rspb20071159.md eqs 2.22-2.23). Results 36-37 inherit this modelling choice. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Crucially, R₀ now uses the **mean degree** κ rather than the excess degree ψ''''(1)/ψ''(1), because the fast-rewiring limit destroys the degree-heterogeneity amplification effect.'
+- id: DynamicLimits.R34
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 164-166
+  text: '**Result 34.** Coarse-graining commutes with the static limit. F(dynamic) = F(staticLimit(dynamic)), because both give dim 3 with the same R₀.'
+  kind: categorical
+  impl:
+  - coarseGrain_static_comm
+  supporting: []
+  impl_note: 'impl: coarseGrain m.toEpiModel = coarseGrain m.staticLimit, i.e. F is invariant under the static-limit map (the second sentence). A commuting square in the categorical sense would need a static-limit map on the node side, which does not exist.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R35a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 172-173
+  text: '**Result 35.** The fast-rewiring limit has the same dimension as coarse-graining (both give dim = 3).'
+  kind: algebraic-identity
+  impl:
+  - fast_rewiring_is_coarsegraining
+  supporting: []
+  impl_note: 'impl: m.fastRewiringLimit.dim = (coarseGrain m.toEpiModel).dim. Faithful.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R35b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 174-175
+  text: 'It is not a coarse-graining of the same model: the MFSH R₀ differs from the static R₀ (`R0_static_lt_mfsh`).'
+  kind: categorical
+  impl:
+  - fast_rewiring_is_coarsegraining
+  supporting:
+  - fast_rewiring_R0_differs
+  impl_note: impl equates only dimensions. fastRewiringLimit m ≠ coarseGrain m.toEpiModel in general because their R₀ fields differ (T·κ vs T·ψ''(1)/ψ'(1); Result 37), so under the library's own coarseGrain the 'IS' claim fails beyond dimension.
+  required: true
+  status: implemented
+  notes: 'Overclaim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The fast-rewiring limit IS a form of coarse-graining.'
+- id: DynamicLimits.R36a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 182-183
+  text: '**Result 36.** For Poisson networks, the value T·κ stored by `fastRewiringLimit` equals the static EBCM R₀.'
+  kind: algebraic-identity
+  impl:
+  - fast_rewiring_R0_poisson
+  supporting: []
+  impl_note: 'impl: for m = ⟨p, PGFData.poisson κ hκ⟩, m.fastRewiringLimit.R0 = m.R0, i.e. T·κ = T·(κ²/κ). Faithful given the definitions.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 36.** For Poisson networks, the fast-rewiring R₀ equals the EBCM R₀. -- Formerly a passing claim with false text (P2.3). New trusted theorems for the MFSH part: DynamicEBCM.R0_mfsh_poisson, R0_static_lt_mfsh.'
+- id: DynamicLimits.R36b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 183-184
+  text: 'This is because the Poisson excess degree equals the mean degree: ψ''''(1)/ψ''(1) = κ.'
+  kind: algebraic-identity
+  impl:
+  - PGFData.poisson_excess_eq_mean
+  supporting: []
+  impl_note: Same as EpiCategory Result 1 over the two-moment record.
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R37a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 197-199
+  text: '**Result 37.** Some degree record has a stored fast-rewiring value T·κ different from the static EBCM R₀. The genuine fast-rewiring (MFSH) R₀ exceeds the static R₀ for every degree law (`R0_static_lt_mfsh`).'
+  kind: inequality
+  impl:
+  - fast_rewiring_R0_differs
+  supporting: []
+  impl_note: 'impl: ∃ m, m.fastRewiringLimit.R0 ≠ m.R0 (one witness), not ∀ non-Poisson ψ. Within PGFData the universal version (secondFactorial ≠ mean² ⇒ the R₀s differ, as T > 0) is true but unproved; for genuine distributions it is false for non-Poisson laws with variance = mean.'
+  required: true
+  status: implemented
+  notes: 'Quantifier gap (∀ in text, ∃ in Lean). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 37.** For non-Poisson networks, the fast-rewiring limit gives a DIFFERENT R₀ than the EBCM. -- Candidate impl: fast_rewiring_R0_differs ∧ DynamicEBCM.R0_static_lt_mfsh.'
+- id: DynamicLimits.R37b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 201-203
+  text: 'Witness: a network with mean κ=3, second factorial=15 (excess=5). T=1/2, so EBCM R₀ = 5/2 and T·κ = 3/2; with β = γ = 1 the MFSH R₀ is 5 + 1 = 6.'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - fast_rewiring_R0_differs
+  impl_note: The witness (β = γ = 1, mean 3, secondFactorial 15) appears only in the proof; no theorem states these values. The arithmetic is correct.
+  required: false
+  status: missing
+  notes: 'Proof-witness description. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Witness: a network with mean κ=3, second factorial=15 (excess=5). T=1/2, so EBCM R₀ = 5/2, fast-rewiring R₀ = 3/2.'
+- id: DynamicLimits.R38
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 214-215
+  text: '**Result 38.** The dynamic model refines the static model (it has strictly more state variables: 5 > 4).'
+  kind: inequality
+  impl:
+  - dynamic_refines_static
+  supporting:
+  - static_lt_dynamic
+  impl_note: 'impl: m.staticLimit ≤ m.toEpiModel (4 ≤ 5 on dims). The parenthetical strictness is Result 29 (static_lt_dynamic), not part of this statement.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R39
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 221-222
+  text: '**Result 39.** The fast-rewiring limit is coarser than the static limit. Mean-field (dim 3) ≤ Static EBCM (dim 4).'
+  kind: inequality
+  impl:
+  - fast_rewiring_coarser_than_static
+  supporting: []
+  impl_note: 'impl: m.fastRewiringLimit ≤ m.staticLimit (3 ≤ 4 on dims). Faithful at the dimension level.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R40a
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 228-228
+  text: '**Result 40.** The full tower: mean-field < static EBCM < dynamic EBCM.'
+  kind: inequality
+  impl:
+  - full_tower
+  supporting: []
+  impl_note: 'impl: fastRewiringLimit.dim < staticLimit.dim ∧ staticLimit.dim < toEpiModel.dim (3 < 4 ∧ 4 < 5), stated on dims (not with < of the EpiModel preorder). Faithful.'
+  required: true
+  status: implemented
+  notes: ''
+- id: DynamicLimits.R40b
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 229-231
+  text: 'Combined with Hierarchy.lean, this gives, for N ≥ 4: Mean-field (3) < Static EBCM (4) < Dynamic EBCM (5) < Pair (12N) < Full (3^N); the last inequality fails for N ≤ 3.'
+  kind: inequality
+  impl: []
+  supporting:
+  - full_tower
+  - dynamic_lt_pair
+  - edgeBased_lt_pair
+  impl_note: No combined theorem. Dynamic (5) < Pair (12N) needs N ≥ 1 (dynamic_lt_pair); Pair (12N) < Full (3^N) is proved nowhere and is false for N ≤ 3 (36 > 27 at N = 3).
+  required: false
+  status: missing
+  notes: 'False as an unconditional chain. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Combined with Hierarchy.lean, this gives: Mean-field (3) < Static EBCM (4) < Dynamic EBCM (5) < Pair (12N) < Full (3^N) -- Candidate impl: pair_lt_full, full_lt_pair_three (Hierarchy).'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text only, see DataTypes/DynamicLimits.md):
+#   structure DynamicEBCM ("5 ODE variables: θ, φ_I, R, φ_D, (φ_S algebraic)"), DynamicEBCM.dim
+#   ("always 5 ... (θ, φ_S, φ_I, R, plus the new φ_D)" - note the two docstrings list different variables),
+#   DynamicEBCM.toEpiModel, DynamicEBCM.staticLimit ("The R₀ is preserved" is covered by R33b),
+#   header sentence 'On a **dynamic network**, edges form (rate η₁) and break (rate η₂), adding a
+#   dormant-edge variable φ_D to the standard EBCM.' (model description; no rates exist in the Lean model).
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: DynamicLimits.r0EdgeSwapZero
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 242-243
+  text: At rewiring rate η = 0 the edge-swapping R₀ is the static-limit R₀ T·ψ''(1)/ψ'(1).
+  kind: algebraic-identity
+  impl:
+  - DynamicEBCM.R0_edgeSwap_zero
+  supporting: []
+  impl_note: m.R0_edgeSwap 0 = m.R0, with R0_edgeSwap m η = β/(β+η+γ)·((η+γ)/γ·excess + η/γ).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: DynamicLimits.r0EdgeSwapTendstoMfsh
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 249-250
+  text: As the rewiring rate η → ∞, the edge-swapping R₀ tends to the MFSH R₀ (β/γ)(ψ''(1)/ψ'(1) + 1).
+  kind: limit
+  impl:
+  - DynamicEBCM.R0_edgeSwap_tendsto_mfsh
+  supporting: []
+  impl_note: Filter.Tendsto m.R0_edgeSwap Filter.atTop (nhds m.R0_mfsh) over ℚ.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: DynamicLimits.r0StaticLtMfsh
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 277-278
+  text: 'The MFSH (fast-rewiring) R₀ exceeds the static-limit R₀ for every degree record: (β/γ)(ψ''''(1)/ψ''(1) + 1) > β/(β+γ) · ψ''''(1)/ψ''(1).'
+  kind: inequality
+  impl:
+  - DynamicEBCM.R0_static_lt_mfsh
+  supporting: []
+  impl_note: m.R0 < m.R0_mfsh for every DynamicEBCM m.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: DynamicLimits.r0MfshPoisson
+  group: DynamicLimits
+  source:
+    file: EBCMCategory/DynamicLimits.lean
+    lines: 288-288
+  text: For Poisson degrees the MFSH (fast-rewiring) R₀ is (β/γ)(κ + 1).
+  kind: algebraic-identity
+  impl:
+  - DynamicEBCM.R0_mfsh_poisson
+  supporting: []
+  impl_note: '(⟨p, PGFData.poisson κ hκ⟩ : DynamicEBCM).R0_mfsh = p.β / p.γ * (κ + 1).'
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

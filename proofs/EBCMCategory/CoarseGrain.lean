@@ -1,12 +1,16 @@
 import EBCMCategory.EpiCategory
 
 /-!
-# CoarseGrain — The forgetful functor F: Edge → Node
+# CoarseGrain — The coarse-graining map F: Edge → Node
 
 The **coarse-graining** map sends an edge-based model to its node-based
 projection by evaluating the PGF at the edge-transmission-failure probability:
 
     S = ψ(θ),   R = R,   I = 1 - S - R
+
+No functor and no ODE system is formalised. In Lean, `coarseGrain` acts on
+`EpiModel` records (a dimension and an R₀): it sets the dimension to 3 and
+keeps R₀. The formula S = ψ(θ) above is the motivation, not a definition.
 
 ## Key results
 
