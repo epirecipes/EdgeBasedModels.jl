@@ -31,8 +31,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # [sources] needs Julia 1.11: on 1.10 the sibling packages cannot be resolved.
-        version: ['1.11', '1']
+        # [sources] needs Julia 1.11: on 1.10 the sibling packages cannot be resolved. 1.12 runs
+        # with the committed Manifest.toml (written by 1.12); the others resolve afresh.
+        version: ['1.11', '1.12', '1']
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +59,17 @@ jobs:
         shell: julia --color=yes --project=. {0}
         run: |
           using Pkg
+          # A manifest written by another minor version of Julia cannot be instantiated (its
+          # standard libraries differ): resolve afresh instead.
+          if isfile("Manifest.toml")
+              v = VersionNumber(Pkg.TOML.parsefile("Manifest.toml")["julia_version"])
+              if (v.major, v.minor) != (VERSION.major, VERSION.minor)
+                  @info "Manifest.toml was written by Julia $v; resolving afresh on Julia $VERSION"
+                  rm("Manifest.toml")
+              end
+          end
           Pkg.instantiate()
+          Pkg.status()
       - name: Run the tests
         working-directory: EdgeBasedModels.jl
         shell: julia --color=yes --project=. {0}
