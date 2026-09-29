@@ -1,3 +1,14 @@
+# Legacy disease-progression types (EdgeBasedModels 0.1). In 0.2 the model object is
+# NetworkEpiCore's `ContactModel`; these types are kept, with converters both ways
+# (`contact_model(prog)` and `DiseaseProgression(cm)`, src/compat.jl), and every builder accepts
+# them through `contact_model`.
+
+"""
+    DiseaseStage(name; transmission_rate = 0)
+
+A non-susceptible stage of a legacy [`DiseaseProgression`](@ref): a node in this stage transmits
+to each susceptible neighbour at the per-contact rate `transmission_rate` (0: not infectious).
+"""
 struct DiseaseStage
     name::Symbol
     transmission_rate
@@ -5,12 +16,38 @@ end
 
 DiseaseStage(name::Symbol; transmission_rate = 0) = DiseaseStage(name, transmission_rate)
 
+"""
+    DiseaseTransition(source, target, rate)
+
+A node transition `source → target` at per-capita `rate` in a legacy
+[`DiseaseProgression`](@ref); `target` may be the susceptible state (SIS-type models).
+"""
 struct DiseaseTransition
     source::Symbol
     target::Symbol
     rate
 end
 
+"""
+    DiseaseProgression(stages, transitions = DiseaseTransition[]; susceptible = :S, entry = nothing)
+    DiseaseProgression(cm::ContactModel)
+
+The legacy (EdgeBasedModels 0.1) disease model: one susceptible state, the stages a node passes
+through after infection, and the transitions between them. Every transmission puts the newly
+infected node in the single `entry` stage (inferred when there is exactly one stage without
+incoming transitions).
+
+`DiseaseProgression(cm)` converts a NetworkEpiCore `ContactModel` (see src/compat.jl); it throws
+for what this type cannot express: branching at infection (several entry states), several
+susceptible classes, removals `X → ∅`, exits out of the susceptible class, layered contacts and
+contacts whose recipient is not susceptible. The inverse is `contact_model(prog)`.
+
+This type has no field for parameter defaults; it keeps them the way 0.1 did (Catalyst's
+`@parameters τ = 0.3`), as default values carried by symbolic rate parameters. So a rate of `cm`
+that uses a parameter with a `parameter_defaults(cm)` entry becomes the symbolic expression of
+that rate, whose parameters carry their defaults (and `build_edge_system` solves without `p`),
+while the other rates keep their Symbols and Exprs.
+"""
 struct DiseaseProgression
     susceptible::Symbol
     entry::Symbol
@@ -48,7 +85,14 @@ function DiseaseProgression(
     return DiseaseProgression(susceptible, inferred_entry, stages, transitions)
 end
 
-function sir_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
+# --- Legacy canned progressions ---------------------------------------------------------------
+#
+# In 0.2 the exported `sir_model`, `seir_model`, `sis_model` and `sirs_model` are NetworkEpiCore's
+# (they return a `ContactModel`, with per-contact rate τ). These are the EdgeBasedModels 0.1
+# factories that returned a `DiseaseProgression` (with β the per-contact rate); they are reachable
+# through the deprecated `edge_sir_model` & co. and through `DiseaseProgression(sir_model())`.
+
+function _legacy_sir_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
     return DiseaseProgression(
         [
             DiseaseStage(:I; transmission_rate = β),
@@ -60,7 +104,7 @@ function sir_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
     )
 end
 
-function seir_model(; σ = :σ, β = :β, γ = :γ, susceptible::Symbol = :S)
+function _legacy_seir_model(; σ = :σ, β = :β, γ = :γ, susceptible::Symbol = :S)
     return DiseaseProgression(
         [
             DiseaseStage(:E; transmission_rate = 0),
@@ -76,7 +120,7 @@ function seir_model(; σ = :σ, β = :β, γ = :γ, susceptible::Symbol = :S)
     )
 end
 
-function sis_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
+function _legacy_sis_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
     return DiseaseProgression(
         [DiseaseStage(:I; transmission_rate = β)],
         [DiseaseTransition(:I, susceptible, γ)];
@@ -85,17 +129,7 @@ function sis_model(; β = :β, γ = :γ, susceptible::Symbol = :S)
     )
 end
 
-"""
-    sirs_model(; β=:β, γ=:γ, ε=:ε, susceptible=:S)
-
-SIRS disease progression: S → I → R → S, where ε is the rate of waning immunity.
-
-Note: this factory produces the canonical SIRS [`DiseaseProgression`] for API
-parity with `NodeBasedModels.sirs_model`. The Miller EBCM formulation does not
-yet support re-susceptibilisation, so `build_edge_system` will currently raise an
-error on a SIRS model. Use `NodeBasedModels.jl` for SIRS dynamics on networks.
-"""
-function sirs_model(; β = :β, γ = :γ, ε = :ε, susceptible::Symbol = :S)
+function _legacy_sirs_model(; β = :β, γ = :γ, ε = :ε, susceptible::Symbol = :S)
     return DiseaseProgression(
         [
             DiseaseStage(:I; transmission_rate = β),
@@ -110,86 +144,13 @@ function sirs_model(; β = :β, γ = :γ, ε = :ε, susceptible::Symbol = :S)
     )
 end
 
-function progression_from_catalyst(
-    reaction_system::Catalyst.ReactionSystem;
-    susceptible::Symbol = :S,
-    transmission_rates = Dict{Symbol, Any}(),
-    entry::Union{Nothing, Symbol} = nothing,
-)
-    stages = DiseaseStage[]
-    stage_names = Symbol[]
-
-    for specie in Catalyst.species(reaction_system)
-        symbol = species_symbol(specie)
-        symbol == susceptible && continue  # susceptible is implicit, not a stage
-        push!(stage_names, symbol)
-        push!(stages, DiseaseStage(symbol; transmission_rate = get(transmission_rates, symbol, 0)))
-    end
-
-    transitions = DiseaseTransition[]
-    # Map stage name → transmission rate inferred from a bimolecular S+X reaction
-    inferred_transmission = Dict{Symbol, Any}()
-    inferred_entry = entry
-
-    for reaction in Catalyst.reactions(reaction_system)
-        substrates_in_reaction = reaction.substrates
-        products_in_reaction = reaction.products
-        normalized_rate = Symbolics.simplify(reaction.rate)
-
-        if length(substrates_in_reaction) == 1
-            # Unimolecular progression: X --rate--> Y
-            length(products_in_reaction) == 1 || throw(ArgumentError(
-                "only single-product unimolecular progression reactions are supported"))
-            substrate_symbol = species_symbol(only(substrates_in_reaction))
-            product_symbol   = species_symbol(only(products_in_reaction))
-            push!(transitions,
-                  DiseaseTransition(substrate_symbol, product_symbol, normalized_rate))
-
-        elseif length(substrates_in_reaction) == 2
-            # Bimolecular transmission: S + X --β--> ... (X is the infector)
-            sub_syms = species_symbol.(substrates_in_reaction)
-            susceptible in sub_syms || throw(ArgumentError(
-                "bimolecular reaction must include the susceptible species `$(susceptible)` " *
-                "as one substrate; got $(sub_syms)"))
-            infector = sub_syms[findfirst(!=(susceptible), sub_syms)]
-            # Use net stoichiometry to determine the new entry stage: the species
-            # that gains +1 and is not the infector, OR the infector itself if
-            # it gains net +1 (e.g., S + I → 2I).
-            net = Dict(species_symbol(sp) => Int(s) for (sp, s) in reaction.netstoich)
-            entry_from_rxn = nothing
-            for (sp, Δ) in net
-                if Δ >= 1 && sp != susceptible
-                    entry_from_rxn = sp
-                    break
-                end
-            end
-            isnothing(entry_from_rxn) && throw(ArgumentError(
-                "could not determine new entry stage from netstoich $(net)"))
-            inferred_transmission[infector] = haskey(inferred_transmission, infector) ?
-                Symbolics.simplify(inferred_transmission[infector] + normalized_rate) :
-                normalized_rate
-            inferred_entry = something(inferred_entry, entry_from_rxn)
-
-        else
-            throw(ArgumentError("reactions with $(length(substrates_in_reaction)) substrates " *
-                                "are not supported (only unimolecular progression or " *
-                                "bimolecular S+X transmission)"))
-        end
-    end
-
-    # Apply inferred transmission rates back into the stages (overrides 0 defaults but
-    # respects user-supplied transmission_rates which were already baked in above).
-    if !isempty(inferred_transmission)
-        stages = [
-            haskey(inferred_transmission, s.name) && _is_zero_rate(s.transmission_rate) ?
-                DiseaseStage(s.name; transmission_rate = inferred_transmission[s.name]) : s
-            for s in stages
-        ]
-    end
-
-    return DiseaseProgression(stages, transitions;
-                              susceptible = susceptible, entry = inferred_entry)
-end
+# n·rate for the Erlang sub-stages. Numbers and symbolic expressions multiply as before; a Symbol
+# or Expr rate (a named parameter, as in `ErlangStage(:I, 3, :γ)`) becomes the Expr `n * γ`
+# through NetworkEpiCore's `rate_mul`, which the builders turn into parameters (`as_parameter`)
+# and NetworkOutbreaks evaluates by name, instead of failing with `*(::Int, ::Symbol)`
+# (verified issue E10).
+_scale_rate(n::Integer, r::Union{Symbol,Expr}) = rate_mul(n, r)
+_scale_rate(n::Integer, r) = n * r
 
 function infer_entry(stage_names::Vector{Symbol}, transitions::Vector{DiseaseTransition})
     sources = Set(transition.source for transition in transitions)
@@ -209,8 +170,6 @@ function infer_entry(stage_names::Vector{Symbol}, transitions::Vector{DiseaseTra
 
     throw(ArgumentError("could not infer a unique entry stage; pass entry = :YourStage"))
 end
-
-species_symbol(specie) = Symbol(replace(string(specie), "(t)" => ""))
 
 """
     ErlangStage(name, n_substages, total_rate; transmission_rate=0)
@@ -272,7 +231,7 @@ function expand_erlang_stages(
     for stage in stages
         if stage isa ErlangStage
             n = stage.n_substages
-            sub_rate = n * stage.total_rate  # each sub-stage rate
+            sub_rate = _scale_rate(n, stage.total_rate)  # each sub-stage rate
 
             sub_names = Symbol[]
             for i in 1:n

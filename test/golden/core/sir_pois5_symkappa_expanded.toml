@@ -1,0 +1,48 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "core"
+columns = ["I", "R", "S", "cumulative", "edge_hazard", "excess_hazard", "infectious", "pop_I", "pop_R", "θ", "φ_I", "φ_R", "φ_S"]
+description = "build_sir(poisson_pgf(κ), τ = 1/6, γ = 1/4; form = :expanded) with a symbolic mean degree κ = 5 supplied at solve time; must equal sir_pois5_expanded"
+generated_by = "test/golden/generate.jl"
+issues = ["E26"]
+kind = "trajectory"
+name = "sir_pois5_symkappa_expanded"
+notes = "The expanded S observable is (1-ρ)ψ(θ), as verified issue E31 confirms is correct (the 0.1 HEAD had S = ψ(θ), so S(0) = 1). E26 fixed (WP29): regenerated when the legacy builders were deleted; the seed parameters are seed_<X> (one per node species), and the cumulative accumulator (design J.8), the :infectious observable and, in the compact form, pop_<X> and φ_S are new names. The numbers of every 0.1 column are unchanged, checked against <area>/v01/ by check_v01 in the area's legacy suite."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.2.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "ed035ce8e0a51a3e124e6bb0662e5597023d3630"
+julia = "1.12.7"
+
+[scalars]
+
+[setup]
+T = 60.0
+abstol = 1.0e-14
+builder = "build_sir"
+form = "expanded"
+gamma = 0.25
+kappa = 5.0
+network = "poisson_pgf(κ), κ = 5.0"
+reltol = 1.0e-12
+saveat = 1.0
+seed_fraction = 0.01
+solver = "OrdinaryDiffEq.Vern9"
+tau = 0.16666666666666666
+
+[structure]
+n_equations = 6
+observables = ["I", "S", "edge_hazard", "excess_hazard", "infectious", "φ_S"]
+observed = ["I", "S", "edge_hazard", "excess_hazard", "infectious", "φ_S"]
+parameters = ["seed_I", "seed_R", "κ"]
+unknowns = ["cumulative", "pop_I", "pop_R", "θ", "φ_I", "φ_R"]
+variables = ["R", "cumulative", "pop_I", "pop_R", "θ", "φ_I", "φ_R"]

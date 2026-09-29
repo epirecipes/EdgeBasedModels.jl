@@ -1,0 +1,53 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "analysis"
+columns = []
+description = "R₀, final_size, epidemic_probability, confidence_bands(N = 10⁴), epidemic_threshold and disease_free_equilibrium for SIR (τ = 1/6, γ = 1/4) on poisson_pgf(5.0)"
+generated_by = "test/golden/generate.jl"
+issues = ["E15", "E16", "E18", "E21", "E31"]
+kind = "scalars"
+name = "sir_pois5_analysis"
+notes = "Fixed by WP19: final_size solves θ = 1 - T + T(1-ρ)ψ'(θ)/ψ'(1) by Brent's method with an exact threshold test (E18), ρ → 0 by default and ρ = 0.01 in final_size_R_infinity_rho001 (E31(i), EoN Attack_rate_cts_time 0.8002040 on Poisson(5)); epidemic_probability is the infector-side mixed-binomial formula (E15: 0.6094 on Poisson(5), not R∞); confidence_bands is Ball (2021) Theorem 2.2, NSW (confidence_bands_*) and MR (confidence_bands_variance_MR) (E16). Still legacy, E21: disease_free_equilibrium keys are S, θ, the stage names and φ_<stage>: φ_S (= 1) is missing and the stage keys are not the builders' pop_<stage> keys (E for SEIR resolves to nothing), so [structure].dfe_keys pins the legacy key set; disease_free_equilibrium(sys) of a lowered system is keyed by the system's variables."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.2.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "2689d4910c3f1c600e43ff8681335d7e0516a4c3"
+julia = "1.12.7"
+
+[scalars]
+R0 = 2.0
+confidence_bands_lower = 0.782145527144304
+confidence_bands_mean = 0.7968121300200199
+confidence_bands_std_error = 0.00748309814852718
+confidence_bands_upper = 0.8114787328957359
+confidence_bands_variance = 0.5599675790049091
+confidence_bands_variance_MR = 0.4966863286687555
+dfe_I = 0.0
+dfe_R = 0.0
+dfe_S = 1.0
+"dfe_θ" = 1.0
+"dfe_φ_I" = 0.0
+"dfe_φ_R" = 0.0
+epidemic_probability = 0.6094083518825806
+epidemic_threshold = 0.0625
+final_size_R_infinity = 0.7968121300200202
+final_size_R_infinity_rho001 = 0.8002039676767992
+final_size_theta_infinity = 0.681275147991992
+
+[setup]
+N = 10000
+gamma = 0.25
+network = "poisson_pgf(5.0)"
+tau = 0.16666666666666666
+
+[structure]
+dfe_keys = ["I", "R", "S", "θ", "φ_I", "φ_R"]

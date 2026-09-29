@@ -1,0 +1,46 @@
+# Golden file written by test/golden/generate.jl. Do not edit by hand: a golden is
+# replaced only by the work package that owns its area (DESIGN_NetworkEpiCore.md, section G.1).
+area = "multiplex"
+columns = ["I", "R", "S", "cumulative", "edge_hazard_comm", "edge_hazard_home", "infectious", "pop_I", "pop_R", "θ_comm", "θ_home", "φ_I_comm", "φ_I_home", "φ_R_comm", "φ_R_home", "φ_S_comm", "φ_S_home"]
+description = "edge_based(scenario(:sir_mpx)): household 3-regular (τ = 3c) and community Poisson(5) (τ = c), c calibrated to R₀ = ρ(K) = 2, γ = 1/4, 1% seeded in I, t = 0:1:80"
+generated_by = "test/golden/generate.jl"
+issues = []
+kind = "trajectory"
+name = "multiplex_sir_mpx"
+notes = "Replaced by WP22 (E12/E13 fix): the per-reaction multiplex lift, seeded with θ_ℓ(0) = 1 and S(0) = 1 − ρ; validated in test/suites/multiplex.jl (Miller & Volz 2013 eq. (13), Jacobsen et al. 2018 eq. (13), NetworkOutbreaks on :sir_mpx)."
+schema = 1
+
+[check]
+atol = 1.0e-12
+rtol = 1.0e-8
+
+[provenance]
+EdgeBasedModels = "0.2.0"
+ModelingToolkit = "11.17.0"
+OrdinaryDiffEq = "6.109.0"
+Symbolics = "7.17.0"
+git_dirty = true
+git_head = "2689d4910c3f1c600e43ff8681335d7e0516a4c3"
+julia = "1.12.7"
+
+[scalars]
+
+[setup]
+T = 80.0
+abstol = 1.0e-14
+builder = "edge_based(scenario(:sir_mpx))"
+c = 0.05970959492
+form = "expanded"
+gamma = 0.25
+reltol = 1.0e-12
+saveat = 1.0
+seed_fraction = 0.01
+solver = "OrdinaryDiffEq.Vern9"
+
+[structure]
+n_equations = 9
+observables = ["I", "S", "edge_hazard_comm", "edge_hazard_home", "infectious", "φ_S_comm", "φ_S_home"]
+observed = ["I", "S", "edge_hazard_comm", "edge_hazard_home", "infectious", "φ_S_comm", "φ_S_home"]
+parameters = ["c", "seed_I", "seed_R", "γ"]
+unknowns = ["cumulative", "pop_I", "pop_R", "θ_comm", "θ_home", "φ_I_comm", "φ_I_home", "φ_R_comm", "φ_R_home"]
+variables = ["R", "cumulative", "pop_I", "pop_R", "θ_comm", "θ_home", "φ_I_comm", "φ_I_home", "φ_R_comm", "φ_R_home"]
