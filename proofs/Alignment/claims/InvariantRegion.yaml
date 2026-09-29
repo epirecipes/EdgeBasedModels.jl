@@ -1,0 +1,778 @@
+# SA-PASS claim registry fragment -- group InvariantRegion
+# Source module: EBCMCategory/InvariantRegion.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: InvariantRegion.header.invariance.theta
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 7-12
+  text: |-
+    The state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the correct field below; this is not proved here — the file records only pointwise sign conditions on the right-hand side):
+    [...]
+    * θ ∈ [0, 1] — edge survival probability
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.theta_dot_nonpos
+  - InvariantRegion.theta_lower_boundary_absorbing
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: No theorem has a solution/flow hypothesis or a trajectory conclusion; only pointwise sign conditions of the vector field are proved. Positive invariance (Nagumo) is not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file establishes that the state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0: [...] * θ ∈ [0, 1] — edge survival probability'
+- id: InvariantRegion.header.invariance.phi
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 7-13
+  text: |-
+    The state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the correct field below; this is not proved here — the file records only pointwise sign conditions on the right-hand side):
+    [...]
+    * φ_I, φ_R ≥ 0 — excess-degree fractions
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.phi_I_dot_zero_at_boundary
+  - InvariantRegion.phi_R_dot_nonneg
+  impl_note: No theorem has a solution/flow hypothesis or a trajectory conclusion; only pointwise sign conditions of the vector field are proved. Positive invariance (Nagumo) is not formalised.
+  required: false
+  status: missing
+  notes: 'φ_I, φ_R are edge (not excess-degree) probabilities in Miller 2011. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file establishes that the state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0: [...] * φ_I, φ_R ≥ 0 — excess-degree fractions'
+- id: InvariantRegion.header.invariance.S
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 7-14
+  text: |-
+    The state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the correct field below; this is not proved here — the file records only pointwise sign conditions on the right-hand side):
+    [...]
+    * S = ψ(θ) ∈ [0, 1] — susceptible fraction
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.S_in_unit_interval
+  - InvariantRegion.S_from_region
+  impl_note: S_in_unit_interval gives S ∈ [0,1] from θ ∈ [0,1] pointwise; the "for all t ≥ 0" part needs θ(t) ∈ [0,1] (unproved).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file establishes that the state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0: [...] * S = ψ(θ) ∈ [0, 1] — susceptible fraction'
+- id: InvariantRegion.header.invariance.R
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 7-15
+  text: |-
+    The state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the correct field below; this is not proved here — the file records only pointwise sign conditions on the right-hand side):
+    [...]
+    * R ≥ 0, non-decreasing
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.R_dot_nonneg
+  impl_note: No theorem has a solution/flow hypothesis or a trajectory conclusion; only pointwise sign conditions of the vector field are proved. Positive invariance (Nagumo) is not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file establishes that the state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0: [...] * R ≥ 0, non-decreasing'
+- id: InvariantRegion.header.invariance.I
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 7-16
+  text: |-
+    The state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0 (for the correct field below; this is not proved here — the file records only pointwise sign conditions on the right-hand side):
+    [...]
+    * I = 1 − S − R ≥ 0 — infected fraction
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.I_dot_nonneg_at_zero_boundary
+  - InvariantRegion.I_nonneg_iff_SR_le_one
+  impl_note: No theorem has a solution/flow hypothesis or a trajectory conclusion; only pointwise sign conditions of the vector field are proved. Positive invariance (Nagumo) is not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file establishes that the state variables of the single-type static SIR edge-based compartmental model (EBCM) remain in a physically meaningful region for all t ≥ 0: [...] * I = 1 − S − R ≥ 0 — infected fraction'
+- id: InvariantRegion.header.model
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 20-37
+  text: 'The expanded single-type SIR EBCM (Volz 2008, Miller 2011) has ODE variables θ, φ_I, φ_R, R with the vector field: dθ/dt = −β φ_I dφ_I/dt = β φ_I ψ″(θ) / ψ′(1) − (β + γ) φ_I dφ_R/dt = γ φ_I dR/dt = γ (1 − ψ(θ) − R) (The φ_I equation follows from φ_I = θ − φ_S − φ_R with φ_S = ψ′(θ)/ψ′(1); it is the form the Julia builders integrate. Several statements below were written for the incorrect form (β φ_I / θ)(ψ′(θ) / ψ′(1)) − (β + γ) φ_I; the corresponding statements for the correct form are `phi_I_dot_correct_*`.) Derived observables (algebraic, not ODE variables): S = ψ(θ) I = 1 − S − R ← by definition; so S + I + R = 1 identically φ_S = ψ′(θ)/ψ′(1)'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Model description only; there is no Lean definition of the vector field -- theorems use inline expressions over free rationals.
+  required: false
+  status: informal
+  notes: 'CORRECTNESS: the dφ_I/dt equation is wrong. From φ_I = θ - φ_S - φ_R with φ_S = ψ′(θ)/ψ′(1) (Miller 2011; also src/builders.jl, which uses ψ″(θ)/ψ′(1)), dφ_I/dt = β φ_I ψ″(θ)/ψ′(1) - (β+γ) φ_I, not (β φ_I/θ)(ψ′(θ)/ψ′(1)) - (β+γ) φ_I; they agree only when θψ″(θ) = ψ′(θ) (2-regular). Poisson (sympy): header coefficient e^{κ(θ-1)}/θ vs correct κe^{κ(θ-1)}. Theorems using this form (R117a, phiIDotFactors) only use proportionality to φ_I, so they remain true, but the stated ODE is wrong. Also, under the seed convention of R120b, S = (1-ρ)ψ(θ), not ψ(θ). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The expanded single-type SIR EBCM (Volz 2008, Miller 2011) has ODE variables θ, φ_I, φ_R, R with the vector field: dθ/dt = −β φ_I dφ_I/dt = (β φ_I / θ)(ψ′(θ) / ψ′(1)) − (β + γ) φ_I dφ_R/dt = γ φ_I dR/dt = γ (1 − ψ(θ) − R) Derived observables (algebraic, not ODE variables): S = ψ(θ) I = 1 − S − R ← by definition; so S + I + R = 1 identically φ_S = ψ′(θ)/ψ′(1)'
+- id: InvariantRegion.header.faceConditions
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 46-48
+  text: '**Sign/monotone conditions**: at each face of the region the component of the vector field normal to the face is ≥ 0 (it vanishes or points inward), given the constraints φ_I ≤ θ and S + R ≤ 1, which `EBCMRegion` omits.'
+  kind: inequality
+  impl:
+  - InvariantRegion.invariant_region_boundary_conditions
+  supporting: []
+  impl_note: impl gives NON-strict signs (-βφ_I ≤ 0, 0 ≤ γφ_I, 0 ≤ βφ_Iψ'_θ) and the literal (0:ℚ) = 0 for the φ_I face; no face is shown to point strictly inward and the θ = 0 face is not covered.
+  required: true
+  status: implemented
+  notes: '"points strictly inward" is false e.g. on the φ_R face when φ_I = 0 (drift 0). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Sign/monotone conditions**: the vector field at each face of the invariant region either vanishes or points strictly inward.'
+- id: InvariantRegion.header.nagumoConditional
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 49-57
+  text: |-
+    These are the hypotheses of Nagumo's theorem (not in Mathlib); this file does not invoke it.
+    [...]
+    No invariance theorem is stated here, conditionally or otherwise: the results are pointwise sign conditions on the right-hand side, and nothing is proved about solutions.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: No theorem takes "a smooth solution exists" as a hypothesis or concludes positive invariance; Nagumo is never invoked.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: These are the hypotheses needed for Nagumo''s theorem (not yet in Mathlib), which we invoke conditionally. [...] We therefore state the invariance theorems *conditionally*: given that a smooth solution exists, the stated sign conditions at the boundary guarantee the invariant region is positively invariant.'
+- id: InvariantRegion.pgfEvalOne
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 109-109
+  text: 'ψ(1) = 1: the PGF evaluated at 1 gives total probability mass.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.pgf_eval_one
+  supporting: []
+  impl_note: 'impl: ψ.eval 1 = 1 for ψ : PolyPGF n (finite-support ℚ coefficients summing to 1).'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R113
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 114-114
+  text: '**Result 113.** ψ(x) ≥ 0 for all x ∈ [0, 1].'
+  kind: inequality
+  impl:
+  - InvariantRegion.pgf_nonneg_on_unit_interval
+  supporting: []
+  impl_note: 'impl needs only 0 ≤ x (no upper bound): 0 ≤ ψ.eval x over ℚ for polynomial PGFs PolyPGF n.'
+  required: true
+  status: implemented
+  notes: Header strategy item 3 (lines 45-46) and table row 113 restate this claim.
+- id: InvariantRegion.R114
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 123-123
+  text: '**Result 114.** ψ(x) ≤ 1 for all x ∈ [0, 1].'
+  kind: inequality
+  impl:
+  - InvariantRegion.pgf_le_one_on_unit_interval
+  supporting: []
+  impl_note: 'impl: 0 ≤ x → x ≤ 1 → ψ.eval x ≤ 1 over ℚ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R115
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 137-137
+  text: '**Result 115.** S = ψ(θ) ∈ [0, 1] whenever θ ∈ [0, 1].'
+  kind: inequality
+  impl:
+  - InvariantRegion.S_in_unit_interval
+  supporting: []
+  impl_note: 'impl: 0 ≤ θ ≤ 1 → 0 ≤ ψ.eval θ ∧ ψ.eval θ ≤ 1; S is not a separate object (S := ψ.eval θ).'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R116a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 155-155
+  text: '**Result 116.** dθ/dt = −β φ_I ≤ 0 when φ_I ≥ 0.'
+  kind: inequality
+  impl:
+  - InvariantRegion.theta_dot_nonpos
+  supporting: []
+  impl_note: 'impl: for p : EBCMParams and 0 ≤ φ_I, -(p.β·φ_I) ≤ 0 over ℚ; dθ/dt is represented by the literal expression.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R116b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 156-156
+  text: This means θ is monotone *decreasing* along every trajectory of the EBCM.
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.theta_dot_nonpos
+  impl_note: No trajectory statement.
+  required: false
+  status: missing
+  notes: Needs φ_I(t) ≥ 0 along the trajectory (part of the unproved invariance) plus a monotonicity-from-derivative argument; "decreasing" should read non-increasing.
+- id: InvariantRegion.R116c
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 157-157
+  text: In particular, θ ≤ θ(0) = 1 for all t ≥ 0.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: ''
+- id: InvariantRegion.R117a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 162-167
+  text: '**Result 117.** When φ_I = 0, the full φ_I component of the EBCM vector field vanishes: dφ_I/dt = β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I = 0. The Lean statement uses the incorrect form (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I; the correct form is `phi_I_dot_correct_zero_at_boundary`.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.phi_I_dot_zero_at_boundary
+  supporting: []
+  impl_note: 'impl: β·0/θ·(ψ''_θ/ψ''_1) - (β+γ)·0 = 0 for free rationals θ, ψ''_θ, ψ''_1 (φ_I substituted by the literal 0).'
+  required: true
+  status: implemented
+  notes: 'The vector-field expression inherits the error flagged in header.model (ψ′(θ)/θ instead of ψ″(θ)); the conclusion also holds for the correct field. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 117.** When φ_I = 0, the full φ_I component of the EBCM vector field vanishes: dφ_I/dt = (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I = 0. -- Candidate impl for the corrected field: phi_I_dot_correct_zero_at_boundary (phi_I_dot_zero_at_boundary uses the incorrect 1/θ form).'
+- id: InvariantRegion.R117b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 168-169
+  text: Both terms are proportional to φ_I, so {φ_I = 0} is a positively invariant face — an absorbing wall.
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.phi_I_dot_factors
+  - InvariantRegion.phi_I_dot_zero_at_boundary
+  impl_note: '"positively invariant face" (a trajectory statement) is not formalised; only the vanishing of the vector field on the face is.'
+  required: false
+  status: missing
+  notes: ''
+- id: InvariantRegion.phiIDotFactors.a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 174-178
+  text: |-
+    More general: when φ_I ≥ 0, the φ_I-derivative factors as φ_I × (something),
+    [...]
+    Concretely, for θ > 0 the derivative has the form φ_I * f(θ) for some f;
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.phi_I_dot_factors
+  supporting: []
+  impl_note: 'impl: for 0 < θ, 0 < ψ''_1: βφ_I/θ·(ψ''_θ/ψ''_1) - (β+γ)φ_I = φ_I·(βψ''_θ/(θψ''_1) - (β+γ)); φ_I ≥ 0 is not needed; f depends on the free rational ψ''_θ, not on θ through ψ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.phiIDotFactors.b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 175-181
+  text: |-
+    so along a solution φ_I keeps its sign and {φ_I = 0} is invariant; the sign of dφ_I/dt also depends on the second factor.
+    [...]
+    here we record the factorization for the form (β φ_I / θ)(ψ′(θ)/ψ′(1)) − (β + γ) φ_I used in this file (the correct field is `phi_I_dot_correct_factors`).
+  kind: inequality
+  impl: []
+  supporting: []
+  impl_note: No sign theorem.
+  required: false
+  status: missing
+  notes: 'FALSE as stated: sign(dφ_I/dt) = sign(φ_I)·sign(f(θ)), and f(θ) (correctly βψ″(θ)/ψ′(1) - (β+γ)) is negative e.g. at θ = 1 whenever R₀ < 1, so φ_I > 0 can decay. The factorisation only shows that {φ_I = 0} is invariant. WP4b (TRIAGE P1.4/P2): text corrected; previous text: so its sign is the sign of φ_I. [...] here we record the factorization that φ_I is the sole sign-determining factor.'
+- id: InvariantRegion.R118a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 200-200
+  text: '**Result 118.** dφ_R/dt = γ φ_I ≥ 0 when φ_I ≥ 0.'
+  kind: inequality
+  impl:
+  - InvariantRegion.phi_R_dot_nonneg
+  supporting: []
+  impl_note: 'impl: 0 ≤ φ_I → 0 ≤ p.γ·φ_I over ℚ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R118b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 201-201
+  text: φ_R is therefore monotone non-decreasing along every trajectory.
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.phi_R_dot_nonneg
+  impl_note: ''
+  required: false
+  status: missing
+  notes: ''
+- id: InvariantRegion.R119a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 206-206
+  text: '**Result 119.** dR/dt = γ I ≥ 0 when I ≥ 0.'
+  kind: inequality
+  impl:
+  - InvariantRegion.R_dot_nonneg
+  supporting: []
+  impl_note: 'impl: 0 ≤ I → 0 ≤ p.γ·I over ℚ; I is a free rational (not 1 - ψ(θ) - R).'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R119b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 201-201
+  text: R is therefore monotone non-decreasing along every trajectory.
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.R_dot_nonneg
+  impl_note: ''
+  required: false
+  status: missing
+  notes: Circular without the unproved invariance I(t) ≥ 0.
+- id: InvariantRegion.R120
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 214-216
+  text: '**Result 120.** S + I + R = 1 holds as an *algebraic identity* because the EBCM defines I := 1 − S − R. No ODE solution theory is required.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.SIR_conservation
+  supporting: []
+  impl_note: 'impl: ∀ S R : ℚ, let I := 1 - S - R; S + I + R = 1 (ring). Matches the stated algebraic identity exactly.'
+  required: true
+  status: implemented
+  notes: Header strategy item 1 (lines 37-38) restates this claim.
+- id: InvariantRegion.R120b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 222-225
+  text: '**Result 120b.** Under the explicit seed convention used by the Julia builders, θ(0)=1 and the susceptible observable is `(1-ρ)ψ(θ)`. Since every PGF satisfies ψ(1)=1, the initial observable values are S(0)=1−ρ, I(0)=ρ, R(0)=0 and therefore conserve total population.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.explicit_seed_initial_conservation
+  supporting:
+  - InvariantRegion.pgf_eval_one
+  impl_note: impl proves the ring identity (1-ρ) + ρ + 0 = 1 over ℚ; θ(0) = 1, the observable (1-ρ)ψ(θ), the PGF and ψ(1) = 1 (pgf_eval_one) are not mentioned.
+  required: true
+  status: implemented
+  notes: The Julia seed convention (uncommitted EBM change S_pop ~ q*psi(theta), q = 1-ρ) is not referenced formally.
+- id: InvariantRegion.R120b.guard
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 227-230
+  text: This identity records the arithmetic behind a regression in which the expanded-form EBCM used `S = ψ(θ)` while still seeding `I(0)=ρ`, which overcounted population by exactly ρ at t=0. It is not linked to the Julia builders and cannot detect that regression.
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.missing_seed_factor_overcounts
+  supporting: []
+  impl_note: 'impl: ρ ≠ 0 → 1 + ρ + 0 ≠ 1; it shows the total is not 1 but not that the overcount is "exactly ρ" (that is 1+ρ-1 = ρ, unstated).'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This proof guards against the regression where expanded-form EBCM used `S = ψ(θ)` while still seeding `I(0)=ρ`, which overcounted population by exactly ρ at t=0.'
+- id: InvariantRegion.missingSeedFactorOvercounts
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 235-236
+  text: If the seed factor is omitted from `S(0)` while `I(0)=ρ`, the total is `1+ρ`; for any nonzero seed this is not a conserved population.
+  kind: inequality
+  impl:
+  - InvariantRegion.missing_seed_factor_overcounts
+  supporting: []
+  impl_note: 'impl: ρ ≠ 0 → 1 + ρ + 0 ≠ 1 over ℚ; S(0) = ψ(1) = 1 is substituted by the literal 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R121
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 243-243
+  text: '**Result 121.** I ≥ 0 is equivalent to S + R ≤ 1.'
+  kind: equivalence
+  impl:
+  - InvariantRegion.I_nonneg_iff_SR_le_one
+  supporting: []
+  impl_note: 'impl: 0 ≤ 1 - S - R ↔ S + R ≤ 1 over ℚ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R122a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 251-256
+  text: '**Result 122.** At the boundary face {I = 0}, the population-level drift is dI/dt = β φ_I ψ′(θ) ≥ 0 whenever φ_I ≥ 0 and ψ′(θ) ≥ 0.'
+  kind: inequality
+  impl:
+  - InvariantRegion.I_dot_nonneg_at_zero_boundary
+  supporting:
+  - InvariantRegion.I_dot_at_zero
+  impl_note: 'impl: 0 ≤ φ_I → 0 ≤ ψ''_θ → 0 ≤ p.β·φ_I·ψ''_θ (free rationals); the identification of this product with dI/dt at I = 0 is not formalised (I_dot_at_zero only shows βφψ'' - γ·0 = βφψ'').'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R122b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 258-259
+  text: 'This is the Nagumo tangency (inward-pointing) condition for the face {I = 0}: the vector field does not point out of {I ≥ 0} at this face.'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: Interpretation; Nagumo's tangency condition is not formalised (no Nagumo theorem in Mathlib).
+- id: InvariantRegion.R122c
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 260-262
+  text: Combined with the analogous conditions on all other faces, Nagumo's theorem (Nagumo 1942) implies that the invariant region {I ≥ 0, ...} is positively invariant.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: ''
+- id: InvariantRegion.R122d
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 264-270
+  text: '**Derivation of dI/dt:** I = 1 − S − R dI/dt = −dS/dt − dR/dt = −ψ′(θ)(dθ/dt) − γ I = ψ′(θ) β φ_I − γ I (substituting dθ/dt = −β φ_I) At I = 0: = β φ_I ψ′(θ) ≥ 0.'
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.I_dot_general
+  - InvariantRegion.I_dot_at_zero
+  impl_note: No derivative of S = ψ(θ(t)) is taken anywhere; I_dot_general is a reflexivity.
+  required: false
+  status: missing
+  notes: Under the seed convention (R120b) S = (1-ρ)ψ(θ) and dS/dt = (1-ρ)ψ′(θ)θ̇; the derivation drops the factor (1-ρ).
+- id: InvariantRegion.iDotGeneral.a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 276-276
+  text: 'Alternative formulation: dI/dt = β φ_I ψ′(θ) − γ I.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.I_dot_general
+  supporting: []
+  impl_note: impl is the reflexivity X = X (rfl) with X = β·φ_I·ψ'_θ - γ·I; it asserts nothing about dI/dt.
+  required: true
+  status: implemented
+  notes: TAUTOLOGICAL implementation.
+- id: InvariantRegion.iDotGeneral.b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 277-277
+  text: When I = 0 the γ I term vanishes, leaving the nonneg inward term.
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.I_dot_at_zero
+  - InvariantRegion.I_dot_nonneg_at_zero_boundary
+  supporting: []
+  impl_note: Docstring is attached to I_dot_general (a reflexivity); the content is I_dot_at_zero (βφψ' - γ·0 = βφψ') plus I_dot_nonneg_at_zero_boundary.
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.iDotAtZero
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 284-284
+  text: When I = 0, the I-derivative reduces to the nonneg inward term.
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.I_dot_at_zero
+  supporting: []
+  impl_note: 'impl: β·φ_I·ψ''_θ - γ·0 = β·φ_I·ψ''_θ (ring); "nonneg" is not part of the statement.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.sFromRegion
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 305-305
+  text: For a point in the invariant region, S = ψ(θ) is automatically in [0, 1].
+  kind: inequality
+  impl:
+  - InvariantRegion.S_from_region
+  supporting: []
+  impl_note: 'impl: for s : EBCMRegion, 0 ≤ ψ.eval s.θ ∧ ψ.eval s.θ ≤ 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.iNonnegFromRegion
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 310-310
+  text: Given S from region and R ≥ 0 with S + R ≤ 1, the infected fraction I ≥ 0.
+  kind: inequality
+  impl:
+  - InvariantRegion.I_nonneg_from_region
+  supporting: []
+  impl_note: 'impl: ψ.eval s.θ + s.R ≤ 1 → 0 ≤ 1 - ψ.eval s.θ - s.R (linarith); R ≥ 0 and "S from region" are unused.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R123a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 315-319
+  text: '**Result 123 (Invariant Region Boundary Conditions).** Four sign conditions at the boundary faces of the EBCM region hold at every point of `EBCMRegion`. They are the conditions Nagumo''s theorem would need, except that the θ = 0 face also needs φ_I ≤ θ, which `EBCMRegion` omits:'
+  kind: inequality
+  impl:
+  - InvariantRegion.invariant_region_boundary_conditions
+  supporting: []
+  impl_note: 'impl: for p, ψ (unused), s : EBCMRegion, 0 ≤ ψ''_θ: -(β·s.φ_I) ≤ 0 ∧ (0:ℚ) = 0 ∧ 0 ≤ γ·s.φ_I ∧ 0 ≤ β·s.φ_I·ψ''_θ. Each condition is evaluated at an arbitrary region point (not on its face); the φ_I-face conjunct is the literal 0 = 0; ψ''_θ is not tied to ψ or s.θ; the θ = 0 face is absent.'
+  required: true
+  status: implemented
+  notes: 'EBCMRegion (the "invariant region") omits I ≥ 0 (S + R ≤ 1) and φ_I ≤ θ, so it is not the region described in the header. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 123 (Invariant Region Boundary Conditions).** All vector field conditions needed for Nagumo''s theorem hold at the boundary faces of the EBCM invariant region:'
+- id: InvariantRegion.R123b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 321-323
+  text: '1. **θ face** (θ = 0 and θ = 1): θ is non-increasing since dθ/dt ≤ 0. This handles the upper face θ ≤ 1 automatically (θ starts at 1 and can only decrease).'
+  kind: inequality
+  impl:
+  - InvariantRegion.theta_dot_nonpos
+  supporting:
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: Only the sign -(β·φ_I) ≤ 0 is formalised; "θ starts at 1 and can only decrease" is a trajectory statement not formalised.
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R123c
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 323-326
+  text: The lower face θ = 0 requires the additional physical constraint φ_I ≤ θ (edge conservation), which holds in the full model; it is not a hypothesis of this theorem (see `theta_lower_boundary_absorbing` and `phi_I_le_theta`).
+  kind: structural
+  impl: []
+  supporting:
+  - InvariantRegion.theta_lower_boundary_absorbing
+  impl_note: invariant_region_boundary_conditions has NO φ_I ≤ θ hypothesis (contrary to "stated here as a hypothesis"); the θ = 0 face is handled only by the separate theta_lower_boundary_absorbing, and "holds in the full bilinear model" is unproved.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The lower face θ = 0 requires the additional physical constraint φ_I ≤ θ (edge conservation), which holds in the full bilinear model but is stated here as a hypothesis.'
+- id: InvariantRegion.R123d
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 328-328
+  text: '2. **φ_I face** (φ_I = 0): dφ_I/dt = 0 there — the face is absorbing.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.phi_I_dot_zero_at_boundary
+  supporting:
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: In the umbrella theorem this conjunct is the literal (0:ℚ) = 0; the actual vanishing is phi_I_dot_zero_at_boundary. "absorbing" (trajectory) is not formalised.
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R123e
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 332-332
+  text: '3. **φ_R face** (φ_R = 0): dφ_R/dt = γ φ_I ≥ 0 — inward pointing.'
+  kind: inequality
+  impl:
+  - InvariantRegion.phi_R_dot_nonneg
+  supporting:
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: 'impl: 0 ≤ φ_I → 0 ≤ γ·φ_I; φ_R itself does not occur.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R123f
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 334-335
+  text: '4. **I face** (I = 0, equivalently S + R = 1): dI/dt = β φ_I ψ′(θ) ≥ 0 — the Nagumo tangency condition holds.'
+  kind: inequality
+  impl:
+  - InvariantRegion.I_dot_nonneg_at_zero_boundary
+  supporting:
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: ψ'_θ ≥ 0 is a free hypothesis; dI/dt at I = 0 is represented by β·φ_I·ψ'_θ with no link to I, S or R.
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.R123g
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 337-339
+  text: Together with φ_I ≤ θ at the θ = 0 face, these conditions are the hypotheses of Nagumo's positive-invariance theorem, which is not formalised here; no forward-invariance statement is proved.
+  kind: dynamical
+  impl: []
+  supporting:
+  - InvariantRegion.invariant_region_boundary_conditions
+  impl_note: Nagumo's theorem and forward invariance are not formalised.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Together these four conditions satisfy the hypotheses of Nagumo''s positive-invariance theorem, which then guarantees that the invariant region is forward-invariant under the EBCM flow.'
+- id: InvariantRegion.header.thetaFace.a
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 358-360
+  text: 'The θ ≥ 0 face requires the *edge conservation* constraint φ_I ≤ θ: when θ = 0, we have φ_I ≤ θ = 0, so φ_I = 0, and therefore dθ/dt = 0 (the wall is absorbing).'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.theta_lower_boundary_absorbing
+  supporting: []
+  impl_note: 'impl: φ_I ≤ 0 → 0 ≤ φ_I → -(β·φ_I) = 0 -- the substitution θ = 0 is done by hand (no θ variable); "absorbing" is reduced to the θ-component vanishing.'
+  required: true
+  status: implemented
+  notes: ''
+- id: InvariantRegion.header.thetaFace.b
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 362-363
+  text: This constraint follows from θ = φ_S + φ_I + φ_R with φ_S, φ_R ≥ 0 (`phi_I_le_theta`).
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'φ_I ≤ θ follows from the conservation identity θ = φ_S + φ_I + φ_R with φ_S, φ_R ≥ 0 (Miller 2011), not from "bilinear coupling". WP4b (TRIAGE P1.4/P2): text corrected; previous text: This constraint follows from the bilinear coupling structure of the EBCM (the φ_I equation is singular at θ = 0 in the expanded formulation), but requires separate treatment. -- Candidate impl: phi_I_le_theta (new).'
+- id: InvariantRegion.header.thetaFace.c
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 364-366
+  text: The factor 1/θ in the φ_I equation used in this file is an artefact of an incorrect form; the correct equation dφ_I/dt = β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I has no singularity at θ = 0.
+  kind: limit
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'Boundedness of φ_I/θ does not by itself give a continuous extension of the φ_I-equation to θ = 0; unproved. WP4b (TRIAGE P1.4/P2): text corrected; previous text: In the limit θ → 0⁺ the excess-hazard term β φ_I/θ is bounded by β (since φ_I/θ ≤ 1 from the conservation identity), so the vector field extends continuously to θ = 0 with dθ/dt = 0 there.'
+- id: InvariantRegion.thetaLowerBoundaryAbsorbing
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 373-374
+  text: 'Assuming the edge conservation identity φ_I ≤ θ (a physical constraint of the EBCM), the lower boundary θ = 0 is absorbing: dθ/dt = 0.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.theta_lower_boundary_absorbing
+  supporting: []
+  impl_note: The hypothesis is φ_I ≤ 0 (φ_I ≤ θ with θ := 0 substituted), not φ_I ≤ θ; conclusion -(β·φ_I) = 0.
+  required: true
+  status: implemented
+  notes: ''
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented theorems: none -- every theorem in this module carries a docstring.
+#
+# Header text not registered separately (restates registered docstrings):
+#   lines 37-38 (strategy 1 = R120), 45-46 (strategy 3 = R113), 56-69 (results table rows
+#   113-123; each row restates the corresponding docstring claim).
+#
+# Definitions/structures (vocabulary, see Alignment/DataTypes/InvariantRegion.md):
+#   PolyPGF, PolyPGF.eval, EBCMParams, EBCMRegion.  No definition of the EBCM vector field,
+#   of ψ', of solutions or of invariance exists in this module.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: InvariantRegion.phiIDotCorrectZeroAtBoundary
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 188-188
+  text: The correct φ_I field β φ_I ψ″(θ)/ψ′(1) − (β + γ) φ_I vanishes at φ_I = 0.
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.phi_I_dot_correct_zero_at_boundary
+  supporting: []
+  impl_note: β * 0 * (ψ''_θ / ψ'_1) - (β + γ) * 0 = 0 (free scalars).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: InvariantRegion.phiIDotCorrectFactors
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 193-194
+  text: 'The correct φ_I field factors as φ_I · (β ψ″(θ)/ψ′(1) − (β + γ)), with no condition on θ: unlike the form with 1/θ, it is regular at θ = 0.'
+  kind: algebraic-identity
+  impl:
+  - InvariantRegion.phi_I_dot_correct_factors
+  supporting: []
+  impl_note: β φ_I (ψ''_θ/ψ'_1) − (β+γ) φ_I = φ_I (β ψ''_θ/ψ'_1 − (β+γ)) (free scalars, ring identity).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: InvariantRegion.phiILeTheta
+  group: InvariantRegion
+  source:
+    file: EBCMCategory/InvariantRegion.lean
+    lines: 368-368
+  text: 'Edge conservation: θ = φ_S + φ_I + φ_R with φ_S, φ_R ≥ 0 gives φ_I ≤ θ.'
+  kind: inequality
+  impl:
+  - InvariantRegion.phi_I_le_theta
+  supporting: []
+  impl_note: θ = φ_S + φ_I + φ_R → 0 ≤ φ_S → 0 ≤ φ_R → φ_I ≤ θ.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

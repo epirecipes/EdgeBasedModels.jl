@@ -1,0 +1,552 @@
+# Claim registry for the self-test mocks (ids SELFTEST.*). SELFTEST.unlisted is deliberately absent;
+# textMismatch, groupMismatch, requiredMismatch and implMismatch deliberately disagree with Lean.
+- id: SELFTEST.vacuousIgnore
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the forward checker ignores the hypothesis'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousBeta
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: eta/beta dodge (fun _ => p) h'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousAndLeft
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: And.left ⟨p, h⟩ dodge'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousAuxLemma
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: auxiliary lemma dodge'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousEval
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: hypothesis passed to a library function that discards it'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousConst
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: Function.const / id wrappers around a hypothesis-free proof'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousMatch
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the hypothesis is destructured but its components are ignored'
+  kind: other
+  impl: [SIRParams.transmissibility_pos, SIRParams.transmissibility_lt_one]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousExistsElim
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: Exists.elim on the hypothesis with a continuation ignoring the witness'
+  kind: other
+  impl: [GF_ne_id]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.vacuousDataArg
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the hypothesis only feeds a proof argument of a data term'
+  kind: other
+  impl: [SIRParams.transmissibility_pos]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.automationSimp
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: simp in a checker'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.automationRing
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: ring in a checker'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.automationOmega
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: omega in a checker'
+  kind: other
+  impl: [edge_refines_node]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.helperAutomation
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: helper lemma proved by ring (inlined by the audit)'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.proofField
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: proof extracted from library data (a proof field)'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.decideCheck
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: decide in a checker'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.implInBackward
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: backward checker uses the implementation theorem itself'
+  kind: other
+  impl: [SIRParams.transmissibility_pos]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.unreviewedBridge
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: checker uses a bridge without a review record'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.staleBridge
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: bridge whose review hash is stale'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.launderingBridge
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: reviewed bridge whose proof depends on an implementation theorem'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.rejectedBridge
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: bridge rejected by the reviewer'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.forgedReview
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: review record written outside ReviewedBridges'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.outOfScopeBridge
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: checker uses a reviewed bridge registered for another claim'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.invalidBridges
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: bridges violating the shape rules'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.mismatch
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: forward checker with the wrong hypothesis'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.sorryCheck
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: sorry in a checker'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.missingCheck
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: forward check 2 missing'
+  kind: other
+  impl: [SIRParams.transmissibility_pos]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.incompleteShadows
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: shadow set without completeness certificate'
+  kind: other
+  impl: [SIRParams.transmissibility_pos]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.recordedFail
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: genuine failure recorded with sa_fail_forward'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.implUntrusted
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: implementation outside the trusted library'
+  kind: other
+  impl: [Nat.le_refl]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.implUnsound
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: implementation depends on sorry'
+  kind: other
+  impl: [Alignment.Example.SelfTest.ImplUnsound.unsoundImpl]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.gap
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: no implementation theorem'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: self-test mock
+  required: false
+  status: missing
+  notes: ''
+- id: SELFTEST.duplicate
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: registered twice'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.bad id!
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: invalid claim id'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.textMismatch
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: this text is NOT the Lean text'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.groupMismatch
+  group: Other
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: group differs from the registry'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.requiredMismatch
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: required flag differs from the registry'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: false
+  status: informal
+  notes: ''
+- id: SELFTEST.implMismatch
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: impl list differs from the registry'
+  kind: other
+  impl: [PGFData.poisson_excess_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.shadowReuse
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: one declaration used as two shadows'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.trustedFreeShadow
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the classification into three families is exhaustive (shadow: trichotomy)'
+  kind: other
+  impl: [pt_classification_exhaustive]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.trustedFreeReviewed
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: arithmetic text; the trusted-free shadow has a valid review record'
+  kind: other
+  impl: [monoidal_left_unit]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.trustedFreeStale
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: trusted-free shadow whose review record has a stale hash'
+  kind: other
+  impl: [monoidal_right_unit]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.refutedHypothesis
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: implementation and shadow share the unsatisfiable hypothesis IsFlow F3Kℝ φ₃'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.witnessMissing
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: satisfiable shared hypotheses'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.witnessInvalid
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: satisfiable shared hypotheses'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.backwardVacuous
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the backward checker ignores its shadow (the implementation holds by rfl)'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.backwardVacuousEval
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the backward checker passes its shadow to a function that discards it'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.unusedBinderShadow
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the shadow mentions SIRParams only as the type of an unused binder'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.tautologyShadow
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the shadow is a reflexivity statement about a trusted term'
+  kind: other
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.impossibilityImpl
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: an impossibility theorem is not refuted by its own content'
+  kind: other
+  impl: [Alignment.Example.SelfTest.ImpossibilityImpl.noFlow]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''
+- id: SELFTEST.backwardBudget
+  group: SelfTest
+  source: {file: Alignment/Example/SelfTest.lean, lines: ''}
+  text: 'mock: the backward checker hands its shadow to a helper that discards it, and normalising the helper exceeds the budget'
+  kind: other
+  impl: [EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply]
+  supporting: []
+  impl_note: self-test mock
+  required: true
+  status: implemented
+  notes: ''

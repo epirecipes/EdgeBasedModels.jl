@@ -1,0 +1,674 @@
+# SA-PASS claim registry fragment -- group ConvergenceTheorems
+# Source module: EBCMCategory/ConvergenceTheorems.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: ConvergenceTheorems.header.scope
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 7-13
+  text: States scalar identities motivated by convergence results connecting the edge-based compartmental model (EBCM) to classical mass-action SIR, the exactness of pair approximations on trees, the final-size fixed-point equation and CLT scaling, together with PGF moment identities, R₀ amplification by degree heterogeneity and the epidemic threshold. No convergence result, limit theorem or ODE solution is formalised; the tree-exactness and CLT results are cited prose (Results 106 and 111).
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: 'Module scope statement. The module contains no limit/convergence theorem: the two convergence-type results (R106 tree exactness, R111 CLT) are axioms, and final_size_CLT has conclusion True.'
+  required: false
+  status: informal
+  notes: 'ALIGNMENT: "Formalizes key convergence results" overstates the content; everything proved is real-number algebra about abstract moment records. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Formalizes key convergence results connecting the edge-based compartmental model (EBCM) to classical mass-action SIR, the exactness of pair approximations on trees, PGF moment identities, R₀ amplification by degree heterogeneity, the final-size fixed-point equation, CLT scaling, and the epidemic threshold.'
+- id: ConvergenceTheorems.R105
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 44-48
+  text: 'For a Poisson(κ) degree distribution with per-edge transmission rate β̃ and recovery γ̃, the susceptible curve S(t) of the EBCM coincides with that of classical SIR with effective rates: β = κ β̃ and γ = γ̃ + β̃; the infected curves differ (Rempała 2023).'
+  kind: equivalence
+  impl: []
+  supporting:
+  - effective_beta_pos
+  - effective_gamma_pos
+  impl_note: No theorem relates the Poisson EBCM ODE to the mass-action SIR ODE. effective_beta / effective_gamma are bare definitions (κ·β̃ and γ̃+β̃); only their positivity is proved.
+  required: false
+  status: missing
+  notes: 'Source: Rempala 2023 (papers/2310.13866v1.md, Theorem 1): the epidemic (S) curves coincide iff β = µβ̃, ρ = ρ̃, γ = γ̃ + β̃, with S = x_S and I = x_D/µ; the mass-action I is NOT the infected fraction x_I. "reduces to classical SIR" is only true for the susceptible curve. The section also says "We verify the effective-rate identities algebraically" (line 48) but nothing beyond the definitions is verified. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For a Poisson(κ) degree distribution with per-edge transmission rate β̃ and recovery γ̃, the EBCM reduces to classical SIR with effective rates: β = κ β̃ and γ = γ̃ + β̃.'
+- id: ConvergenceTheorems.R105.keyIdentity
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 50-54
+  text: 'Key algebraic identity: the Poisson EBCM ODE θ̇ = -β̃ θ + β̃ exp(κ(θ-1)) + γ̃(1-θ) reduces to dS/dt = -β S I when S = exp(κ(θ-1)) and I := φ_I (the probability that a partner is infectious and has not yet transmitted), not the network prevalence.'
+  kind: dynamical
+  impl: []
+  supporting:
+  - S_theta_chain_rule_coeff
+  impl_note: No theorem mentions the θ ODE, exp, a time derivative or I; S_theta_chain_rule_coeff is the tautology κ·S = κ·S.
+  required: false
+  status: missing
+  notes: 'AMBIGUITY: I is undefined. Checked by hand/sympy: with S = exp(κ(θ-1)), dS/dt = κSθ̇ = -κβ̃·S·φ_I where φ_I = θ - S - (γ̃/β̃)(1-θ) (Miller edge variable = Rempala x_D/µ). So the identity holds with I := φ_I, not with I = infected node fraction. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Key algebraic identity: the Poisson EBCM ODE θ̇ = -β̃ θ + β̃ exp(κ(θ-1)) + γ̃(1-θ) reduces to dS/dt = -β S I when S = exp(κ(θ-1)).'
+- id: ConvergenceTheorems.R105a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 58-58
+  text: '**Result 105a.** Effective mass-action transmission rate: β = κ β̃.'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: Docstring of the DEFINITION effective_beta (body κ·β̃), not of a theorem. Its alignment is a definition-bridge question; the substantive content ("effective mass-action rate") is R105 (missing).
+  required: false
+  status: informal
+  notes: ''
+- id: ConvergenceTheorems.R105b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 62-62
+  text: '**Result 105b.** Effective mass-action recovery rate: γ = γ̃ + β̃.'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: Docstring of the DEFINITION effective_gamma (body γ̃ + β̃); see R105a.
+  required: false
+  status: informal
+  notes: ''
+- id: ConvergenceTheorems.effectiveBetaPos
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 66-66
+  text: Effective β is positive.
+  kind: inequality
+  impl:
+  - effective_beta_pos
+  supporting: []
+  impl_note: 'impl: ∀ d : PoissonEBCMData, 0 < effective_beta d; positivity of κ and β̃ are structure fields.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.effectiveGammaPos
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 71-71
+  text: Effective γ is positive.
+  kind: inequality
+  impl:
+  - effective_gamma_pos
+  supporting: []
+  impl_note: 'impl: ∀ d : PoissonEBCMData, 0 < effective_gamma d.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R105c.1
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 76-77
+  text: '**Result 105c.** Transmissibility consistency: with β = κβ̃ and γ = γ̃ + β̃, the mass-action R₀ is β/γ = κβ̃/(β̃ + γ̃).'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - poisson_R0_edge_formula
+  impl_note: No theorem mentions β/(β+γ), effective_beta or effective_gamma; T_MA is not defined.
+  required: false
+  status: missing
+  notes: 'Substituting β = κβ̃, γ = γ̃+β̃ into β/(β+γ) does give κβ̃/(κβ̃+γ̃+β̃) (true, unformalised). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 105c.** Transmissibility consistency: β/(β+γ) reduces correctly. With β = κβ̃ and γ = γ̃ + β̃, the mass-action transmissibility is T_MA = κβ̃/(κβ̃ + γ̃ + β̃).'
+- id: ConvergenceTheorems.R105c.2
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 78-79
+  text: With the edge-based transmissibility T_edge = β̃/(β̃ + γ̃), the mass-action R₀ is exactly T_edge · κ, the Poisson EBCM R₀ (`R0_massAction_eq_edge`).
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - poisson_R0_edge_formula
+  impl_note: Not formalised; poisson_R0_edge_formula only rewrites κ·(β̃/(β̃+γ̃)).
+  required: false
+  status: missing
+  notes: 'CORRECTNESS: R₀_MA = T_MA·(κ-1) is false for mass action. With β = κβ̃, γ = γ̃+β̃ one has R₀_MA = β/γ = κβ̃/(β̃+γ̃) = T_edge·κ EXACTLY (sympy: difference 0), i.e. Rempala R₀^MA = R₀^NET. T_MA·(κ-1) is a different, unrelated quantity. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For the edge-based transmissibility T_edge = β̃/(β̃ + γ̃), we verify the R₀ identity: R₀_MA = T_MA · (κ-1) and R₀_EBCM = T_edge · κ. -- Candidate impl: R0_massAction_eq_edge.'
+- id: ConvergenceTheorems.R105c.3
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 80-80
+  text: 'There is no large-κ approximation: the two R₀ agree for every κ.'
+  kind: limit
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'FALSE as stated: lim_{κ→∞} T_MA(κ-1)/(T_edge·κ) = (β̃+γ̃)/β̃ ≠ 1 (sympy). The correct statement is exact equality R₀_MA = R₀_EBCM (see R105c.2 note). WP4b (TRIAGE P1.4/P2): text corrected; previous text: When κ is large (continuous approximation), these are asymptotically equivalent.'
+- id: ConvergenceTheorems.R105c.4
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 82-82
+  text: 'Here we verify the simpler identity: κ · β̃/(β̃ + γ̃) = κβ̃/(β̃ + γ̃).'
+  kind: algebraic-identity
+  impl:
+  - poisson_R0_edge_formula
+  supporting: []
+  impl_note: impl proves κ·(β̃/(β̃+γ̃)) = κβ̃/(β̃+γ̃) over ℝ by ring (positivity hypotheses unused). This is exactly the "simpler identity" (mul_div_assoc); it does not connect to R₀_MA, T_MA or the effective rates.
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R105d.1
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 89-90
+  text: '**Result 105d.** The Poisson PGF identity: for ψ(x) = exp(κ(x-1)), ψ''(x) = κ·exp(κ(x-1)), so ψ''(1) = κ and ψ''''(1) = κ².'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - poisson_excess_degree_real
+  impl_note: No theorem mentions exp or derivatives (deriv/HasDerivAt). The Poisson moments ψ'(1)=κ, ψ''(1)=κ² are asserted by the definition poissonMoments (secondFactorial := κ²), not derived.
+  required: false
+  status: missing
+  notes: ''
+- id: ConvergenceTheorems.R105d.2
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 91-91
+  text: Thus the excess degree ratio ψ''(1)/ψ'(1) = κ²/κ = κ.
+  kind: algebraic-identity
+  impl:
+  - poisson_excess_degree_real
+  supporting: []
+  impl_note: impl proves κ^2/κ = κ for κ > 0 over ℝ; ψ, ψ', ψ'' do not appear, so the identification of κ² with ψ''(1) is carried by the text only.
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R105e.1
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 97-98
+  text: '**Result 105e.** S-substitution identity: if S = exp(κ(θ-1)) and θ̇ = f(θ), then dS/dt = κ·S·θ̇. This is the chain rule d/dt[exp(κ(θ-1))] = κ·exp(κ(θ-1))·θ̇.'
+  kind: dynamical
+  impl: []
+  supporting:
+  - S_theta_chain_rule_coeff
+  impl_note: No theorem about d/dt exp(κ(θ(t)-1)); Mathlib HasDerivAt.exp + HasDerivAt.comp would give it.
+  required: false
+  status: missing
+  notes: ''
+- id: ConvergenceTheorems.R105e.2
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 99-100
+  text: 'The Lean statement `kappa * S = kappa * S` is tautological: it holds by reflexivity. The chain rule itself is `S_theta_chain_rule`.'
+  kind: algebraic-identity
+  impl:
+  - S_theta_chain_rule_coeff
+  supporting: []
+  impl_note: impl is the tautology κ·S = κ·S (ring) with S a free real; the left side κ·exp(κ(θ-1)) never appears, so the premise S = exp(κ(θ-1)) is not represented.
+  required: true
+  status: implemented
+  notes: 'TAUTOLOGICAL implementation; forward checks for any shadow mentioning exp should fail. WP4b (TRIAGE P1.4/P2): text corrected; previous text: We verify the algebraic coefficient: κ · exp(κ(θ-1)) = κ · S. -- impl S_theta_chain_rule_coeff is tautological (P1.4); the chain rule of R105e.1 is now S_theta_chain_rule (candidate impl for R105e.1).'
+- id: ConvergenceTheorems.R106.header
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 125-131
+  text: 'On tree networks (no cycles), the pair approximation is exact. Precisely (Sharkey, Kiss, Wilkinson and Simon 2015, Theorem 1.1): for Markovian SIR dynamics on a network whose underlying graph is a tree, started from a pure state (or from uncorrelated initial node states), the individual-level closure (A_i S_j B_k)·(S_j) = (A_i S_j)·(S_j B_k) holds exactly for every triple in the pair equations, so the closed pair-based system reproduces the exact node and pair probabilities.'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'P1.1 (WP4): the inconsistent axiom tree_pair_exactness (unconstrained classes TreeNetwork, PairClosureError; instances ⟨True⟩, ⟨1⟩ on Unit gave (1 : ℝ) = 0) was deleted with its classes. The text now states the published theorem (papers/s11538-013-9923-5.md, Theorem 1.1); the citation was corrected from Sharkey, Kiss, Maybank, Sherborne (2013) to Sharkey, Kiss, Wilkinson, Simon (2015), Bull Math Biol 77:614-645. Established result (yes-lit); no Lean theorem (coverage gap, not planned for this legacy tree).'
+- id: ConvergenceTheorems.R106
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 133-135
+  text: '**Result 106** (not formalised; cited). This library models no contact network, pair probabilities or ODE solutions, so the result has no Lean counterpart.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.1 (WP4): meta statement replacing the deleted inconsistent axiom.'
+- id: ConvergenceTheorems.R107a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 170-170
+  text: '**Result 107a.** ψ''''(1)/ψ''(1) = (⟨k²⟩ - ⟨k⟩)/⟨k⟩.'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_second_moment
+  supporting: []
+  impl_note: 'Over the abstract record PGFMoments (reals mean, secondFactorial, variance with variance_eq; no PGF function): excessDegree (:= sf/mean) = (secondMoment - mean)/mean where secondMoment := sf + mean.'
+  required: true
+  status: implemented
+  notes: Section header lines 146-148 restate R107a-c "for any PGF ψ with ψ(1)=1, ψ'(1)=⟨k⟩, ψ''(1)=⟨k(k-1)⟩"; not registered separately. ψ is never a function in this module.
+- id: ConvergenceTheorems.R107b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 176-176
+  text: '**Result 107b.** (⟨k²⟩ - ⟨k⟩)/⟨k⟩ = ⟨k⟩ + Var(k)/⟨k⟩ - 1.'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_variance_form
+  supporting: []
+  impl_note: 'impl states excessDegree m = mean + variance/mean - 1: its LHS is ψ''''(1)/ψ''(1), not (⟨k²⟩-⟨k⟩)/⟨k⟩ as written (they agree by R107a). Uses the structure field variance_eq and mean > 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R107c
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 187-187
+  text: '**Result 107c.** The two forms are equal: (⟨k²⟩-⟨k⟩)/⟨k⟩ = ⟨k⟩+Var/⟨k⟩-1.'
+  kind: algebraic-identity
+  impl:
+  - excess_degree_forms_agree
+  supporting: []
+  impl_note: 'impl: (secondMoment - mean)/mean = mean + variance/mean - 1 for every PGFMoments.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R108a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 205-205
+  text: '**Result 108a.** R₀ = T · (⟨k⟩ + Var(k)/⟨k⟩ - 1).'
+  kind: algebraic-identity
+  impl:
+  - R0_variance_formula
+  supporting: []
+  impl_note: 'R0_heterogeneous T m := T·excessDegree m; impl: R0_heterogeneous T m = T·(mean + variance/mean - 1), all real T.'
+  required: true
+  status: implemented
+  notes: Section header lines 174-175 restate R108a/b; not registered separately.
+- id: ConvergenceTheorems.R108b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 211-212
+  text: '**Result 108b.** Heterogeneity amplifies R₀: for any degree distribution with mean ⟨k⟩ and Var ≥ 0, R₀ ≥ T·(⟨k⟩ - 1) = R₀(homogeneous).'
+  kind: inequality
+  impl:
+  - R0_heterogeneity_amplifies
+  supporting: []
+  impl_note: impl adds 0 ≤ T (absent from the text) and proves R0_homogeneous T m.mean ≤ R0_heterogeneous T m, i.e. T(⟨k⟩-1) ≤ T·ψ''(1)/ψ'(1); Var ≥ 0 is a structure field.
+  required: true
+  status: implemented
+  notes: The homogeneous comparator uses the (possibly non-integer) mean as a regular degree.
+- id: ConvergenceTheorems.R108c
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 226-226
+  text: '**Result 108c.** Equality iff Var(k) = 0 (regular network).'
+  kind: equivalence
+  impl:
+  - R0_heterogeneity_eq_iff_regular
+  supporting: []
+  impl_note: impl adds 0 < T; "regular network" is represented only by variance = 0 (there is no distribution to be regular).
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R109a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 258-258
+  text: '**Result 109a.** Poisson excess degree equals the mean κ.'
+  kind: algebraic-identity
+  impl:
+  - poisson_excess_eq_mean
+  supporting: []
+  impl_note: 'impl: (poissonMoments κ hk).excessDegree = κ; poissonMoments sets secondFactorial := κ², so this is κ²/κ = κ.'
+  required: true
+  status: implemented
+  notes: Section header lines 225-226 restate R109a/b. Root-namespace name, distinct from PGFData.poisson_excess_eq_mean (EpiCategory).
+- id: ConvergenceTheorems.R109b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 266-266
+  text: '**Result 109b.** R₀ = T·κ for Poisson networks.'
+  kind: algebraic-identity
+  impl:
+  - poisson_R0
+  supporting: []
+  impl_note: 'impl: R0_heterogeneous T (poissonMoments κ hk) = T·κ for all real T.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R110.header
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 274-276
+  text: 'The final size of an epidemic on a configuration-model network is determined by the fixed point θ∞ of: θ∞ = 1 - T + T · ψ''(θ∞)/ψ''(1).'
+  kind: dynamical
+  impl: []
+  supporting:
+  - disease_free_fixed_point
+  impl_note: No theorem relates θ(t→∞) of the EBCM to a fixed point; finalSizeMap takes the value g(θ) as an unrelated real argument.
+  required: false
+  status: missing
+  notes: ''
+- id: ConvergenceTheorems.R110.stability
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 278-280
+  text: For strictly convex f (some degree ≥ 3 has positive probability) it is the only fixed point in [0, 1] iff R₀ ≤ 1, where R₀ = f'(1) (not formalised here).
+  kind: equivalence
+  impl:
+  - dfe_stable_iff_R0_le_one
+  supporting: []
+  impl_note: 'Best available impl is dfe_stable_iff_R0_le_one: T·e ≤ 1 ↔ T·e ≤ 1 (Iff.rfl). "Stable" is not defined anywhere.'
+  required: true
+  status: implemented
+  notes: 'VACUOUS implementation. Also inconsistent with R110b.2 ("requires |f''(1)| < 1, i.e., R₀ < 1"): ≤ vs <. The header also promises "and prove the stability criterion" (lines 260-261); no such proof exists. WP4b (TRIAGE P1.4/P2): text corrected; previous text: It is stable iff R₀ ≤ 1. -- impl dfe_stable_iff_R0_le_one is Iff.rfl (P1.4); the corrected text is not formalised (status should become missing).'
+- id: ConvergenceTheorems.R110a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 291-291
+  text: '**Result 110a.** θ = 1 is always a fixed point: f(1) = 1 when g(1) = 1.'
+  kind: algebraic-identity
+  impl:
+  - disease_free_fixed_point
+  supporting: []
+  impl_note: 'impl: finalSizeMap T 1 = 1 for all real T (1 - T + T·1 = 1). g is not a function; the premise g(1) = 1 is modelled by passing the literal 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R110b.1
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 297-298
+  text: '**Result 110b.** The derivative f''(θ) = T · g''(θ). At θ = 1: f''(1) = T · g''(1) = T · ψ''''(1)/ψ''(1) = R₀.'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - fixed_point_derivative
+  impl_note: No derivative (deriv/HasDerivAt) of finalSizeMap, g or ψ appears anywhere.
+  required: false
+  status: missing
+  notes: 'The mathematics is right (sympy, Poisson: f''(1) = Tκ = T·ψ''''(1)/ψ''(1)) but unformalised.'
+- id: ConvergenceTheorems.R110b.2
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 299-301
+  text: Linear stability of θ = 1 needs |f'(1)| < 1, i.e. R₀ < 1; at R₀ = 1 the linearisation is inconclusive, and θ = 1 is still attracting from below when f is strictly convex.
+  kind: inequality
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'Strict inequality here vs "R₀ ≤ 1" in R110.stability / R110c.1. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Stability of θ = 1 requires |f''(1)| < 1, i.e., R₀ < 1.'
+- id: ConvergenceTheorems.R110b.3
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 303-304
+  text: '**Tautological Lean statement:** `T * excessDeg = T * excessDeg`; the derivative is computed in `finalSizeMap_hasDerivAt`.'
+  kind: algebraic-identity
+  impl:
+  - fixed_point_derivative
+  supporting: []
+  impl_note: impl is the tautology T·e = T·e (ring) for free reals T, e; f' does not appear.
+  required: true
+  status: implemented
+  notes: 'TAUTOLOGICAL implementation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: We verify: f''(1) = T · ψ''''(1)/ψ''(1). -- impl fixed_point_derivative is tautological (P1.4); candidate impl for R110b.1: finalSizeMap_hasDerivAt.'
+- id: ConvergenceTheorems.R110c.1
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 308-308
+  text: '**Result 110c.** When R₀ ≤ 1, the disease-free equilibrium θ = 1 is stable:'
+  kind: dynamical
+  impl: []
+  supporting:
+  - dfe_stable_iff_R0_le_one
+  impl_note: No notion of stability (of the fixed-point iteration or the ODE equilibrium) is formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: ConvergenceTheorems.R110c.2
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 309-309
+  text: '|f''(1)| ≤ 1 iff T · excessDeg ≤ 1 (since both T and excessDeg are nonneg).'
+  kind: equivalence
+  impl:
+  - dfe_stable_iff_R0_le_one
+  supporting: []
+  impl_note: 'impl: for 0 ≤ T, 0 ≤ e: (T·e ≤ 1 ↔ T·e ≤ 1) by Iff.rfl. The left side |f''(1)| ≤ 1 has been replaced by the right side, so the statement is P ↔ P.'
+  required: true
+  status: implemented
+  notes: VACUOUS implementation.
+- id: ConvergenceTheorems.R110d
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 333-333
+  text: '**Result 110d.** When T = 0 (no transmission), the fixed point is trivially θ = 1.'
+  kind: algebraic-identity
+  impl:
+  - no_transmission_fixed_point
+  supporting: []
+  impl_note: 'impl: finalSizeMap 0 g = 1 for every real g (so f ≡ 1 and θ = 1 is the unique fixed point; uniqueness is not stated).'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R111a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 341-349
+  text: 'For SIR epidemics on configuration-model random graphs with bounded degrees and an arbitrary infectious-period distribution, the final size Z_n satisfies √n(Z_n/n − ρ) ⇒ N(0, σ²) with an explicit σ² (so Z_n/n → ρ in probability) in any of three regimes (Ball 2021): the initially infected fraction converges to a limit ε ∈ (0, 1) (Theorem 2.1); R₀ > 1, the number of initial infectives is fixed, and the statement is conditional on a major outbreak, of size at least log n (Theorem 2.2); or R₀ > 1 and the number of initial infectives tends to infinity while their fraction tends to zero, without conditioning (Theorem 2.3).'
+  kind: limit
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'P1.2 + P2.11 (WP4): the content-free axiom final_size_CLT (conclusion True) was deleted with the unused structure FinalSizeCLTData, and the text rewritten with the conditions of Ball (2021), Ann Appl Probab 31:2091-2142 (papers/Ball-CENTRALLIMITTHEOREMS-2021.md, Theorems 2.1-2.3; Theorem 2.3, the unconditioned regime with a growing number of initial infectives, was added in the WP4 fix round). The old text claimed unconditional a.s. convergence, which is false. Established result (yes-lit); no Lean theorem. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For SIR epidemics on configuration-model random graphs with bounded degrees and an arbitrary infectious-period distribution, the final size Z_n satisfies √n(Z_n/n − z) ⇒ N(0, σ²) with an explicit σ² (so Z_n/n → z in probability) in any of three regimes (Ball 2021): the initially infected fraction converges to a positive limit (Theorem 2.1); R₀ > 1, the number of initial infectives is fixed, and the statement is conditional on a major outbreak, of size at least log n (Theorem 2.2); or R₀ > 1 and the number of initial infectives tends to infinity while their fraction tends to zero, without conditioning (Theorem 2.3).'
+- id: ConvergenceTheorems.R111b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 349-351
+  text: Without the conditioning of Theorem 2.2, Z_n/n does not converge to ρ > 0 for an epidemic started by a fixed number of infectives, because a minor outbreak has positive probability.
+  kind: limit
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'P1.2 (WP4): new text after the deletion of final_size_CLT. True (a minor outbreak has limiting probability 1 − P(major) > 0; Ball 2021 §2.4). No Lean theorem. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Without the conditioning of Theorem 2.2, Z_n/n does not converge to z > 0 for an epidemic started by a fixed number of infectives, because a minor outbreak has positive probability.'
+- id: ConvergenceTheorems.R111c
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 353-354
+  text: '**Result 111** (not formalised; cited). This library models no random graph, epidemic process or limit theorem, so the result has no Lean counterpart.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.2 (WP4): meta statement replacing the deleted content-free axiom.'
+- id: ConvergenceTheorems.R112a
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 369-369
+  text: '**Result 112a.** T_c = 1 / excessDegree.'
+  kind: algebraic-identity
+  impl:
+  - critical_T_eq_inv_excess
+  supporting: []
+  impl_note: impl adds 0 < secondFactorial (criticalTransmissibility takes this proof as an argument).
+  required: true
+  status: implemented
+  notes: Section header lines 324-327 restate R112a-c; not registered separately.
+- id: ConvergenceTheorems.R112b
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 377-378
+  text: '**Result 112b.** R₀ > 1 iff T > T_c: the epidemic threshold. R₀ = T · excessDeg > 1 ↔ T > 1/excessDeg (when excessDeg > 0).'
+  kind: equivalence
+  impl:
+  - epidemic_threshold
+  supporting: []
+  impl_note: 'impl: for 0 < T (unused) and 0 < ψ''''(1): 1 < R0_heterogeneous T m ↔ criticalTransmissibility m hsf < T. The text''s side condition "excessDeg > 0" corresponds to secondFactorial > 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R112c
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 387-388
+  text: '**Result 112c.** The threshold depends only on first two moments. T_c = ⟨k⟩/⟨k(k-1)⟩ = ⟨k⟩/(⟨k²⟩ - ⟨k⟩).'
+  kind: algebraic-identity
+  impl:
+  - threshold_moment_form
+  supporting: []
+  impl_note: 'impl: T_c = mean/(secondMoment - mean); "depends only on first two moments" is expressed only through this formula.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R112d
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 395-395
+  text: '**Result 112d.** For Poisson(κ), T_c = 1/κ.'
+  kind: algebraic-identity
+  impl:
+  - poisson_threshold
+  supporting: []
+  impl_note: 'impl: criticalTransmissibility (poissonMoments κ hk) _ = 1/κ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ConvergenceTheorems.R112e
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 406-408
+  text: '**Result 112e.** Higher variance lowers the epidemic threshold. If m₁ and m₂ have the same mean but Var(m₁) ≤ Var(m₂), then T_c(m₂) ≤ T_c(m₁): more heterogeneous networks have lower thresholds.'
+  kind: inequality
+  impl:
+  - variance_lowers_threshold
+  supporting: []
+  impl_note: impl adds 0 < ψ''(1) for both records (needed for T_c); hypotheses mean₁ = mean₂ and var₁ ≤ var₂; conclusion T_c(m₂) ≤ T_c(m₁) as in the text.
+  required: true
+  status: implemented
+  notes: ''
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented theorems (no natural-language text): none -- every theorem/axiom in this module
+# carries a docstring.
+#
+# Section headers not registered separately because they restate registered docstrings:
+#   the section headers at lines 137 (Result 107), 165 (Result 108), 216 (Result 109) and
+#   307 (Result 112). The Result 111 section (line 288) is registered as R111a-c.
+#
+# Definitions with docstrings (vocabulary only, see Alignment/DataTypes/ConvergenceTheorems.md):
+#   PoissonEBCMData, effective_beta (R105a), effective_gamma (R105b), TreeNetwork, PairClosureError,
+#   PGFMoments, PGFMoments.excessDegree, PGFMoments.secondMoment, R0_heterogeneous, R0_homogeneous,
+#   poissonMoments, finalSizeMap, FinalSizeCLTData, criticalTransmissibility.
+#
+# Axioms: none. tree_pair_exactness (INCONSISTENT, see R106.header) and final_size_CLT (True) were deleted
+#   in WP4 (P1.1, P1.2).
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: ConvergenceTheorems.r0MassActionEqEdge
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 104-105
+  text: The mass-action R₀ β/γ with β = κβ̃ and γ = γ̃ + β̃ equals the Poisson EBCM R₀ κ · T_edge = κ · β̃/(β̃ + γ̃), exactly.
+  kind: algebraic-identity
+  impl:
+  - R0_massAction_eq_edge
+  supporting: []
+  impl_note: effective_beta d / effective_gamma d = d.kappa * (d.beta_tilde / (d.beta_tilde + d.gamma_tilde)).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: ConvergenceTheorems.sThetaChainRule
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 113-114
+  text: 'The chain rule behind Result 105e: if `θ` has derivative `θ''` at `t`, then `S = exp(κ(θ − 1))` has derivative `κ · S · θ''` at `t`.'
+  kind: dynamical
+  impl:
+  - S_theta_chain_rule
+  supporting: []
+  impl_note: HasDerivAt θ θ' t → HasDerivAt (fun s => exp (κ * (θ s - 1))) (κ * exp (κ * (θ t - 1)) * θ') t.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: ConvergenceTheorems.finalSizeMapHasDerivAt
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 318-319
+  text: 'The derivative of the final-size map: if `g` has derivative `g''` at `x`, then `θ ↦ f(θ) = 1 − T + T·g(θ)` has derivative `T·g''` at `x`.'
+  kind: dynamical
+  impl:
+  - finalSizeMap_hasDerivAt
+  supporting: []
+  impl_note: HasDerivAt g g' x → HasDerivAt (fun θ => finalSizeMap T (g θ)) (T * g') x.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: ConvergenceTheorems.dfeDerivativeAbsLeOneIff
+  group: ConvergenceTheorems
+  source:
+    file: EBCMCategory/ConvergenceTheorems.lean
+    lines: 326-327
+  text: For `T ≥ 0` and `excessDeg ≥ 0`, `|f'(1)| ≤ 1 ↔ R₀ ≤ 1`, where `f'(1) = R₀ = T · excessDeg`.
+  kind: equivalence
+  impl:
+  - dfe_derivative_abs_le_one_iff
+  supporting: []
+  impl_note: 0 ≤ T → 0 ≤ e → (|T * e| ≤ 1 ↔ T * e ≤ 1).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

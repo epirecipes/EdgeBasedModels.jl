@@ -1,0 +1,154 @@
+# SA-PASS claim registry fragment: group EpiCategory
+# Source module: EBCMCategory/EpiCategory.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: EpiCategory.header.twoCategories
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 6-11
+  text: 'This file defines scalar records motivated by two informal classes of epidemic models; no categorical structure is formalised: * **Node** models: ODE systems on population-level state spaces (S, I, R) * **Edge** models: ODE systems on edge-probability state spaces (θ, φ, R), parameterised by a probability generating function (PGF)'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: 'No category (objects, morphisms, composition) is defined anywhere in the module. Both ''node'' and ''edge'' models are values of the single record EpiModel (dim : ℕ, R0 : ℚ); no ODE system, state space, or generating function appears.'
+  required: false
+  status: missing
+  notes: 'Module-header claim. The only categorical structure is the Preorder instance on EpiModel (a thin category), shared by ''Node'' and ''Edge''. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file defines the two categories at the heart of the EBCM theory: * **Node**: ODE systems on population-level state spaces (S, I, R) * **Edge**: ODE systems on edge-probability state spaces (θ, φ, R), parameterised by a probability generating function (PGF)'
+- id: EpiCategory.header.refinementPreorder
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 15-17
+  text: The only order is the preorder `M₁ ≤ M₂ iff M₁.dim ≤ M₂.dim`; "refinement" below means "has at least as many state variables" and nothing more.
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: 'Definitional: the instance Preorder EpiModel orders models by their dim field (a proxy for ''structural information''); there is one preorder (not two) and no theorem; to be checked by a bridge.'
+  required: false
+  status: informal
+  notes: 'Module-header claim about definitions. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Both are formalised as preorders under a "refinement" relation: M₁ ≤ M₂ iff M₂ carries at least as much structural information as M₁.'
+- id: EpiCategory.dispersionIndexOneIffPoisson
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 66-69
+  text: 'Index of dispersion: σ²/κ. Poisson ⇒ dispersion index 1 (`poisson_dispersion_eq_one`). The converse is false for degree distributions: the law with P(0) = P(2) = 1/2, ψ(u) = (1 + u²)/2, has mean 1 and variance 1 but is not Poisson.'
+  kind: equivalence
+  impl: []
+  supporting:
+  - poisson_dispersion_eq_one
+  - poisson_unique_exact_lift
+  impl_note: Docstring of def PGFData.dispersionIndex. Only the direction Poisson ⇒ index 1 is proved (CoarseGrain Result 8, poisson_dispersion_eq_one). The converse is not stated anywhere; in the two-moment PGFData record it would say secondFactorial = mean² (which pins the record to PGFData.poisson), but for genuine degree distributions 'index 1 ⇒ Poisson' is false.
+  required: false
+  status: missing
+  notes: 'Checkable claim attached to a def; the ''iff'' is not implemented. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Index of dispersion: σ²/κ. Equals 1 iff Poisson. -- Record-level version now proved: PGFData.dispersionIndex_eq_one_iff (new claim EpiCategory.dispersionIndexEqOneIff).'
+- id: EpiCategory.R1
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 54-54
+  text: '**Result 1.** For Poisson, the excess degree equals the mean degree.'
+  kind: algebraic-identity
+  impl:
+  - PGFData.poisson_excess_eq_mean
+  supporting: []
+  impl_note: impl proves (PGFData.poisson κ hκ).excessDegree = κ over ℚ for κ > 0. PGFData.poisson is a two-moment record (mean κ, secondFactorial κ²) and excessDegree is secondFactorial/mean, so this is the field identity κ²/κ = κ; no generating function exp(κ(z−1)) or derivative appears.
+  required: true
+  status: implemented
+  notes: ''
+- id: EpiCategory.R2
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 60-60
+  text: '**Result 2.** For Poisson, the variance equals the mean (equidispersion).'
+  kind: algebraic-identity
+  impl:
+  - PGFData.poisson_variance_eq_mean
+  supporting: []
+  impl_note: impl proves (PGFData.poisson κ hκ).variance = κ, i.e. the ring identity κ² + κ − κ² = κ, with variance defined from the two recorded moments rather than from a distribution.
+  required: true
+  status: implemented
+  notes: ''
+- id: EpiCategory.transmissibilityPos
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 100-100
+  text: Transmissibility is positive.
+  kind: inequality
+  impl:
+  - SIRParams.transmissibility_pos
+  supporting: []
+  impl_note: impl proves 0 < p.transmissibility = β/(β+γ) using the β > 0, γ > 0 fields of SIRParams. Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: EpiCategory.transmissibilityLtOne
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 106-106
+  text: Transmissibility is less than 1.
+  kind: inequality
+  impl:
+  - SIRParams.transmissibility_lt_one
+  supporting: []
+  impl_note: impl proves p.transmissibility < 1 for every SIRParams (uses γ > 0). Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: EpiCategory.R3
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 139-139
+  text: '**Result 3.** The edge model always refines the node model.'
+  kind: structural
+  impl:
+  - edge_refines_node
+  supporting: []
+  impl_note: 'impl proves nodeModel p ψ.mean ≤ edgeModel p ψ in the EpiModel preorder, which unfolds to the numeral inequality 3 ≤ 4 on the dim fields (proof: omega). R₀, p and ψ play no role; the node model is instantiated at κ = ψ.mean only.'
+  required: true
+  status: implemented
+  notes: '''Refines'' is only ''has at least as many state variables''.'
+- id: EpiCategory.R4
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 145-145
+  text: '**Result 4.** For Poisson networks, both models compute the same R₀.'
+  kind: algebraic-identity
+  impl:
+  - poisson_R0_agree
+  supporting: []
+  impl_note: impl proves (nodeModel p κ).R0 = (edgeModel p (PGFData.poisson κ hκ)).R0, i.e. T·κ = T·(κ²/κ). nodeModel's R₀ is defined as T·κ with T = β/(β+γ).
+  required: true
+  status: implemented
+  notes: The 'node model' R₀ T·κ = βκ/(β+γ) is itself a network (Poisson-EBCM) quantity, not the R₀ of a mass-action SIR (βκ/γ with per-edge β); agreement is by construction of nodeModel.
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text only, see DataTypes/EpiCategory.md):
+#   structure PGFData ("Abstract probability generating function data ..."), PGFData.excessDegree,
+#   PGFData.variance, PGFData.poisson ("Key property: ψ''(1) = κ²" is its body), structure SIRParams,
+#   SIRParams.transmissibility, structure EpiModel, instances LE/Preorder EpiModel, nodeModel, edgeModel.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: EpiCategory.dispersionIndexEqOneIff
+  group: EpiCategory
+  source:
+    file: EBCMCategory/EpiCategory.lean
+    lines: 72-73
+  text: A `PGFData` record has dispersion index 1 iff it is the Poisson record of its own mean, i.e. iff ψ''(1) = ψ'(1)².
+  kind: equivalence
+  impl:
+  - PGFData.dispersionIndex_eq_one_iff
+  supporting: []
+  impl_note: ψ.dispersionIndex = 1 ↔ ψ = PGFData.poisson ψ.mean ψ.mean_pos (record equality).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

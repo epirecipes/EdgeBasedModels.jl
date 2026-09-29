@@ -4,11 +4,14 @@ import Mathlib.Tactic
 /-!
 # Hierarchy — The tower of epidemic model approximations
 
-Epidemic models form a strict hierarchy of decreasing information content:
+Epidemic models are compared here by the state-space dimension of an
+N-node SIR network model (`levelDim`):
 
-    Full stochastic  >  Pair approximation  >  EBCM  >  Mean-field SIR
+    Full stochastic (3^N)  >  Pair approximation (12N)  >  EBCM (4)  >  Mean-field SIR (3)
 
-Each step is a coarse-graining that discards correlations.
+The first inequality holds only for N ≥ 4 (`pair_lt_full`); for N = 3,
+3³ = 27 < 36 = 12·3 (`full_lt_pair_three`). The comparison is by
+dimension only: no coarse-graining map between the levels is formalised.
 
 ## Key results
 
@@ -18,8 +21,8 @@ Each step is a coarse-graining that discards correlations.
 | 24     | EBCM < Pair approximation (for N ≥ 1)               |
 | 25     | EBCM → Mean-field is exact for Poisson networks      |
 | 26     | Every node model has a canonical Poisson lift         |
-| 27     | Poisson is the unique exact lift                      |
-| 28     | Lift space is parameterised by mean-matching PGFs     |
+| 27     | Excess = mean forces variance = mean (records only)   |
+| 28     | A Poisson-record lift exists; R₀ kept iff excess = κ  |
 
 ## References
 
@@ -59,7 +62,11 @@ theorem edgeBased_lt_pair (N : ℕ) (hN : 1 ≤ N) :
 
 /-! ## Exactness conditions -/
 
-/-- **Result 25.** The EBCM → Mean-field step is exact iff Poisson. -/
+/-- **Result 25.** The EBCM → Mean-field step is exact iff Poisson.
+    The Lean theorem proves only the algebraic consequence for the Poisson
+    record, ψ''(1)/ψ'(1) = ψ'(1). The dynamical statement (the EBCM has
+    mass-action form iff ψ' = κψ, i.e. iff ψ is Poisson; Rempała 2023) is
+    not formalised. -/
 theorem ebcm_to_meanfield_exact_iff_poisson (κ : ℚ) (hκ : 0 < κ) :
     (PGFData.poisson κ hκ).excessDegree = (PGFData.poisson κ hκ).mean := by
   exact PGFData.poisson_excess_eq_mean κ hκ
@@ -72,8 +79,12 @@ theorem node_lifts_to_edge (p : SIRParams) (κ : ℚ) (hκ : 0 < κ) :
     (nodeModel p κ).R0 = (edgeModel p (PGFData.poisson κ hκ)).R0 :=
   poisson_R0_agree p κ hκ
 
-/-- **Result 27.** The Poisson lift is the UNIQUE PGF for which
-    excess degree = mean (the exactness condition). -/
+/-- **Result 27.** For a two-moment record with mean κ, excess degree = mean
+    forces variance = mean, so the record is the Poisson record `poisson κ`
+    (`PGFData.dispersionIndex_eq_one_iff`).
+    This does not make Poisson the unique degree distribution with excess
+    degree = mean: ψ(u) = (1 + u²)/2 has ψ''(1)/ψ'(1) = 1 = ψ'(1) and is not
+    Poisson. -/
 theorem poisson_unique_exact_lift (κ : ℚ) (_hκ : 0 < κ) (ψ : PGFData)
     (h_mean : ψ.mean = κ)
     (h_excess : ψ.excessDegree = κ) :
@@ -88,8 +99,38 @@ theorem poisson_unique_exact_lift (κ : ℚ) (_hκ : 0 < κ) (ψ : PGFData)
   have := div_eq_one_iff_eq hm |>.mp h_disp
   linarith [h_mean]
 
-/-- **Result 28.** The lift space is parameterised by PGFs with matching mean. -/
+/-- **Result 28.** Some PGF record with mean κ (the Poisson record) gives an
+    edge model with R₀ = T·ψ''(1)/ψ'(1).
+    Matching the mean does not preserve R₀: the edge model of a record ψ has
+    the node model's R₀ T·κ iff ψ''(1)/ψ'(1) = κ (`edge_lift_R0_eq_iff`). -/
 theorem lift_space_parameterised (p : SIRParams) (κ : ℚ) (hκ : 0 < κ) :
     ∃ (ψ : PGFData), ψ.mean = κ ∧
       (edgeModel p ψ).R0 = p.transmissibility * ψ.excessDegree :=
   ⟨PGFData.poisson κ hκ, rfl, rfl⟩
+
+/-- The edge model of a record ψ has the R₀ of the node model with mean degree
+    κ iff ψ''(1)/ψ'(1) = κ. -/
+theorem edge_lift_R0_eq_iff (p : SIRParams) (κ : ℚ) (ψ : PGFData) :
+    (edgeModel p ψ).R0 = (nodeModel p κ).R0 ↔ ψ.excessDegree = κ := by
+  simp only [edgeModel, nodeModel]
+  exact mul_right_inj' (ne_of_gt p.transmissibility_pos)
+
+/-! ## Dimension comparisons -/
+
+/-- The pair approximation has fewer variables than the full stochastic
+    model for N ≥ 4: 12N < 3^N. -/
+theorem pair_lt_full (N : ℕ) (hN : 4 ≤ N) :
+    levelDim .pairApproximation N < levelDim .fullStochastic N := by
+  simp only [levelDim]
+  induction N, hN using Nat.le_induction with
+  | base => norm_num
+  | succ n hn ih =>
+    rw [pow_succ]
+    nlinarith [ih, hn]
+
+/-- For N = 3 the full stochastic model has fewer variables than the pair
+    approximation: 3³ = 27 < 36 = 12·3. -/
+theorem full_lt_pair_three :
+    levelDim .fullStochastic 3 < levelDim .pairApproximation 3 := by
+  simp only [levelDim]
+  norm_num

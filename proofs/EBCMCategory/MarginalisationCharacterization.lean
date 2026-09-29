@@ -8,36 +8,51 @@ import Mathlib.Tactic
 
 The companion result to Theorem T2 (`Obstructions.lean`): the witness
 there shows the diagram fails for one specific Kirkwood-style closure,
-and Theorem T1 (`MarginalisationFunctor.lean`) shows that any such
-algebraic failure forces a dynamical failure of subgraph
-marginalisation. T3 — proved here — is the **structural** statement:
+and Theorem T1 (`MarginalisationFunctor.lean`) shows that, for systems
+with global flows, any such algebraic failure forces a dynamical failure
+of subgraph marginalisation. The T2 witness has no global order-3 flow, so
+there the local form `rhs_commute_of_local_traj_commute` is the one that
+applies. T3 — proved here — is an **existential** statement (T3b):
 
-  *No nontrivial multiplicative-rational ("Kirkwood-form") closure
-  family can yield marginalisation-equivariant closed dynamics with
-  respect to a generic linear marginalisation `M`.*
+  *There is a linear marginalisation `M` and a non-additive order-4
+  closure `C₄` such that no order-3 closure `C₃` makes the diagram
+  commute.*
 
-Only the trivial / linear / exact case escapes the obstruction.
+The universal statement (no non-additive closure is ever equivariant) is
+false for the Lean predicate `IsKirkwoodForm`, which expresses only
+non-additivity: with `M = id`, `x ↦ x²` is non-additive and equivariant
+(`exists_kirkwoodForm_equivariant`).
+
+Non-additive closures can escape the obstruction: some `C₃` makes the
+diagram commute iff `C₄` maps each fibre of `M` into a single fibre
+(`exists_equivariant_iff_fibrewise`).
 
 ## Connection to `ClosureTheorem.lean`
 
-The Kiss–Kenah–Rempala (2023) characterization (`ClosureTheorem.lean`,
-Results 51–59) gives **necessary and sufficient conditions on the
-degree distribution** for the *pairwise* closure
-`[ASI] = κ · [AS][SI] / [S]` to be exact in the `N → ∞` limit. That
+The Kiss–Kenah–Rempala (2023) characterization gives **necessary and
+sufficient conditions on the degree distribution** (Poisson, binomial or
+negative binomial) for the *pairwise* closure
+`[ASI] = κ · [AS][SI] / [S]` to be exact in the `N → ∞` limit;
+`ClosureTheorem.lean` (Results 51–59) checks only the sufficiency
+identities for these families. That
 result is about a **single closure level** (triples in terms of pairs).
-T3 below is a different, *higher*-order statement: even when each
-closure level is exact (or as close to exact as KKR allows), the
-**inter-level marginalisation diagrams need not commute**. The KKR
-conditions are necessary but **not sufficient** for marginalisation
-equivariance at order ≥ 4.
+T3 below is a different statement: a closure that is exact at the
+pairwise level constrains nothing at order 4, and the **inter-level
+marginalisation diagram need not commute**. The formal witness (T3c) only
+pairs a Poisson record, whose `closureKappa` is 1, with the unrelated
+surrogate of T3b.
+No result here shows that the KKR conditions are necessary for
+marginalisation equivariance at order ≥ 4.
+T3c shows only that a KKR-exact degree record can be paired with an
+order-4 closure that is **not** equivariant.
 
 | Result | Statement                                                    |
 |--------|---------------------------------------------------------------|
-| T3a    | Linear closures are equivariant for any linear `M`             |
-| T3b    | A nontrivial multiplicative Kirkwood closure cannot be          |
-|        | equivariant for a generic surjective `M` (sketch w/ `sorry`)   |
+| T3a    | A linear `L₄` admits an equivariant `F₃` iff `L₄(ker M) ⊆ ker M` |
+| T3b    | Some linear `M` and non-additive `C₄` admit no equivariant `C₃` |
+|        | (existential; no `sorry`)                                        |
 | T3c    | Corollary: KKR-exactness ⇒ pairwise-level closure exact, but    |
-|        | does NOT imply order-4 marginalisation equivariance             |
+|        | a KKR-exact record pairs with a non-equivariant order-4 closure |
 -/
 
 namespace EBCMCategory.MarginalisationCharacterization
@@ -59,8 +74,9 @@ We model a *closure family* on a finite-dimensional moment space as a
 function `V → V`. The two pertinent algebraic shapes are:
 
 * **Linear** closures: `C(u) = L u` for some linear `L`. (Includes
-  truncation closures, exact closures of the unclosed CTMC at the
-  given order, and any moment-zero closure.)
+  truncation and moment-zero closures. Exact closures of the unclosed
+  CTMC are in general nonlinear: the KKR-exact pairwise closure
+  `[ASI] = κ·[AS][SI]/[S]` is rational.)
 
 * **Kirkwood / multiplicative** closures: `C(u)_i = ∏_j u_{α(i,j)}^{p(i,j)} /
   ∏_k u_{β(i,k)}^{q(i,k)}` — a tuple of monomial ratios. Pair-Kirkwood
@@ -78,22 +94,23 @@ def ClosureFamily.IsLinear {V : Type _} [AddCommGroup V] [Module ℝ V]
     (C : ClosureFamily V) : Prop :=
   ∃ L : V →ₗ[ℝ] V, ∀ u, C.C u = L u
 
-/-- Marker: the closure has the *multiplicative Kirkwood form*
-    (product-of-monomials over product-of-monomials with at least one
-    coordinate-index appearing with positive exponent in the numerator
-    AND at least one strictly positive output component depending on at
-    least two distinct input coordinates). The precise multi-index data
-    is abstracted; the only hypothesis we use downstream is *existence
-    of a strictly bilinear (or higher-degree) monomial entry* in `C`
-    that does not collapse under any single linear pushforward. -/
+/-- Marker named after the *multiplicative Kirkwood form*
+    (product-of-monomials over product-of-monomials). In Lean the
+    predicate says only that `C` is **not additive**:
+    `∃ u v, C (u + v) ≠ C u + C v`. This is much weaker than Kirkwood
+    form: every non-additive field satisfies it, for example `x ↦ x²`. -/
 def ClosureFamily.IsKirkwoodForm {V : Type _} [Add V] (C : ClosureFamily V) : Prop :=
   ∃ (u v : V), C.C (u + v) ≠ C.C u + C.C v
 
 /-! ## T3a — Linear closures are equivariant for any compatible `M` -/
 
 /-- A linear closure paired with an `M`-compatible linear `L₃` at order 3
-    yields an equivariant closed RHS — this is the *trivial* (and only)
-    case in which the order-4/order-3 diagram commutes for free. -/
+    yields an equivariant closed RHS.
+    **Tautological:** the hypothesis `h_intertwine` is the conclusion
+    `Equivariant M L₄ L₃` written out, so the theorem only unfolds the
+    definition.
+    It is not the only case in which the diagram commutes: see
+    `exists_equivariant_iff_fibrewise` and `exists_kirkwoodForm_equivariant`. -/
 theorem linear_closure_equivariant
     {V₄ V₃ : Type _} [AddCommGroup V₄] [AddCommGroup V₃]
     [Module ℝ V₄] [Module ℝ V₃]
@@ -102,8 +119,12 @@ theorem linear_closure_equivariant
     Equivariant M (fun u => L₄ u) (fun v => L₃ v) := by
   intro u; exact h_intertwine u
 
-/-- Corollary: an `IsLinear` closure family at order 4 admits an
-    equivariant `F₃` whenever `M` intertwines the two linear pieces. -/
+/-- **Vacuous; kept for compatibility.** The statement is
+    `∃ F₃, Equivariant M C₄.C F₃ ∨ True`, which holds because of the
+    disjunct `True`; it does not show that an `IsLinear` closure admits an
+    equivariant `F₃`. The correct criterion is
+    `linear_admits_equivariant_iff`: a linear `L₄` admits an equivariant
+    `F₃` iff `L₄` maps `ker M` into `ker M`. -/
 theorem isLinear_admits_equivariant
     {V₄ V₃ : Type _} [AddCommGroup V₄] [AddCommGroup V₃]
     [Module ℝ V₄] [Module ℝ V₃]
@@ -197,8 +218,8 @@ lemma C4ℝ_isKirkwoodForm : C4ℝ.IsKirkwoodForm := by
     No algebraic-geometry / Zariski machinery is needed: the diagram
     fails on a single `M`-fibre because two distinct `u`'s with the
     same `M u` produce different `M(F₄ u)`. This is the elementary
-    "linear pushforward kills the bilinear term" obstruction, in its
-    smallest faithful form. -/
+    "linear pushforward kills the bilinear term" obstruction, for one
+    small witness. -/
 theorem kirkwood_form_not_equivariant :
     ∃ (V₄ V₃ : Type) (_ : AddCommGroup V₄) (_ : AddCommGroup V₃)
       (_ : Module ℝ V₄) (_ : Module ℝ V₃)
@@ -228,12 +249,14 @@ theorem kirkwood_form_not_equivariant :
 
 /-- **Theorem T3c.** The Kiss–Kenah–Rempala pairwise-closure
     exactness conditions (cf. `ClosureTheorem.lean`, Results 51–59)
-    are *necessary* but **not sufficient** for marginalisation
+    are **not sufficient** for marginalisation
     equivariance with the order-4 closed system used to generate `F₄`.
-    Concretely, even when the order-3 closure is KKR-exact in the
-    `N → ∞` limit (e.g. `closureKappa = 1` for Poisson), the order-4
-    closure `C₄` is *independent data*, and Theorem T3b applies to it
-    whenever it has Kirkwood form.
+    Nothing here shows that they are necessary.
+    The order-4 closure `C₄` is independent data: a degree record that
+    meets the KKR criterion (`closureKappa = 1` for Poisson) can be paired
+    with the non-equivariant surrogate of T3b. It is false that T3b applies
+    to every Kirkwood-form `C₄`: with `M = id`, `x ↦ x²` is Kirkwood-form
+    and equivariant (`exists_kirkwoodForm_equivariant`).
 
     The formal statement: there exists a degree distribution `ψ` whose
     `closureKappa` is `1` (so the KKR pairwise-exactness criterion of
@@ -251,5 +274,58 @@ theorem kkr_necessary_not_sufficient :
     kirkwood_form_not_equivariant
   refine ⟨PGFData.poisson 1 (by norm_num), V₄, V₃, _, _, _, _, M, C₄, ?_, hKirk, hno⟩
   exact poisson_kappa_is_one' 1 (by norm_num)
+
+/-! ## Fibre criterion for equivariance -/
+
+/-- **Fibre criterion.** For any field `F` on `V₄`, some order-3 field `F₃`
+    satisfies `M ∘ F = F₃ ∘ M` iff `F` maps each fibre of `M` into a single
+    fibre: `M u = M u' → M (F u) = M (F u')`. The direction (⇐) is the
+    converse of the fibre-collapse obstruction T4. -/
+theorem exists_equivariant_iff_fibrewise
+    {V₄ V₃ : Type _} [AddCommGroup V₄] [AddCommGroup V₃]
+    [Module ℝ V₄] [Module ℝ V₃]
+    (M : V₄ →ₗ[ℝ] V₃) (F : V₄ → V₄) :
+    (∃ F₃ : V₃ → V₃, Equivariant M F F₃) ↔
+      ∀ u u', M u = M u' → M (F u) = M (F u') := by
+  classical
+  constructor
+  · rintro ⟨F₃, hF₃⟩ u u' h
+    rw [hF₃ u, hF₃ u', h]
+  · intro h
+    refine ⟨fun v => if hv : ∃ u, M u = v then M (F hv.choose) else 0, ?_⟩
+    intro u
+    have hu : ∃ u', M u' = M u := ⟨u, rfl⟩
+    show M (F u) = if hv : ∃ u', M u' = M u then M (F hv.choose) else 0
+    rw [dif_pos hu]
+    exact h u hu.choose hu.choose_spec.symm
+
+/-- **Theorem T3a (corrected).** A linear field `L₄` admits an order-3 field
+    `F₃` with `M ∘ L₄ = F₃ ∘ M` iff `L₄` maps `ker M` into `ker M`. So linear
+    closures are *not* equivariant for every linear `M`. -/
+theorem linear_admits_equivariant_iff
+    {V₄ V₃ : Type _} [AddCommGroup V₄] [AddCommGroup V₃]
+    [Module ℝ V₄] [Module ℝ V₃]
+    (M : V₄ →ₗ[ℝ] V₃) (L₄ : V₄ →ₗ[ℝ] V₄) :
+    (∃ F₃ : V₃ → V₃, Equivariant M L₄ F₃) ↔ ∀ u, M u = 0 → M (L₄ u) = 0 := by
+  rw [exists_equivariant_iff_fibrewise]
+  constructor
+  · intro h u hu
+    have := h u 0 (by rw [hu, map_zero])
+    rwa [map_zero, map_zero] at this
+  · intro h u u' huu'
+    have hk : M (u - u') = 0 := by rw [map_sub, huu', sub_self]
+    have := h (u - u') hk
+    rw [map_sub, map_sub] at this
+    exact sub_eq_zero.mp this
+
+/-- A non-additive (`IsKirkwoodForm`) closure can be equivariant: with
+    `M = id` on `ℝ`, the field `x ↦ x²` is non-additive and commutes with
+    itself. So the universal form of T3 is false for the Lean predicate
+    `IsKirkwoodForm`, which expresses only non-additivity. -/
+theorem exists_kirkwoodForm_equivariant :
+    ∃ (M : ℝ →ₗ[ℝ] ℝ) (C₄ C₃ : ClosureFamily ℝ),
+      C₄.IsKirkwoodForm ∧ C₃.IsKirkwoodForm ∧ Equivariant M C₄.C C₃.C :=
+  ⟨LinearMap.id, ⟨fun x => x ^ 2⟩, ⟨fun x => x ^ 2⟩,
+    ⟨1, 1, by norm_num⟩, ⟨1, 1, by norm_num⟩, fun _ => rfl⟩
 
 end EBCMCategory.MarginalisationCharacterization

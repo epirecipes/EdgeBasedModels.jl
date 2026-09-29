@@ -1,0 +1,265 @@
+# SA-PASS claim registry fragment: group SEIREquations
+# Source module: EBCMCategory/SEIREquations.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: '<Group>.<lowerCamelName>' (the SEIRn labels are not '**Result N.**'),
+#   '-a'/'-b' suffix for splits, 'table.SEIRn' for module-header table rows.
+- id: SEIREquations.table.SEIR1
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 19-19
+  text: '| SEIR1 | I_pop counts only infectious stages (I), not E |'
+  kind: structural
+  impl:
+  - I_pop_zero_at_seed
+  supporting:
+  - I_pop_le_wrong
+  impl_note: impl proves I_pop = 0 only for the single literal state ⟨θ=1, φ_E=ε, φ_I=0, pop_E=ε, pop_I=0, pop_R=0⟩ (by rfl); the general property (I_pop s = s.pop_I, independent of pop_E) holds by definition but is not stated as a theorem; I_pop_le_wrong only gives I_pop ≤ pop_E + pop_I.
+  required: true
+  status: implemented
+  notes: Header-table row. Same content as the docstring claims iPopZeroAtSeed-a / iPop.
+- id: SEIREquations.table.SEIR2
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 20-20
+  text: '| SEIR2 | E does not contribute to the edge hazard |'
+  kind: structural
+  impl:
+  - edge_hazard_independent_of_E
+  supporting: []
+  impl_note: 'impl: two states with equal φ_I have equal edgeHazard (for every p); this implies independence from φ_E (indeed from every field other than φ_I). Good match.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: SEIREquations.table.SEIR3
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 21-21
+  text: '| SEIR3 | S + E + I + R = 1 (conservation, excluding seed) |'
+  kind: algebraic-identity
+  impl:
+  - seir_population_conservation
+  supporting: []
+  impl_note: impl proves the rate identity dE p inc + dI p + dR p = inc for an arbitrary rational 'inc'. SEIRState has no S field, no dS rate is defined, and no statement S + E + I + R = 1 (or its time-derivative form with dS = −inc) appears; 'excluding seed' has no formal counterpart.
+  required: true
+  status: implemented
+  notes: Header-table row. Table text (algebraic conservation of the total) differs from the SEIR3 docstring (d(E+I+R)/dt = incidence).
+- id: SEIREquations.table.SEIR4
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 22-22
+  text: '| SEIR4 | θ only decreases from I-edges (not E-edges) |'
+  kind: structural
+  impl:
+  - seir_theta_nonincreasing
+  supporting: []
+  impl_note: impl proves dθ ≤ 0 given 0 ≤ φ_I; it does not state that dθ is independent of φ_E (true by the definition of dθ, but no theorem says so), which is the 'not E-edges' part of the text.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: SEIREquations.table.SEIR5
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 23-23
+  text: '| SEIR5 | SEIR final size = SIR final size at the same β, γ (the latent period delays the epidemic but does not change T = β/(β+γ)) |'
+  kind: inequality
+  impl: []
+  supporting:
+  - seir_I_growth_bounded
+  impl_note: No final-size notion exists in the module; the theorem labelled SEIR5 (seir_I_growth_bounded) is about an instantaneous bound on dI, not final size.
+  required: false
+  status: missing
+  notes: 'Header-table row with no implementing theorem. Mathematically, for the Markovian SEIR EBCM with the same β, γ the per-edge transmissibility T = β/(β+γ) is unchanged by the latent stage, so the final size is EQUAL to the SIR one; the claim can only hold with equality. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | SEIR5 | SEIR final size ≤ SIR final size (latent period delays, doesn''t amplify) |'
+- id: SEIREquations.table.SEIR6
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 24-24
+  text: '| SEIR6 | SEIR peak I ≤ SIR peak I (at same R₀): expected from simulations, not proved here |'
+  kind: inequality
+  impl: []
+  supporting: []
+  impl_note: No trajectory, peak or R₀ notion for SEIR exists in the module; no theorem.
+  required: false
+  status: missing
+  notes: 'Header-table row with no implementing theorem. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | SEIR6 | SEIR peak I ≤ SIR peak I (at same R₀) |'
+- id: SEIREquations.edgeHazard
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 63-64
+  text: 'The edge hazard: only I contributes (E has zero transmission rate). **SEIR2**: E does NOT contribute to edge hazard.'
+  kind: structural
+  impl:
+  - edge_hazard_independent_of_E
+  supporting: []
+  impl_note: Def docstring of SEIRState.edgeHazard; the independence-from-φ_E property is exactly what edge_hazard_independent_of_E proves (equal φ_I ⇒ equal hazard).
+  required: true
+  status: implemented
+  notes: '''E has zero transmission rate'' has no formal counterpart (SEIRParams has no E-stage rate); it is realised only by the definition not mentioning φ_E.'
+- id: SEIREquations.dTheta
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 67-68
+  text: 'dθ/dt = −β·φ_I (only infectious edges cause transmission). **SEIR4**: θ does not decrease from E-edges.'
+  kind: structural
+  impl:
+  - seir_theta_nonincreasing
+  supporting: []
+  impl_note: Def docstring of SEIRState.dθ. The first sentence is the definition itself (bridge material). The SEIR4 property 'θ does not decrease from E-edges' (dθ independent of φ_E) is not stated by any theorem; the SEIR4-labelled theorem only gives dθ ≤ 0 under φ_I ≥ 0.
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.iPop
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 71-72
+  text: 'I_pop = pop_I only (NOT pop_E + pop_I). **SEIR1**: This is the key invariant that was violated in the bug.'
+  kind: structural
+  impl: []
+  supporting:
+  - I_pop_zero_at_seed
+  - I_pop_le_wrong
+  impl_note: Definitional statement about SEIRState.I_pop (its body is s.pop_I); to be checked by a bridge, not a theorem.
+  required: false
+  status: informal
+  notes: Def docstring.
+- id: SEIREquations.seirPopulationConservation
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 91-92
+  text: '**SEIR3.** Population conservation: d(E + I + R)/dt = incidence. The total non-susceptible fraction grows exactly at the incidence rate.'
+  kind: algebraic-identity
+  impl:
+  - seir_population_conservation
+  supporting: []
+  impl_note: 'impl: dE p inc + dI p + dR p = inc (ring). Matches the rate identity, but ''incidence'' is a free rational parameter of dE, not tied to θ, ψ or the edge hazard, and no time derivative appears (dE, dI, dR are rate functions).'
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.iPopZeroAtSeed-a
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 100-100
+  text: '**SEIR1.** I_pop counts only infectious stages.'
+  kind: structural
+  impl:
+  - I_pop_zero_at_seed
+  supporting: []
+  impl_note: impl is a single-instance check (I_pop = 0 at the literal seed state); the universal statement 'counts only infectious stages' is not stated (only true by definition).
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.iPopZeroAtSeed-b
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 101-101
+  text: 'At t=0 with seed in E: I_pop = 0, not ε.'
+  kind: structural
+  impl:
+  - I_pop_zero_at_seed
+  supporting: []
+  impl_note: 'impl: for the literal state ⟨1, ε, 0, ε, 0, 0⟩ (θ=1, φ_E=ε, φ_I=0, pop_E=ε, pop_I=0, pop_R=0), I_pop = 0 (rfl). ''t=0'' and ''seed in E'' are encoded only by that literal (no time or dynamics); ''not ε'' is not stated.'
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.iPopWrongNonzeroAtSeed
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 107-107
+  text: The buggy version gives ε at t=0 (wrong).
+  kind: structural
+  impl:
+  - I_pop_wrong_nonzero_at_seed
+  supporting: []
+  impl_note: impl proves I_pop_wrong ≠ 0 for the literal seed state under ε > 0; it does not state I_pop_wrong = ε (which the text asserts).
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.iPopLeWrong
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 114-114
+  text: '**SEIR1b.** I_pop ≤ I_pop_wrong (correct is always ≤ buggy).'
+  kind: inequality
+  impl:
+  - I_pop_le_wrong
+  supporting: []
+  impl_note: impl needs the extra hypothesis 0 ≤ s.pop_E, which 'always' in the text leaves implicit (SEIRState does not constrain signs).
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.edgeHazardIndependentOfE
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 122-122
+  text: '**SEIR2.** The edge hazard is independent of φ_E.'
+  kind: structural
+  impl:
+  - edge_hazard_independent_of_E
+  supporting: []
+  impl_note: 'impl: s₁.φ_I = s₂.φ_I → s₁.edgeHazard p = s₂.edgeHazard p. Stronger than independence of φ_E alone (independence of all fields but φ_I); implies the text.'
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.seirThetaNonincreasing
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 128-128
+  text: '**SEIR4.** θ is non-increasing (same proof as SIR).'
+  kind: inequality
+  impl:
+  - seir_theta_nonincreasing
+  supporting: []
+  impl_note: 'impl: 0 ≤ φ_I → dθ ≤ 0 for the pointwise rate function; ''θ is non-increasing'' is a statement about the solution θ(t) of the ODE, which is not formalised; the sign hypothesis on φ_I is extra.'
+  required: true
+  status: implemented
+  notes: ''
+- id: SEIREquations.seirIGrowthBounded-a
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 137-140
+  text: '**SEIR5 (auxiliary; not a peak bound).** If σ·pop_E ≤ pop_E + pop_I, then dI/dt ≤ pop_E + pop_I − γ·pop_I. Since dI/dt = σ·pop_E − γ·pop_I, this only restates the hypothesis; it does not compare SEIR with SIR, and σ·pop_E can exceed the SIR incidence.'
+  kind: inequality
+  impl:
+  - seir_I_growth_bounded
+  supporting: []
+  impl_note: 'impl: under hypothesis σ·pop_E ≤ pop_E + pop_I, dI ≤ pop_E + pop_I − γ·pop_I (linarith from the hypothesis). No SIR model and no incidence appear; the right-hand side is not an SIR growth rate (an SIR dI would be inc − γ·I), and the hypothesis is essentially the conclusion.'
+  required: true
+  status: implemented
+  notes: 'Suspicious: the formal statement bears no recognisable relation to the text. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **SEIR5.** At the same incidence, SEIR''s I growth rate is lower than SIR''s because SEIR''s inflow to I comes from E (rate σ·E) rather than directly from incidence.'
+- id: SEIREquations.seirIGrowthBounded-b
+  group: SEIREquations
+  source:
+    file: EBCMCategory/SEIREquations.lean
+    lines: 140-140
+  text: No bound on the SEIR peak follows.
+  kind: inequality
+  impl: []
+  supporting:
+  - seir_I_growth_bounded
+  impl_note: No peak notion exists; nothing bounds a peak.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This bounds the peak.'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text only, see DataTypes/SEIREquations.md):
+#   SEIRState.I_pop_wrong ("The wrong definition that caused the bug"), SEIRState.dE ("Population
+#   rates."), SEIRState.dI, SEIRState.dR (no docstrings), structures SEIRState, SEIRParams.
+# Header 'Motivation' paragraph (lines 28-32) is a claim about the Julia build_edge_system bug,
+#   not about the Lean library; not registered.

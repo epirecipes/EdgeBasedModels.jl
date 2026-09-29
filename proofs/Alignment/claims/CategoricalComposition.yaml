@@ -1,0 +1,988 @@
+# SA-PASS claim registry fragment -- group CategoricalComposition
+# Source module: EBCMCategory/CategoricalComposition.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: CategoricalComposition.header.scope
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 7-13
+  text: 'States scalar identities motivated by categorical constructions on edge-based compartmental models: products (multiplex networks), coproducts (stratified populations), natural transformations (adding stages, adding clustering), monoidal structure and functoriality. No categorical structure is formalised: no category, functor, natural transformation or monoidal product is defined, and the identities below are about real and natural numbers attached to layer records.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported). All results are identities/inequalities about ℝ, ℚ and ℕ.
+  required: false
+  status: missing
+  notes: 'ALIGNMENT: the module title/scope claims a categorical formalisation that does not exist. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Formalizes the categorical structure of edge-based compartmental models: products (multiplex networks), coproducts (stratified populations), natural transformations (adding stages, adding clustering), monoidal structure, and functorial properties.'
+- id: CategoricalComposition.R95.functor
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 56-58
+  text: 'The EBCM construction maps each (degree distribution, disease progression) pair to an ODE system. It would be a functor F: Graph × Disease → ODE once categories of such pairs and of ODE systems are defined; neither is defined here.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The EBCM construction is a functor F: Graph × Disease → ODE that maps each (degree distribution, disease progression) pair to an ODE system.'
+- id: CategoricalComposition.R95a.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 66-66
+  text: '**Result 95a.** The EBCM construction maps (PGF, SIR params) to an ODE system (not formalised).'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: EBCMLayer stores moments, T and a dimension; no ODE system is constructed.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 95a.** The EBCM functor maps (PGF, SIR params) to an ODE system.'
+- id: CategoricalComposition.R95a.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 67-67
+  text: We verify that R₀ = T · ψ''(1)/ψ'(1) for the resulting system.
+  kind: algebraic-identity
+  impl:
+  - ebcm_functor_R0
+  supporting: []
+  impl_note: 'impl: l.R0 = l.T·(l.secondFactorial/l.mean) -- the definition of EBCMLayer.R0 unfolded; there is no "resulting system".'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R95b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 73-75
+  text: '**Result 95b** (not formalised). Functoriality: the EBCM functor preserves the identity morphism—the identity graph homomorphism and identity disease map yield the same ODE system.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.2 (WP4): the content-free axiom was deleted and the docstring rewritten as prose; re-registered as informal. Ill-posed here: no category, morphism or ODE system is defined, so there is no Lean counterpart. The former axiom ebcm_functor_identity stated l.R0 = l.R0.'
+- id: CategoricalComposition.R95c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 80-81
+  text: '**Result 95c** (not formalised). Functoriality: F preserves composition. If φ: G₁ → G₂ and ψ: D₁ → D₂ are morphisms, then F(ψ∘φ) = F(ψ)∘F(φ).'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.2 (WP4): the content-free axiom was deleted and the docstring rewritten as prose; re-registered as informal. Ill-posed here: no category is defined. The former axiom ebcm_functor_composition stated transitivity of ≤ on layer R₀ values, unrelated to the text.'
+- id: CategoricalComposition.R96.product
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 88-89
+  text: 'For independent multiplex layers (G₁,D₁) and (G₂,D₂), the joint susceptible fraction is the product: S(t) = ψ₁(θ₁(t)) · ψ₂(θ₂(t)).'
+  kind: structural
+  impl: []
+  supporting:
+  - product_susceptible_pos
+  impl_note: No θ, ψ or time dependence exists for layers; S(t) = ψ₁(θ₁(t))·ψ₂(θ₂(t)) is not stated.
+  required: false
+  status: missing
+  notes: ''
+- id: CategoricalComposition.R96a
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 98-100
+  text: '**Result 96a.** Product susceptible fraction: S = S₁ · S₂. For layer susceptible fractions S₁ ∈ (0,1] and S₂ ∈ (0,1], the product S₁·S₂ ∈ (0,1].'
+  kind: inequality
+  impl:
+  - product_susceptible_pos
+  supporting: []
+  impl_note: 'impl: 0 < S₁ ≤ 1 → 0 < S₂ ≤ 1 → 0 < S₁·S₂ ∧ S₁·S₂ ≤ 1 over ℝ; "S = S₁·S₂" is not a definition, S₁, S₂ are free reals.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R96b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 109-111
+  text: '**Result 96b.** The product dimension is defined as the sum of the layer dimensions; the compact multiplex system needs fewer ODEs (one θ-equation per layer plus one recovery equation, `compactMultiplexDim`).'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Docstring of the DEFINITION MultiplexProduct.dim (:= layer1.dim + layer2.dim).
+  required: false
+  status: informal
+  notes: 'Inconsistent with compactMultiplexDim (n layers ↦ n+1 ODEs, R96d/e): if each layer carries its own recovery equation, the sum of dimensions overcounts the shared recovery equation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 96b.** The product dimension is the sum of individual dimensions.'
+- id: CategoricalComposition.R96c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 115-122
+  text: '**Result 96c.** The sum T₁e₁ + T₂e₂ of the per-layer R₀ values; it matches the former compact implementation in `src/multiplex.jl`. It is not the R₀ of independent multiplex layers, which is ρ(K) with K = [[T₁e₁, T₁⟨k₁⟩], [T₂⟨k₂⟩, T₂e₂]] and eᵢ = ψᵢ''''(1)/ψᵢ''(1) (`MultiplexProduct.K11` …). The sum T₁e₁ + T₂e₂ equals ρ(K) iff det K = 0, i.e. e₁e₂ = ⟨k₁⟩⟨k₂⟩, for example for two Poisson layers; it underestimates ρ(K) when e₁e₂ < ⟨k₁⟩⟨k₂⟩. Two 3-regular layers with T = 6/25 give sum 24/25 but ρ(K) = 6/5 (`multiplex_R0_sum_ne_spectral`).'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: Docstring of the DEFINITION MultiplexProduct.R0_sum (:= layer1.R0 + layer2.R0); no theorem relates it to the multiplex R₀.
+  required: false
+  status: missing
+  notes: 'CORRECTNESS (also affects src/multiplex.jl multiplex_R0): for independent layers on shared nodes the next-generation matrix is K = [[T₁e₁, T₁⟨k₁⟩], [T₂⟨k₂⟩, T₂e₂]] (e_i = ψ_i″(1)/ψ_i′(1)); R₀ = ρ(K) equals T₁e₁ + T₂e₂ iff det K = T₁T₂(e₁e₂ - ⟨k₁⟩⟨k₂⟩) = 0 (e.g. both layers Poisson). Example (sympy): 4-regular + 2-regular layers, T₁ = T₂ = 1/2: sum = 2, ρ(K) = 2.5. The additive formula underestimates R₀ in general. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 96c.** Product R₀ for independent multiplex layers adds the per-layer contributions, matching the compact implementation in `src/multiplex.jl`. -- The corrected text is implemented (for the counterexample) by multiplex_R0_sum_ne_spectral; MultiplexProduct.R0_sum_eq_trace records sum = tr K.'
+- id: CategoricalComposition.R96d
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 131-131
+  text: '**Result 96d.** A two-layer compact multiplex system has 3 ODEs.'
+  kind: algebraic-identity
+  impl:
+  - compact_multiplex_dim_two
+  supporting: []
+  impl_note: 'impl: compactMultiplexDim 2 = 3 by rfl -- a fact about the Lean def (n+1), not about the Julia system.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R96e
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 136-136
+  text: '**Result 96e.** A three-layer compact multiplex system has 4 ODEs.'
+  kind: algebraic-identity
+  impl:
+  - compact_multiplex_dim_three
+  supporting: []
+  impl_note: 'impl: compactMultiplexDim 3 = 4 by rfl.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R96f
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 141-145
+  text: '**Result 96f.** If the summed multiplex contribution is at most one, the sum is at most one. **Tautological Lean statement:** its hypothesis is its conclusion. The multiplex product itself need not be subcritical: for two 3-regular layers with T = 6/25 the sum is 24/25 but R₀ = ρ(K) = 6/5 (`multiplex_R0_sum_ne_spectral`).'
+  kind: inequality
+  impl:
+  - product_subcritical
+  supporting: []
+  impl_note: impl is the identity implication p.R0_sum ≤ 1 → p.R0_sum ≤ 1 ("subcritical" is not defined separately).
+  required: true
+  status: implemented
+  notes: 'TAUTOLOGICAL; also R0_sum is not the multiplex R₀ in general (see R96c). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 96f.** If the summed multiplex contribution is at most one, the product is subcritical. -- Formerly a passing claim with false text (TRIAGE P2.5); impl product_subcritical is tautological. Candidate additional impl for the counterexample sentence: multiplex_R0_sum_ne_spectral.'
+- id: CategoricalComposition.R96g
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 151-152
+  text: '**Result 96g.** If the first layer is supercritical, then the additive multiplex threshold is also supercritical.'
+  kind: inequality
+  impl:
+  - product_supercritical_left
+  supporting: []
+  impl_note: 'impl: 1 < layer1.R0 → 1 < layer1.R0 + layer2.R0 using layer2.R0 ≥ 0 (from T > 0, sf ≥ 0, mean > 0). Genuine for the additive threshold.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R97.coproduct
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 216-219
+  text: 'For K types with degree distributions and a K×K mixing matrix M, the multi-type EBCM couples K single-type EBCMs through M. It is not a coproduct: with mixing, the types interact, so the joint system is not a disjoint union of the single-type systems.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported). Only a 2-type data record exists.
+  required: false
+  status: missing
+  notes: 'The mixing entries m11..m22 of StratifiedData are never used by any theorem. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For K types with degree distributions and a K×K mixing matrix M, the multi-type EBCM is the coproduct of K single-type EBCMs glued by M.'
+- id: CategoricalComposition.R97a.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 238-239
+  text: '**Result 97a.** Overall susceptible fraction is the population-weighted sum: S(t) = p₁·S₁(t) + p₂·S₂(t).'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: 'Docstring of the DEFINITION StratifiedData.S_total (S1 S2 : ℝ) (d) := d.p1·S1 + d.p2·S2.'
+  required: false
+  status: informal
+  notes: ''
+- id: CategoricalComposition.R97a.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 239-240
+  text: It is a convex combination of the type susceptible fractions, not a coproduct injection.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'A convex combination of observables is not a coproduct injection. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the defining property of the coproduct injection.'
+- id: CategoricalComposition.R97b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 244-245
+  text: '**Result 97b.** The coproduct susceptible fraction at t=0 is 1 (everyone starts susceptible).'
+  kind: algebraic-identity
+  impl:
+  - stratified_S_initial
+  supporting: []
+  impl_note: 'impl: d.S_total 1 1 = 1 (p1 + p2 = 1); "t = 0" is represented by passing S₁ = S₂ = 1.'
+  required: true
+  status: implemented
+  notes: Conflicts with the explicit seed convention (InvariantRegion.R120b), where S(0) = 1 - ρ.
+- id: CategoricalComposition.R97c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 251-252
+  text: '**Result 97c.** The coproduct susceptible fraction is in [0,1] when each Si ∈ [0,1].'
+  kind: inequality
+  impl:
+  - stratified_S_in_unit
+  supporting: []
+  impl_note: 'impl: S1, S2 ∈ [0,1] → 0 ≤ d.S_total S1 S2 ≤ 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R97d.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 266-266
+  text: '**Result 97d.** The coproduct dimension is the sum of individual dimensions.'
+  kind: algebraic-identity
+  impl:
+  - stratified_dim
+  supporting: []
+  impl_note: impl is the reflexivity d.layer1.dim + d.layer2.dim = d.layer1.dim + d.layer2.dim (rfl); no coproduct dimension is defined.
+  required: true
+  status: implemented
+  notes: TAUTOLOGICAL.
+- id: CategoricalComposition.R97d.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 268-269
+  text: With mixing, a single type's system is not an invariant subsystem of the joint system, so it is not injected into it.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The coproduct injects each type''s ODE system into the joint system.'
+- id: CategoricalComposition.R98.natTrans
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 275-277
+  text: 'The method of stages defines a map η_n: EBCM_Exp → EBCM_Erlang (informally a natural transformation; no category is defined) that replaces each exponential infectious period with n Erlang sub-stages.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The method of stages defines a natural transformation η: EBCM_Exp → EBCM_Erlang where η_n replaces each exponential infectious period with n Erlang sub-stages.'
+- id: CategoricalComposition.R98.keyProperty
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 279-281
+  text: 'Key property: η_n preserves the PGF and the mean infectious period. T_n = 1 − (nγ/(β+nγ))^n increases with n towards 1 − exp(−β/γ), so R₀ and the final size change (`stages_change_transmissibility`).'
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'FALSE for a fixed mean infectious period 1/γ: T_n = 1 - (nγ/(β+nγ))^n depends on n (β = γ = 1: T₁ = 1/2, T₂ = 5/9, T_∞ = 1 - e^{-1}), so R₀ = T_n·ψ″(1)/ψ′(1) and the final size change with n. R98d.2 itself concedes "Different T values from different stage counts may yield different final sizes". WP4b (TRIAGE P1.4/P2): text corrected; previous text: Key property: η preserves R₀ and the final epidemic size. -- Candidate impl: stages_change_transmissibility (n = 2 case of the change of T).'
+- id: CategoricalComposition.R98a
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 301-302
+  text: '**Result 98a.** For n=1, the Erlang transmissibility equals the exponential transmissibility: T₁ = β/(β+γ).'
+  kind: algebraic-identity
+  impl:
+  - stages_n1_recovers_exp
+  supporting: []
+  impl_note: 'impl: β, γ > 0 → 1 - (1·γ/(β + 1·γ))^1 = β/(β+γ); the defs T_erlang/T_exp are inlined (not referenced) with n = 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R98b.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 311-312
+  text: '**Result 98b.** Excess-degree preservation: the excess degree ratio is independent of the number of stages (it depends only on the PGF).'
+  kind: structural
+  impl:
+  - stages_preserve_excess_degree
+  supporting: []
+  impl_note: 'impl: for reals e, T1, T2: (T1·e/e = T1 ∧ T2·e/e = T2) ∨ e = 0 -- a cancellation identity; no stage count, PGF or R₀ appears.'
+  required: true
+  status: implemented
+  notes: 'The label "R₀ preservation" is misleading: R₀ = T_n·e is not preserved (see R98.keyProperty). WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 98b.** R₀ preservation: the excess degree ratio is independent of the number of stages (it depends only on the PGF).'
+- id: CategoricalComposition.R98b.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 312-313
+  text: Hence for any layer, R₀ = T · excessDeg where excessDeg is fixed across the transformation.
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: ''
+- id: CategoricalComposition.R98b.3
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 315-315
+  text: The map η_n sends T_exp to T_n and keeps the PGF.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The natural transformation η maps T_exp to T_n while preserving the PGF component.'
+- id: CategoricalComposition.R98c.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 326-326
+  text: '**Result 98c.** Mean infectious period is preserved: E[Erlang(n,nγ)] = 1/γ.'
+  kind: algebraic-identity
+  impl:
+  - stages_mean_preserved
+  supporting: []
+  impl_note: 'impl: n/(n·γ) = 1/γ for n > 0, γ > 0; the Erlang distribution and its expectation are not formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R98c.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 327-327
+  text: It is the identity that fixes the sub-stage rate nγ.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the key identity ensuring the natural transformation is well-defined.'
+- id: CategoricalComposition.R98d.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 353-355
+  text: '**Result 98d.** Final-size equation: the final size equation θ∞ = 1 - T + T·g(θ∞) depends on T and the PGF g, not on the sojourn time distribution within the infectious period.'
+  kind: structural
+  impl:
+  - stages_final_size_map
+  supporting: []
+  impl_note: 'impl: 1 - T + T·g = 1 - T·(1 - g) (ring) for reals T, g -- a rearrangement of the fixed-point map, silent about sojourn-time distributions.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 98d.** Final size preservation: the final size equation θ∞ = 1 - T + T·g(θ∞) depends on T and the PGF g, not on the sojourn time distribution within the infectious period.'
+- id: CategoricalComposition.R98d.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 355-357
+  text: Different T values from different stage counts may yield different final sizes, but the mapping T ↦ finalSize(T) is the same functional form.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: Contradicts the section header "η preserves R₀ and the final epidemic size" (R98.keyProperty) and the label "Final size preservation".
+- id: CategoricalComposition.R99.natTrans
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 363-364
+  text: The clustering extension maps an unclustered EBCM to a clustered one (informally a natural transformation η_C; no category is defined).
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The clustering extension defines a natural transformation η_C from unclustered EBCM to clustered EBCM.'
+- id: CategoricalComposition.R99a.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 369-371
+  text: '**Result 99a.** When the clustering coefficient is zero (no triangles), the clustered model susceptible fraction reduces to the standard EBCM susceptible fraction.'
+  kind: structural
+  impl: []
+  supporting:
+  - clustering_zero_is_identity
+  impl_note: No clustered-EBCM susceptible fraction is defined; clustering_zero_is_identity only evaluates 2·0/(2·0 + ⟨s⟩) = 0.
+  required: false
+  status: missing
+  notes: ''
+- id: CategoricalComposition.R99a.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 371-372
+  text: So the clustered model with no triangles is the standard model.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This makes η₀ the identity transformation.'
+- id: CategoricalComposition.R99a.3
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 374-376
+  text: The triangle stub fraction 2⟨t⟩/(2⟨t⟩+⟨s⟩) (called the clustering coefficient in ClusteringExtension; the clustering coefficient is 2⟨t⟩/⟨k(k−1)⟩) vanishes when ⟨t⟩ = 0.
+  kind: algebraic-identity
+  impl:
+  - clustering_zero_is_identity
+  supporting: []
+  impl_note: 'impl: 2·0/(2·0 + mean_s) = 0 over ℚ (hypothesis 0 < mean_s unused).'
+  required: true
+  status: implemented
+  notes: 'DEFINITION ISSUE: 2⟨t⟩/(2⟨t⟩+⟨s⟩) is the fraction of edge-ends lying in triangles, not the clustering coefficient C = 3·N_triangles/N_2-paths (Volz et al. 2011, papers/clustering1.md l.73); for the triangle model C = 2⟨t⟩/⟨k(k-1)⟩. Both vanish when ⟨t⟩ = 0. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Clustering coefficient C = 2⟨t⟩/(2⟨t⟩+⟨s⟩). When ⟨t⟩=0, C=0.'
+- id: CategoricalComposition.R99b.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 381-385
+  text: |-
+    **Result 99b.** The clustered R₀ reduces to the standard R₀ when there are no triangle edges (⟨t⟩ = 0).
+    [...]
+    When ⟨t⟩ = 0: R₀_clustered = T·excess_single = R₀_standard.
+  kind: algebraic-identity
+  impl:
+  - clustering_zero_R0
+  supporting: []
+  impl_note: 'impl: T·e + T·(2·0/(e + 2·0))·(1+T) = T·e over ℚ -- the formula''s ⟨s⟩ is replaced by excess_s (one variable plays both the single-edge mean and the excess degree) and ⟨t⟩ is the literal 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R99b.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 383-384
+  text: The scalar `clustered_R0` = T·excess_single + T·(2⟨t⟩/(⟨s⟩+2⟨t⟩))·(1+T) is not the R₀ of a clustered network (ClusteringExtension, Result 72).
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'Formula has no Lean definition and no cited source; it should be checked against Miller 2009 / ClusteringExtension.lean (for triangle-clustered CM networks R₀ is usually a spectral radius over single/triangle edge types). WP4b (TRIAGE P1.4/P2): text corrected; previous text: R₀_clustered = T·excess_single + T·(2⟨t⟩/(⟨s⟩+2⟨t⟩))·(1+T).'
+- id: CategoricalComposition.R99c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 390-393
+  text: '**Result 99c** (not formalised). Naturality: for any graph morphism φ that preserves the clustering structure, the diagram commutes — applying φ then computing the clustered EBCM gives the same result as computing the unclustered EBCM then applying η_C.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'P1.2 (WP4): the content-free axiom was deleted and the docstring rewritten as prose; re-registered as informal. Ill-posed here: no graph morphism or natural transformation is defined. The former axiom clustering_naturality concluded True.'
+- id: CategoricalComposition.R100.monoidal
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 400-402
+  text: 'The multiplex product of layers (Result 96) behaves like a monoidal product on susceptible fractions and dimensions (informal: no category is defined). Its unit is the trivial network: degree 0, no edges.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The EBCM category with multiplex product (Result 96) is monoidal. The unit object is the trivial network: degree 0, no edges.'
+- id: CategoricalComposition.R100.unitObject
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 407-409
+  text: 'The trivial (unit) layer: degree 0, no edges, T irrelevant. The PGF is ψ(x) = 1 (deterministic degree 0), so ψ''(1) = 0. We model the unit via its effect on the product: S_unit = ψ_unit(θ) = 1 for all θ.'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'A degree-0 layer is NOT an EBCMLayer: EBCMLayer.mean_pos requires ψ′(1) > 0 and T_pos requires T > 0, so the claimed unit object does not exist in the formalised data; the unit is modelled only by the number 1.'
+- id: CategoricalComposition.R100a
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 411-412
+  text: '**Result 100a.** Left unitality: the trivial layer is a left unit for the susceptible product. S_unit · S = 1 · S = S.'
+  kind: algebraic-identity
+  impl:
+  - monoidal_left_unit
+  supporting: []
+  impl_note: 'impl: 1·S = S over ℝ (ring); layers and products are not involved.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R100b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 415-415
+  text: '**Result 100b.** Right unitality: S · S_unit = S · 1 = S.'
+  kind: algebraic-identity
+  impl:
+  - monoidal_right_unit
+  supporting: []
+  impl_note: 'impl: S·1 = S over ℝ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R100c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 418-419
+  text: '**Result 100c.** Associativity of the multiplex product: (S₁ · S₂) · S₃ = S₁ · (S₂ · S₃).'
+  kind: algebraic-identity
+  impl:
+  - monoidal_assoc
+  supporting: []
+  impl_note: 'impl: S1·S2·S3 = S1·(S2·S3) over ℝ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R100d
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 423-424
+  text: '**Result 100d.** The product ODE dimension is associative: (d₁ + d₂) + d₃ = d₁ + (d₂ + d₃).'
+  kind: algebraic-identity
+  impl:
+  - monoidal_dim_assoc
+  supporting: []
+  impl_note: 'impl: associativity of + on ℕ (omega).'
+  required: true
+  status: implemented
+  notes: compactMultiplexDim (n+1) is not additive, so this is not associativity of the compact multiplex dimension.
+- id: CategoricalComposition.R100e
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 428-429
+  text: '**Result 100e.** The unit dimension is 0 (trivial ODE system): 0 + d = d and d + 0 = d.'
+  kind: algebraic-identity
+  impl:
+  - monoidal_dim_unit_left
+  - monoidal_dim_unit_right
+  supporting: []
+  impl_note: 'impl: 0 + d = d and d + 0 = d on ℕ; the second theorem has no docstring of its own.'
+  required: true
+  status: implemented
+  notes: Under compactMultiplexDim the 0-layer system has 1 ODE, not 0.
+- id: CategoricalComposition.R100f.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 434-436
+  text: '**Result 100f.** The real-number identities that the pentagon and triangle identities would reduce to hold (no associator or unitor is defined).'
+  kind: categorical
+  impl:
+  - monoidal_pentagon
+  - monoidal_triangle
+  supporting: []
+  impl_note: 'impl: S1·S2·S3·S4 = S1·(S2·(S3·S4)) and S1·1·S2 = S1·(1·S2) over ℝ -- instances of associativity/unit laws of real multiplication, not the pentagon/triangle equations between associator and unitor morphisms.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 100f.** Monoidal coherence: the Pentagon identity for the associator and the Triangle identity for the unitors hold.'
+- id: CategoricalComposition.R100f.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 436-438
+  text: These are automatically satisfied for the product of real numbers (since ℝ multiplication is a strict monoidal operation).
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: ''
+- id: CategoricalComposition.R101.natTrans
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 447-448
+  text: R₀ is a real-valued function of the layer data (informally a natural transformation to the constant functor ℝ; no functor is defined).
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'A natural transformation from a functor to a constant functor needs the functor''s action on morphisms; none is defined. WP4b (TRIAGE P1.4/P2): text corrected; previous text: R₀ defines a natural transformation from the EBCM functor to the constant functor ℝ.'
+- id: CategoricalComposition.R101a
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 452-453
+  text: '**Result 101a.** R₀ is monotone in transmissibility: if T₁ ≤ T₂ and the excess degree is the same, then R₀(T₁) ≤ R₀(T₂).'
+  kind: inequality
+  impl:
+  - R0_monotone_in_T
+  supporting: []
+  impl_note: 'impl: T1 ≤ T2 → 0 ≤ e → T1·e ≤ T2·e over ℝ (adds 0 ≤ excessDeg).'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R101b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 459-459
+  text: '**Result 101b.** Strict monotonicity when excessDeg > 0.'
+  kind: inequality
+  impl:
+  - R0_strict_monotone_in_T
+  supporting: []
+  impl_note: 'impl: T1 < T2 → 0 < e → T1·e < T2·e.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R101c
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 465-465
+  text: '**Result 101c.** R₀ = 0 when T = 0 (no transmission).'
+  kind: algebraic-identity
+  impl:
+  - R0_zero_at_T_zero
+  supporting: []
+  impl_note: 'impl: 0·e = 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R101d
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 469-469
+  text: '**Result 101d.** R₀ = excessDeg when T = 1 (complete transmission).'
+  kind: algebraic-identity
+  impl:
+  - R0_at_T_one
+  supporting: []
+  impl_note: 'impl: 1·e = e.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R101e
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 473-474
+  text: '**Result 101e.** Monotonicity of R₀ in the excess degree: if e₁ ≤ e₂ and T ≥ 0, then T·e₁ ≤ T·e₂.'
+  kind: inequality
+  impl:
+  - R0_monotone_in_excess
+  supporting: []
+  impl_note: 'impl: 0 ≤ T → e1 ≤ e2 → T·e1 ≤ T·e2; no morphism or graph homomorphism is involved, and "increases" is non-strict.'
+  required: true
+  status: implemented
+  notes: 'Graph homomorphisms need not increase excess degree; the naturality reading has no formal content. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 101e.** Naturality of R₀: for any morphism (graph homomorphism) that maps excess degree e₁ to e₂ with e₁ ≤ e₂, R₀ increases.'
+- id: CategoricalComposition.R102.pullback
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 482-484
+  text: The degree-correlated model is built from a mixing matrix Q and the degree distribution (informally a pullback; no category of mixing matrices is defined).
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The degree-correlated model is a pullback of the mixing matrix Q along the degree distribution.'
+- id: CategoricalComposition.R102.terminal
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 484-486
+  text: Neutral mixing (Q(l|k) = l·pₗ/⟨k⟩) is the special case r = 0 of the assortative family below; no category of mixing matrices, and so no terminal object, is defined.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'No category of mixing matrices is defined. The section also says "We formalize this using the 2-type mixing matrix from DegreeCorrelation" but CategoricalComposition does not import DegreeCorrelation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Neutral mixing (Q(l|k) = l·pₗ/⟨k⟩) is the terminal object in the category of mixing matrices.'
+- id: CategoricalComposition.meanDegPos
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 510-510
+  text: Mean degree is positive.
+  kind: inequality
+  impl:
+  - MixingPullbackData.meanDeg_pos
+  supporting: []
+  impl_note: 'impl: 0 < d.meanDeg (k_i, p_i > 0 are structure fields).'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102a.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 525-526
+  text: '**Result 102a.** Neutral mixing: when r=0, the mixing matrix Q(l|k) = q_l is independent of k.'
+  kind: categorical
+  impl: []
+  supporting:
+  - neutral_is_terminal_q1
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 102a.** Neutral mixing is the terminal object: when r=0, the mixing matrix Q(l|k) = q_l is independent of k.'
+- id: CategoricalComposition.R102a.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 526-527
+  text: Setting r = 0 is a specialisation of the family, not a universal property.
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the universal property — every mixing matrix maps to the neutral one by setting r=0.'
+- id: CategoricalComposition.R102a.3
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 528-528
+  text: We verify that for any r, the r=0 specialization gives q₁.
+  kind: algebraic-identity
+  impl:
+  - neutral_is_terminal_q1
+  supporting: []
+  impl_note: 'impl: k1·(0 + (1-0)·q1) = k1·q1 over ℝ (ring) -- r is the literal 0, "for any r" has no content, and the mixing form r·δ + (1-r)·q is only implicit.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102b
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 532-533
+  text: '**Result 102b.** At r=0, the off-diagonal mixing entry k₁·(1-r)·q₂ reduces to k₁·q₂, the neutral mixing value.'
+  kind: algebraic-identity
+  impl:
+  - pullback_neutral_offdiag
+  supporting: []
+  impl_note: 'impl: d.k1·(1-0)·d.q2 = d.k1·d.q2 (ring) with r replaced by the literal 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102c.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 537-538
+  text: '**Result 102c.** The r = 0 specialisation of the assortative mixing matrix.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 102c.** The pullback universality: for any mixing matrix with assortativity r, there is a unique morphism to the neutral mixing matrix (r=0). This morphism is simply the map r ↦ 0.'
+- id: CategoricalComposition.R102c.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 540-541
+  text: We verify that the r=0 specialization of every mixing entry recovers the neutral form.
+  kind: algebraic-identity
+  impl:
+  - pullback_C11_neutral
+  - pullback_C12_neutral
+  - pullback_C21_neutral
+  - pullback_C22_neutral
+  supporting: []
+  impl_note: Four ring identities, one per 2×2 entry, with r := 0 substituted by hand (diagonal r + (1-r)q form, off-diagonal (1-r)q form); three of the four theorems have no docstring of their own.
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102d.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 554-555
+  text: '**Result 102d.** The neutral mixing matrix is rank-1 (det = 0): it factors through the degree distribution.'
+  kind: categorical
+  impl: []
+  supporting: []
+  impl_note: No category, functor, natural transformation, limit or monoidal structure is defined (Mathlib CategoryTheory is not imported).
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 102d.** Uniqueness of the terminal morphism: the neutral mixing matrix is rank-1 (det = 0), meaning it is the unique factorization through the degree distribution.'
+- id: CategoricalComposition.R102d.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 555-555
+  text: We verify that det(C_neutral) = 0 for 2×2.
+  kind: algebraic-identity
+  impl:
+  - neutral_mixing_det_zero
+  supporting: []
+  impl_note: 'impl: k1q1·k2q2 - k1q2·k2q1 = 0 (ring); the hypothesis q1 + q2 = 1 is unused; Matrix.det is not used.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102e.1
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 560-561
+  text: '**Result 102e.** Pullback compatibility: the degree-correlated model recovers the uncorrelated R₀ when r=0.'
+  kind: structural
+  impl:
+  - pullback_R0_at_neutral
+  supporting: []
+  impl_note: 'impl: T·A/B = T·(A/B) with A = k1²p1 + k2²p2, B = k1p1 + k2p2 > 0 (field_simp) -- associativity of ·,/; no correlated model, eigenvalue or r appears.'
+  required: true
+  status: implemented
+  notes: ''
+- id: CategoricalComposition.R102e.2
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 562-566
+  text: For r=0, the largest eigenvalue of C = k·Q equals ⟨k²⟩/⟨k⟩, which is one more than the largest eigenvalue ⟨k²-k⟩/⟨k⟩ of the next-generation matrix K = (k-1)·Q; R₀ = T·⟨k²-k⟩/⟨k⟩ is the standard uncorrelated formula (DegreeCorrelation `neutral_traceK`). The Lean statement below is the field identity T·a/b = T·(a/b), with a/b = ⟨k²⟩/⟨k⟩.
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'ALIGNMENT/CORRECTNESS: internally inconsistent. If the leading eigenvalue of C (C_ij = k_i q_j, rank 1, trace Σk_i²p_i/⟨k⟩) is ⟨k²⟩/⟨k⟩, then T·λ = T⟨k²⟩/⟨k⟩, not T⟨k²-k⟩/⟨k⟩; the standard formula needs C_ij = (k_i - 1)q_j. The impl of R102e.1 uses ⟨k²⟩/⟨k⟩, i.e. the non-standard value. WP4b (TRIAGE P1.4/P2): text corrected; previous text: For r=0, the largest eigenvalue of C equals ⟨k²⟩/⟨k⟩, so R₀ = T·⟨k²-k⟩/⟨k⟩ which is the standard uncorrelated formula.'
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Theorems without a docstring of their own (covered by the preceding docstring's claim):
+#   monoidal_dim_unit_right   (R100e)
+#   monoidal_triangle         (R100f.1)
+#   pullback_C12_neutral, pullback_C21_neutral, pullback_C22_neutral   (R102c.2)
+#
+# Section-header sentences not registered separately (restate a docstring or are meta):
+#   lines 56-58 ("Functoriality means ... stated axiomatically"), 84 (= R96b), 153 ("We formalize the
+#   2-type case explicitly"), 271-272 (= R99a), 304 ("We verify associativity and unitality"),
+#   346-347 (= R101a), 383 ("We formalize this using the 2-type mixing matrix from DegreeCorrelation";
+#   noted under R102.terminal).
+#
+# Definitions/structures (vocabulary, see Alignment/DataTypes/CategoricalComposition.md):
+#   EBCMLayer, EBCMLayer.excessDegree, EBCMLayer.R0, MultiplexProduct, MultiplexProduct.dim (R96b),
+#   MultiplexProduct.R0_sum (R96c), compactMultiplexDim, StratifiedData, StratifiedData.S_total (R97a),
+#   StagesNatTransData, StagesNatTransData.T_exp, StagesNatTransData.T_erlang, MixingPullbackData,
+#   MixingPullbackData.meanDeg, MixingPullbackData.q1, MixingPullbackData.q2 (undocumented).
+#
+# Axioms formerly in this module (deleted in WP4, P1.2): ebcm_functor_identity (l.R0 = l.R0),
+#   ebcm_functor_composition (le_trans on R0), clustering_naturality (True) -- all trivially true, none
+#   stated its docstring. The module now declares no axiom.
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: CategoricalComposition.r0SumEqTrace
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 183-184
+  text: The additive rule `R0_sum` is the trace of the multiplex next-generation matrix K.
+  kind: algebraic-identity
+  impl:
+  - MultiplexProduct.R0_sum_eq_trace
+  supporting: []
+  impl_note: p.R0_sum = p.K11 + p.K22 (rfl), K11 = T₁e₁, K22 = T₂e₂.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: CategoricalComposition.multiplexR0SumNeSpectral
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 199-202
+  text: '**The additive multiplex R₀ is not the spectral radius.** For two 3-regular layers with T = 6/25, K = [[12/25, 18/25], [18/25, 12/25]] has the eigenvectors (1, 1) with eigenvalue 6/5 and (1, −1) with eigenvalue −6/25, so ρ(K) = 6/5 > 1, while `R0_sum` = 24/25 < 1.'
+  kind: existence
+  impl:
+  - multiplex_R0_sum_ne_spectral
+  supporting: []
+  impl_note: ∃ p, K11 + K12 = 6/5 ∧ K21 + K22 = 6/5 ∧ K11 − K12 = −6/25 ∧ K21 − K22 = 6/25 ∧ R0_sum = 24/25 (eigenvector equations written entrywise; ρ(K) itself is not defined in Lean).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: CategoricalComposition.stagesChangeTransmissibility
+  group: CategoricalComposition
+  source:
+    file: EBCMCategory/CategoricalComposition.lean
+    lines: 333-335
+  text: 'Staging changes the transmissibility: with n = 2 stages, T_exp = β/(β+γ) < T_2 = 1 − (2γ/(β+2γ))², since the difference is β²γ/((β+γ)(β+2γ)²) > 0.'
+  kind: inequality
+  impl:
+  - stages_change_transmissibility
+  supporting: []
+  impl_note: d.n = 2 → d.T_exp < d.T_erlang.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

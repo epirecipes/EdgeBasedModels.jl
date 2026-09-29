@@ -4,15 +4,17 @@ import Mathlib.Tactic
 /-!
 # Clustering Extension for EBCM
 
-Formalizes the bivariate PGF framework for networks with tunable clustering,
-following Volz (2011) and Miller & Volz (2011). A clustered network is described
-by g(x,y) = Σ p_{s,t} x^s y^t where s counts single-edge stubs and t counts
-triangle-edge stubs.
+Records scalar quantities of the bivariate PGF framework for networks with
+tunable clustering, following Volz et al. (2011) and Miller & Volz (2013). A
+clustered network is described by g(x,y) = Σ p_{s,t} x^s y^t where s counts
+single-edge stubs and t counts triangles at a node. The PGF g itself is not
+formalised: the records below store free rationals.
 
 ## References
 
-* Volz E (2011). Effects of heterogeneous and clustered contact patterns
-  on infectious disease dynamics. PLoS Comput Biol.
+* Volz EM, Miller JC, Galvani A, Ancel Meyers L (2011). Effects of
+  heterogeneous and clustered contact patterns on infectious disease
+  dynamics. PLoS Comput Biol 7(6): e1002042.
 * Miller JC, Volz EM (2013). Incorporating disease and population structure
   into models of SIR disease in contact networks. PLoS ONE 8(8):e69162.
 -/
@@ -29,11 +31,17 @@ structure ClusteredPGFData where
 
 /-! ## Result 69: Clustering coefficient -/
 
-/-- **Result 69.** Clustering coefficient C = 2⟨t⟩/(2⟨t⟩+⟨s⟩). -/
+/-- **Result 69.** The triangle stub fraction 2⟨t⟩/(2⟨t⟩+⟨s⟩): the fraction
+    of stubs that are triangle stubs (named `clustering_coefficient` for
+    compatibility).
+    It is not the clustering coefficient, which is C = 2⟨t⟩/⟨k(k−1)⟩ with
+    k = s + 2t (the fraction of connected triples that are closed); for
+    independent Poisson single and triangle degrees with means κ_s, κ_t,
+    C = 2κ_t/((κ_s + 2κ_t)² + 2κ_t). -/
 def clustering_coefficient (d : ClusteredPGFData) : ℚ :=
   2 * d.mean_triangle / (2 * d.mean_triangle + d.mean_single)
 
-/-- The clustering coefficient lies in [0,1]. -/
+/-- The triangle stub fraction lies in [0,1]. -/
 theorem clustering_in_unit_interval (d : ClusteredPGFData) :
     0 ≤ clustering_coefficient d ∧ clustering_coefficient d ≤ 1 := by
   unfold clustering_coefficient
@@ -66,13 +74,17 @@ theorem zero_clustering_iff_no_triangles (d : ClusteredPGFData) :
 
 Within a triangle, a susceptible node can be infected directly (prob T)
 or indirectly via the third node. The total probability of infection through
-a triangle pair is 1 - (1-T)(1-T²) = T + T² - T³, or T(2-T) per partner. -/
+a triangle pair is 1 - (1-T)(1-T²) = T + T² - T³ (independent edges).
+This is not T(2-T) = 1 - (1-T)², the probability that at least one of two
+independent edges transmits. -/
 
 /-- **Result 71a.** Pair transmission through a triangle. -/
 theorem triangle_pair_transmission (T : ℚ) :
     1 - (1 - T) * (1 - T ^ 2) = T + T ^ 2 - T ^ 3 := by ring
 
-/-- **Result 71b.** Per-partner effective transmissibility in a triangle. -/
+/-- **Result 71b.** The ring identity T(2 − T) = 2T − T².
+    It is not the per-partner transmissibility in a triangle, which is
+    T + T² − T³ (Result 71a); at T = 1/2 the two are 3/4 and 5/8. -/
 theorem triangle_per_partner (T : ℚ) :
     T * (2 - T) = 2 * T - T ^ 2 := by ring
 
@@ -84,8 +96,13 @@ structure ClusteredR0Data extends ClusteredPGFData where
   T_pos : 0 < T
   T_le_one : T ≤ 1
 
-/-- **Result 72.** R₀ for a clustered network:
-  R₀ = T·(⟨s(s-1)⟩/⟨s+2t⟩) + T·(2⟨t⟩/⟨s+2t⟩)·(1+T). -/
+/-- **Result 72.** The scalar `clustered_R0` =
+  T·(⟨s(s-1)⟩/⟨s+2t⟩) + T·(2⟨t⟩/⟨s+2t⟩)·(1+T), kept for compatibility.
+  It is not the R₀ of a clustered network: its triangle term does not scale
+  with the excess triangle degree. For triangle-clustered configuration
+  models, R₀ is the spectral radius of the next-generation matrix over
+  single-edge and triangle-edge infection types (Miller 2009); it is not
+  formalised here. -/
 def clustered_R0 (d : ClusteredR0Data) : ℚ :=
   d.T * d.excess_single +
   d.T * (2 * d.mean_triangle / (d.mean_single + 2 * d.mean_triangle)) * (1 + d.T)
@@ -93,13 +110,14 @@ def clustered_R0 (d : ClusteredR0Data) : ℚ :=
 /-! ## Result 73: Clustering reduces R₀ (algebraic form)
 
 Converting a triangle (⟨t⟩→⟨t⟩-1) to two single edges (⟨s⟩→⟨s⟩+2) preserves
-mean degree ⟨k⟩ = ⟨s⟩+2⟨t⟩ but the triangle contribution T·(1+T) > T alone,
-so the original clustered R₀ is LOWER than the unclustered one because
-the triangle terms contribute less per mean degree.
+mean degree ⟨k⟩ = ⟨s⟩+2⟨t⟩. In the scalar formula `clustered_R0`, a
+triangle's two stubs contribute T·(1+T) in total, i.e. T(1+T)/2 per stub,
+which is at most the contribution T of a single-edge stub. This is a
+statement about that formula, not a derivation of R₀ for clustered networks.
 
-The key inequality: for 0 < T ≤ 1, the effective per-edge R₀ from
-a triangle partner is T(1+T)/2, vs T for a single-edge partner.
-Since T(1+T)/2 ≤ T ↔ (1+T)/2 ≤ 1 ↔ T ≤ 1. -/
+The key inequality: for 0 < T ≤ 1, T(1+T)/2 ≤ T, since
+T(1+T)/2 ≤ T ↔ (1+T)/2 ≤ 1 ↔ T ≤ 1. The per-stub value T(1+T)/2 comes from
+`clustered_R0` and is not sourced. -/
 
 /-- **Result 73.** Triangle edges contribute less per edge than single edges to R₀. -/
 theorem triangle_per_edge_le_single (T : ℚ) (hT : 0 < T) (hT1 : T ≤ 1) :
@@ -125,9 +143,12 @@ theorem mean_degree_positive (d : ClusteredPGFData) :
 
 For independent Poisson single/triangle edges with means κ_s, κ_t:
 g(x,y) = exp(κ_s(x-1) + κ_t(y-1)).
-The clustering coefficient equals 2κ_t/(2κ_t + κ_s). -/
+The triangle stub fraction equals 2κ_t/(2κ_t + κ_s); the clustering
+coefficient is 2⟨t⟩/⟨k(k−1)⟩ = 2κ_t/((κ_s + 2κ_t)² + 2κ_t). -/
 
-/-- **Result 75.** Poisson clustered network has clustering coefficient 2κ_t/(2κ_t+κ_s). -/
+/-- **Result 75.** A Poisson clustered network has triangle stub fraction
+    2κ_t/(2κ_t+κ_s). Its clustering coefficient is
+    2κ_t/((κ_s + 2κ_t)² + 2κ_t). -/
 theorem poisson_clustering (kappa_s kappa_t : ℚ) (hs : 0 < kappa_s) (ht : 0 ≤ kappa_t) :
     2 * kappa_t / (2 * kappa_t + kappa_s) =
     clustering_coefficient ⟨kappa_s, kappa_t, kappa_s, hs, ht⟩ := by

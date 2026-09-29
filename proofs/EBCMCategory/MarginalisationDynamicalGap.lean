@@ -1,4 +1,5 @@
 import EBCMCategory.MarginalisationCharacterization
+import Mathlib.Analysis.Calculus.Deriv.Prod
 import Mathlib.Tactic
 
 /-!
@@ -7,9 +8,11 @@ import Mathlib.Tactic
 Companion to `MarginalisationFunctor.lean` (T1), the Kirkwood obstruction
 in `Obstructions.lean` (T2), and `MarginalisationCharacterization.lean` (T3).
 
-This file bridges the **algebraic** obstruction `kirkwood_form_not_equivariant`
-(T3b) to the **dynamical** failure observed empirically in the Phase B B(c)
-Gillespie comparison (`NodeBasedModels.jl`, testset "B(c) Gillespie").
+This file relates the **algebraic** obstruction `kirkwood_form_not_equivariant`
+(T3b) to the first-order behaviour of trajectories of the surrogate fields.
+No formal object refers to the Phase B B(c) Gillespie comparison
+(`NodeBasedModels.jl`), which motivated it; nothing here explains that
+experiment.
 
 | Result | Statement                                                        |
 |--------|------------------------------------------------------------------|
@@ -22,21 +25,32 @@ Gillespie comparison (`NodeBasedModels.jl`, testset "B(c) Gillespie").
 |        | the m=3 Kirkwood closure deviates, exhibiting the phase reversal  |
 | T7     | `trajectoryGap_norm_ge_half_eps_t`: quantitative lower bound:     |
 |        | if `‖algebraicGap‖ ≥ ε > 0` then `‖trajectoryGap u t‖ ≥ εt/2`   |
-|        | for all sufficiently small `t > 0` (Gronwall-style bound)         |
+|        | for all sufficiently small `t > 0` (little-o bound)               |
+| T5ℓ    | `localGap_hasDerivAt_zero`: T5 for local solutions                |
+| T7ℓ    | `localGap_norm_ge_half_eps_t`: T7 for local solutions             |
 
 ## Overview
 
-T1 (equivariance ↔ trajectory commutation) + T2 (algebraic gap = 2 at u₁)
-+ T4 (fibre-collapse structure) + T5 (gap = first-order divergence rate)
-together certify:
+T2 (algebraic gap = 2 at u₁) + T5 (gap = first-order divergence rate) give,
+in local form:
 
-  *For any flows φ₄ of F4Kℝ and φ₃ of any m=3 closure C₃, the trajectory
-   gap `M(φ₄ u₁ t) − φ₃(M u₁) t` diverges at rate exactly 2 as t → 0⁺.*
+  *For any local solutions ψ₄ of F4Kℝ from u₁ and ψ₃ of F3Kℝ from M u₁, the
+   trajectory gap `M(ψ₄ t) − ψ₃ t` has derivative exactly 2 at t = 0
+   (`witness_localGap_hasDerivAt`), and its norm is at least t for all
+   small t > 0 (`witness_localGap_ge`).*
 
-T6 exhibits the complementary existence result: there **is** an m=4 system
-that is exact at first order (the "correctly marginalised" one), but no
-Kirkwood-form m=3 closure matches it at that IC — confirming the
-empirical `err_m4 > err_m3` is a fundamental obstruction, not a numerics bug.
+Such local solutions exist (`witness_local_solutions_exist`). For another
+order-3 closure C₃ the first-order rate is 6 − C₃(4) (`algebraicGap_witness`),
+not 2. The global-flow versions (T1 and `trajectoryGap_rate_two_at_witness`)
+are vacuous at this witness, because F3Kℝ has no global flow (`no_flow_F3Kℝ`).
+
+T6 exhibits an existence result at one state: an order-3 right-hand side
+`F3_exact` (the constant 6, fitted to `M(F4Kℝ u₁)`) that agrees with the
+marginalised order-4 surrogate at `u₁`,
+and the Kirkwood surrogate F3Kℝ, which does not. Other non-additive
+order-3 closures do match at that state: `c ↦ 3c²/8` gives 6
+(`kirkwoodForm_matches_at_witness`).
+So T6 says nothing about the empirical comparison of `err_m4` and `err_m3`.
 -/
 
 namespace EBCMCategory.MarginalisationDynamicalGap
@@ -177,6 +191,68 @@ theorem trajectoryGap_norm_ge_half_eps_t
     exact h1
   linarith
 
+/-- If `f 0 = 0`, `f` has derivative `g` at `0` and `ε ≤ ‖g‖` with `ε > 0`,
+    then `ε * t / 2 ≤ ‖f t‖` for all small enough `t > 0`. This is the
+    little-o argument behind T7, for an arbitrary curve `f`. -/
+theorem norm_ge_half_eps_t_of_hasDerivAt {f : ℝ → V₃} {g : V₃}
+    (hf0 : f 0 = 0) (hd : HasDerivAt f g 0) {ε : ℝ} (hε : 0 < ε)
+    (h_gap : ε ≤ ‖g‖) :
+    ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε * t / 2 ≤ ‖f t‖ := by
+  have hlit : (fun t => f t - t • g) =o[nhds (0 : ℝ)] (fun t => t) := by
+    have h := hd.isLittleO
+    simp only [hf0, sub_zero] at h
+    exact h
+  rw [Asymptotics.isLittleO_iff] at hlit
+  obtain ⟨δ, hδ_pos, hδ⟩ := Metric.eventually_nhds_iff.mp (hlit (half_pos hε))
+  refine ⟨δ / 2, half_pos hδ_pos, fun t ht_pos ht_le => ?_⟩
+  have hdist : dist t 0 < δ := by
+    rw [Real.dist_eq, sub_zero, abs_of_pos ht_pos]; linarith
+  have hresid : ‖f t - t • g‖ ≤ ε / 2 * ‖(t : ℝ)‖ := hδ hdist
+  rw [Real.norm_eq_abs, abs_of_pos ht_pos] at hresid
+  have htg : ‖t • g‖ = t * ‖g‖ := by
+    rw [norm_smul, Real.norm_eq_abs, abs_of_pos ht_pos]
+  have hnormtg : ε * t ≤ ‖t • g‖ := by
+    rw [htg]; nlinarith [mul_le_mul_of_nonneg_right h_gap ht_pos.le]
+  have hrtri : ‖t • g‖ - ‖f t‖ ≤ ‖f t - t • g‖ := by
+    have h1 := norm_sub_norm_le (t • g) (f t)
+    rw [norm_sub_rev] at h1
+    exact h1
+  linarith
+
+/-- **Theorem T5, local form.** For any local solutions `ψ₄` of `F₄` through
+    `u` and `ψ₃` of `F₃` through `M u` (`IsLocalSolution`), the gap
+    `t ↦ M (ψ₄ t) − ψ₃ t` has derivative `algebraicGap M F₄ F₃ u` at `t = 0`.
+    No global flow is assumed, so this applies to fields whose solutions
+    blow up in finite time. -/
+theorem localGap_hasDerivAt_zero
+    (M : V₄ →L[ℝ] V₃) (F₄ : V₄ → V₄) (F₃ : V₃ → V₃) (u : V₄)
+    {δ₄ δ₃ : ℝ} {ψ₄ : ℝ → V₄} {ψ₃ : ℝ → V₃}
+    (h₄ : IsLocalSolution F₄ u δ₄ ψ₄) (h₃ : IsLocalSolution F₃ (M u) δ₃ ψ₃) :
+    HasDerivAt (fun t => M (ψ₄ t) - ψ₃ t) (algebraicGap M F₄ F₃ u) 0 := by
+  obtain ⟨hδ₄, h₄0, h₄d⟩ := h₄
+  obtain ⟨hδ₃, h₃0, h₃d⟩ := h₃
+  have hφ : HasDerivAt ψ₄ (F₄ u) 0 := by
+    have := h₄d 0 (by simpa using hδ₄); rwa [h₄0] at this
+  have hψ : HasDerivAt ψ₃ (F₃ (M u)) 0 := by
+    have := h₃d 0 (by simpa using hδ₃); rwa [h₃0] at this
+  have h_lhs : HasDerivAt (fun t => M (ψ₄ t)) (M (F₄ u)) 0 :=
+    M.hasFDerivAt.comp_hasDerivAt 0 hφ
+  show HasDerivAt (fun t => M (ψ₄ t) - ψ₃ t) (M (F₄ u) - F₃ (M u)) 0
+  exact h_lhs.sub hψ
+
+/-- **Theorem T7, local form.** If `‖algebraicGap M F₄ F₃ u‖ ≥ ε > 0`, then
+    for any local solutions `ψ₄` of `F₄` through `u` and `ψ₃` of `F₃`
+    through `M u`, `‖M (ψ₄ t) − ψ₃ t‖ ≥ ε * t / 2` for all small enough
+    `t > 0`. -/
+theorem localGap_norm_ge_half_eps_t
+    (M : V₄ →L[ℝ] V₃) (F₄ : V₄ → V₄) (F₃ : V₃ → V₃) (u : V₄)
+    {δ₄ δ₃ : ℝ} {ψ₄ : ℝ → V₄} {ψ₃ : ℝ → V₃}
+    (h₄ : IsLocalSolution F₄ u δ₄ ψ₄) (h₃ : IsLocalSolution F₃ (M u) δ₃ ψ₃)
+    {ε : ℝ} (hε : 0 < ε) (h_gap : ε ≤ ‖algebraicGap M F₄ F₃ u‖) :
+    ∃ T > 0, ∀ t, 0 < t → t ≤ T → ε * t / 2 ≤ ‖M (ψ₄ t) - ψ₃ t‖ :=
+  norm_ge_half_eps_t_of_hasDerivAt (f := fun t => M (ψ₄ t) - ψ₃ t)
+    (by simp [h₄.2.1, h₃.2.1]) (localGap_hasDerivAt_zero M F₄ F₃ u h₄ h₃) hε h_gap
+
 end DynamicalGap
 
 /-! ### Witness corollary for T5 -/
@@ -226,8 +302,10 @@ lemma algebraicGap_at_witness :
 
       `M(φ₄ u₁ t) − φ₃(M u₁) t = 2t · ê_c + o(t)`.
 
-    This is the rigorous formal bridge from the Lean-certified
-    algebraic difference of `2` to the empirically observed
+    **Vacuity.** The hypothesis `IsFlow F3Kℝ φ₃` cannot be satisfied:
+    `F3Kℝ` has no global flow (`no_flow_F3Kℝ`; from `v(c) = 4` the
+    solution `4/(1 − t)` blows up at `t = 1`). This theorem is therefore
+    vacuously true and is not a formal bridge to the empirically observed
     `err_m4 − err_m3 ≈ 0.32` in the B(c) Gillespie testset. -/
 theorem trajectoryGap_rate_two_at_witness
     {φ₄ : U4ℝ → ℝ → U4ℝ} {φ₃ : U3ℝ → ℝ → U3ℝ}
@@ -235,6 +313,156 @@ theorem trajectoryGap_rate_two_at_witness
     HasDerivAt (trajectoryGap MℝLinCLM φ₄ φ₃ u₁) (fun _ => (2 : ℝ)) 0 := by
   have h := trajectoryGap_hasDerivAt_zero MℝLinCLM F4Kℝ F3Kℝ h₄ h₃ u₁
   rwa [algebraicGap_at_witness] at h
+
+/-! ### Vacuity of the order-3 witness flow -/
+
+/-- There is no real function `w` with `w 0 = 4` and
+    `HasDerivAt w (w t ^ 2 / 4) t` for every `t : ℝ`: the solution of this
+    initial-value problem, `4/(1 − t)`, blows up at `t = 1`. -/
+theorem no_global_solution_sq_div_four (w : ℝ → ℝ) (h0 : w 0 = 4)
+    (hd : ∀ t, HasDerivAt w (w t ^ 2 / 4) t) : False := by
+  have hdiff : Differentiable ℝ w := fun t => (hd t).differentiableAt
+  have hmono : Monotone w := by
+    apply monotone_of_deriv_nonneg hdiff
+    intro t
+    rw [(hd t).deriv]
+    positivity
+  have hge : ∀ t, 0 ≤ t → 4 ≤ w t := fun t ht => h0 ▸ hmono ht
+  -- `g t = -4 / w t - t` has zero derivative on `[0, ∞)`, so it is constant there
+  set g : ℝ → ℝ := fun t => -4 / w t - t with hg
+  have hgd : ∀ t, 0 ≤ t → HasDerivAt g 0 t := by
+    intro t ht
+    have hw : w t ≠ 0 := by linarith [hge t ht]
+    have h1 : HasDerivAt (fun s => -4 / w s) (4 * (w t ^ 2 / 4) / (w t) ^ 2) t := by
+      have := ((hd t).inv hw).const_mul (-4)
+      convert this using 1
+      ring
+    have h2 := h1.sub (hasDerivAt_id t)
+    convert h2 using 1
+    field_simp
+    ring
+  have hcont : ContinuousOn g (Set.Icc 0 1) := fun t ht =>
+    (hgd t ht.1).continuousAt.continuousWithinAt
+  have hconst := constant_of_has_deriv_right_zero hcont
+    (fun t ht => (hgd t ht.1).hasDerivWithinAt) 1 ⟨zero_le_one, le_rfl⟩
+  simp only [hg, h0] at hconst
+  -- `g 1 = g 0` gives `4 / w 1 = 0`, contradicting `w 1 ≥ 4`
+  have hw1pos : 0 < w 1 := by linarith [hge 1 zero_le_one]
+  have e1 : (-4 : ℝ) / w 1 = -(4 / w 1) := neg_div _ _
+  have e2 : (-4 : ℝ) / 4 - 0 = -1 := by norm_num
+  rw [e1, e2] at hconst
+  have : 0 < 4 / w 1 := by positivity
+  linarith
+
+/-- **No global flow of `F3Kℝ`.** The order-3 Kirkwood witness field
+    `F3Kℝ v = (c ↦ v(c)²/4)` has no flow in the sense of `IsFlow`, which
+    requires solutions for all `t ∈ ℝ`. From `v(c) = 4` the solution is
+    `4/(1 − t)`, which blows up at `t = 1`. Hence `IsFlow F3Kℝ φ₃` is
+    unsatisfiable, and every theorem that assumes it (such as
+    `trajectoryGap_rate_two_at_witness`) holds vacuously. -/
+theorem no_flow_F3Kℝ (φ₃ : U3ℝ → ℝ → U3ℝ) : ¬ IsFlow F3Kℝ φ₃ := by
+  intro ⟨h0, hd⟩
+  let v : U3ℝ := fun _ => 4
+  apply no_global_solution_sq_div_four (fun t => φ₃ v t .c)
+  · simp [h0 v, v]
+  · intro t
+    have := (hasDerivAt_pi.mp (hd v t)) .c
+    simpa [F3Kℝ] using this
+
+/-! ### Local-solution form of the witness corollaries -/
+
+/-- The first-order rate at the witness for an arbitrary order-3 field `C₃`:
+    `algebraicGap MℝLinCLM F4Kℝ C₃ u₁ = 6 − C₃(4)`, where `4 = MℝLinCLM u₁`.
+    So the rate is 2 only when `C₃(4) = 4`, as for `F3Kℝ`. -/
+theorem algebraicGap_witness (C₃ : U3ℝ → U3ℝ) :
+    algebraicGap MℝLinCLM F4Kℝ C₃ u₁ = fun i => 6 - C₃ (fun _ => 4) i := by
+  have hM : MℝLinCLM u₁ = fun _ => (4 : ℝ) := by
+    funext i; simp only [MℝLinCLM_apply, u₁]; norm_num
+  funext i
+  simp only [algebraicGap, Pi.sub_apply, MℝLinCLM_apply, hM, F4Kℝ, u₁]
+  norm_num
+
+/-- A non-additive order-3 closure that matches the marginalised order-4
+    surrogate at the witness: `C₃ v = (c ↦ 3 v(c)² / 8)` is non-additive
+    (`IsKirkwoodForm`) and `M(F4Kℝ u₁) = C₃(M u₁)`, since `3·4²/8 = 6`. So
+    "no Kirkwood-form order-3 closure matches at `u₁`" is false. -/
+theorem kirkwoodForm_matches_at_witness :
+    (ClosureFamily.mk (fun v : U3ℝ => fun _ => 3 * (v .c) ^ 2 / 8)).IsKirkwoodForm ∧
+    algebraicGap MℝLinCLM F4Kℝ (fun v : U3ℝ => fun _ => 3 * (v .c) ^ 2 / 8) u₁ = 0 := by
+  refine ⟨⟨fun _ => (1 : ℝ), fun _ => (1 : ℝ), ?_⟩, ?_⟩
+  · intro h
+    have h_c := congrFun h Idx3.c
+    simp only [Pi.add_apply] at h_c
+    norm_num at h_c
+  · rw [algebraicGap_witness]
+    funext i
+    simp only [Pi.zero_apply]
+    norm_num
+
+/-- **Local solutions exist at the witness.** `t ↦ (exp (3 (eᵗ − 1)), 3 eᵗ)`
+    solves `F4Kℝ` (`a' = a b`, `b' = b`) from `u₁ = (1, 3)` for every `t`,
+    and `t ↦ (c ↦ 4 / (1 − t))` solves `F3Kℝ` (`v' = v²/4`) from
+    `MℝLinCLM u₁ = 4` on `(-1, 1)`. So the hypotheses of the local witness
+    theorems can be satisfied, unlike `IsFlow F3Kℝ φ₃` (`no_flow_F3Kℝ`). -/
+theorem witness_local_solutions_exist :
+    ∃ (ψ₄ : ℝ → U4ℝ) (ψ₃ : ℝ → U3ℝ),
+      IsLocalSolution F4Kℝ u₁ 1 ψ₄ ∧ IsLocalSolution F3Kℝ (MℝLinCLM u₁) 1 ψ₃ := by
+  refine ⟨fun t i => match i with
+      | .a => Real.exp (3 * (Real.exp t - 1))
+      | .b => 3 * Real.exp t,
+    fun t _ => 4 / (1 - t), ⟨one_pos, ?_, ?_⟩, ⟨one_pos, ?_, ?_⟩⟩
+  · funext i; cases i <;> simp [u₁]
+  · intro t _
+    rw [hasDerivAt_pi]
+    intro i
+    cases i
+    · show HasDerivAt (fun t => Real.exp (3 * (Real.exp t - 1)))
+        (Real.exp (3 * (Real.exp t - 1)) * (3 * Real.exp t)) t
+      exact (((Real.hasDerivAt_exp t).sub_const 1).const_mul 3).exp
+    · show HasDerivAt (fun t => 3 * Real.exp t) (3 * Real.exp t) t
+      exact (Real.hasDerivAt_exp t).const_mul 3
+  · funext i; simp only [MℝLinCLM_apply, u₁]; norm_num
+  · intro t ht
+    have ht1 : t < 1 := (abs_lt.mp ht).2
+    have hne : (1 : ℝ) - t ≠ 0 := by linarith
+    rw [hasDerivAt_pi]
+    intro i
+    show HasDerivAt (fun t : ℝ => 4 / (1 - t)) ((4 / (1 - t)) ^ 2 / 4) t
+    have h := (hasDerivAt_const t (4 : ℝ)).div ((hasDerivAt_const t (1 : ℝ)).sub
+      (hasDerivAt_id' t)) hne
+    convert h using 1
+    simp only [Pi.sub_apply]
+    field_simp
+    ring
+
+/-- **Theorem T5 Corollary, local form.** For any local solutions `ψ₄` of
+    `F4Kℝ` through `u₁ = (1, 3)` and `ψ₃` of `F3Kℝ` through `MℝLinCLM u₁`,
+    the gap `t ↦ M(ψ₄ t) − ψ₃ t` has derivative `2` (in every coordinate)
+    at `t = 0`. Unlike `trajectoryGap_rate_two_at_witness`, its hypotheses
+    can be satisfied (`witness_local_solutions_exist`). -/
+theorem witness_localGap_hasDerivAt {δ₄ δ₃ : ℝ} {ψ₄ : ℝ → U4ℝ} {ψ₃ : ℝ → U3ℝ}
+    (h₄ : IsLocalSolution F4Kℝ u₁ δ₄ ψ₄)
+    (h₃ : IsLocalSolution F3Kℝ (MℝLinCLM u₁) δ₃ ψ₃) :
+    HasDerivAt (fun t => MℝLinCLM (ψ₄ t) - ψ₃ t) (fun _ => (2 : ℝ)) 0 := by
+  have h := localGap_hasDerivAt_zero MℝLinCLM F4Kℝ F3Kℝ u₁ h₄ h₃
+  rwa [algebraicGap_at_witness] at h
+
+/-- **Theorem T7 Corollary, local form.** For any local solutions `ψ₄` of
+    `F4Kℝ` through `u₁` and `ψ₃` of `F3Kℝ` through `MℝLinCLM u₁`, there is
+    `T > 0` with `t ≤ ‖M(ψ₄ t) − ψ₃ t‖` for all `0 < t ≤ T`. In particular
+    the marginalised order-4 trajectory and the order-3 trajectory differ
+    at every such `t`. -/
+theorem witness_localGap_ge {δ₄ δ₃ : ℝ} {ψ₄ : ℝ → U4ℝ} {ψ₃ : ℝ → U3ℝ}
+    (h₄ : IsLocalSolution F4Kℝ u₁ δ₄ ψ₄)
+    (h₃ : IsLocalSolution F3Kℝ (MℝLinCLM u₁) δ₃ ψ₃) :
+    ∃ T > 0, ∀ t, 0 < t → t ≤ T → t ≤ ‖MℝLinCLM (ψ₄ t) - ψ₃ t‖ := by
+  haveI : Nonempty Idx3 := ⟨Idx3.c⟩
+  have h_gap : (2 : ℝ) ≤ ‖algebraicGap MℝLinCLM F4Kℝ F3Kℝ u₁‖ := by
+    rw [algebraicGap_at_witness, pi_norm_const]
+    norm_num
+  obtain ⟨T, hT, hb⟩ :=
+    localGap_norm_ge_half_eps_t MℝLinCLM F4Kℝ F3Kℝ u₁ h₄ h₃ two_pos h_gap
+  exact ⟨T, hT, fun t ht htT => by have := hb t ht htT; linarith⟩
 
 /-! ## T6 — Refinement-failure existence -/
 
@@ -263,11 +491,12 @@ lemma F3Kℝ_isKirkwoodForm : (ClosureFamily.mk F3Kℝ).IsKirkwoodForm := by
     * `M(F4Kℝ u₁)(c) = 1·3 + 3 = 6 = F3_exact(M u₁)(c)`.
     * `F3Kℝ(M u₁)(c) = 4²/4 = 4 ≠ 6`.
 
-    Together with T5, this says: the error of the correctly-marginalised
-    m=4 ODE is **zero** at first order at `u₁`, while the m=3 Kirkwood
-    ODE has first-order error `|4 − 6| = 2`.  The empirical B(c) phase
-    reversal occurs because the **standard** Kirkwood m=4 marginalisation
-    is not the correct one; T3b (T4) certifies that no correct one exists. -/
+    Together with T5: relative to the fitted `F3_exact`, the marginalised
+    m=4 surrogate has zero first-order error at `u₁` (by construction),
+    while the m=3 Kirkwood surrogate has first-order error `|4 − 6| = 2`.
+    T6 does not explain the empirical B(c) phase reversal. T3b (via T4)
+    shows only that no order-3 field commutes with `F4Kℝ` under `MℝLin` at
+    every state. -/
 theorem refinement_failure_exists :
     ∃ (F4_kirk : U4ℝ → U4ℝ) (F3_kirk : U3ℝ → U3ℝ) (F3_exact : U3ℝ → U3ℝ)
       (u₀ : U4ℝ),

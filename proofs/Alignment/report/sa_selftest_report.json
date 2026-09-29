@@ -1,0 +1,5057 @@
+{
+ "mode": "selftest",
+ "lean_version": "4.29.0-rc4",
+ "trusted_modules": [
+  "EBCMCategory.CategoricalComposition",
+  "EBCMCategory.ClosureTheorem",
+  "EBCMCategory.ClusteringExtension",
+  "EBCMCategory.CoarseGrain",
+  "EBCMCategory.ConvergenceTheorems",
+  "EBCMCategory.DegreeCorrelation",
+  "EBCMCategory.DynamicLimits",
+  "EBCMCategory.EpiCategory",
+  "EBCMCategory.GaloisPair",
+  "EBCMCategory.Hierarchy",
+  "EBCMCategory.InvariantRegion",
+  "EBCMCategory.MarginalisationCharacterization",
+  "EBCMCategory.MarginalisationDynamicalGap",
+  "EBCMCategory.MarginalisationFunctor",
+  "EBCMCategory.MessagePassingBridge",
+  "EBCMCategory.MethodOfStages",
+  "EBCMCategory.Obstructions",
+  "EBCMCategory.PairwiseClosureConditions",
+  "EBCMCategory.SEIREquations",
+  "EBCMCategory.SurvivalBridge",
+  "EBCMCategory.VolzMeyersEquations"
+ ],
+ "summary": {
+  "registry_claims": 53,
+  "registered_claims": 54,
+  "unregistered_claims": 0,
+  "required_claims": 52,
+  "sa_pass": 5,
+  "sa_pass_required": 5,
+  "mean_soft": 0.1343,
+  "required_failures": 47,
+  "check_status_counts": {
+   "pass": 29,
+   "vacuous": 11,
+   "missing": 54,
+   "audit_violation": 15,
+   "fail": 2,
+   "sorry": 1
+  },
+  "bridges": {
+   "unreviewed": 2,
+   "stale": 1,
+   "rejected": 1,
+   "reviewed": 1,
+   "invalid": 4
+  },
+  "hints": {
+   "backward_unused_shadows": 2,
+   "witness_missing": 2
+  },
+  "trusted_free_shadows": {
+   "unreviewed": 2,
+   "reviewed": 1,
+   "stale": 1
+  },
+  "tautological_shadows": {
+   "unreviewed": 1
+  },
+  "claims_with_refuted_hypotheses": 1
+ },
+ "groups": [
+  {
+   "group": "Example",
+   "registry": 3,
+   "registered": 3,
+   "required": 3,
+   "sa_pass": 3,
+   "mean_soft": 1.0,
+   "fwd_pass": 5,
+   "fwd_total": 5,
+   "bwd_pass": 3,
+   "bwd_total": 3,
+   "required_failures": 0,
+   "status_counts": {
+    "pass": 8
+   }
+  },
+  {
+   "group": "Other",
+   "registry": 1,
+   "registered": 1,
+   "required": 1,
+   "sa_pass": 0,
+   "mean_soft": 0.0,
+   "fwd_pass": 0,
+   "fwd_total": 1,
+   "bwd_pass": 0,
+   "bwd_total": 1,
+   "required_failures": 1,
+   "status_counts": {
+    "missing": 2
+   }
+  },
+  {
+   "group": "SelfTest",
+   "registry": 49,
+   "registered": 50,
+   "required": 48,
+   "sa_pass": 2,
+   "mean_soft": 0.085,
+   "fwd_pass": 12,
+   "fwd_total": 52,
+   "bwd_pass": 9,
+   "bwd_total": 50,
+   "required_failures": 46,
+   "status_counts": {
+    "vacuous": 11,
+    "missing": 52,
+    "audit_violation": 15,
+    "fail": 2,
+    "sorry": 1,
+    "pass": 21
+   }
+  }
+ ],
+ "required_failures": [
+  {
+   "id": "SELFTEST.vacuousIgnore",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousBeta",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousAndLeft",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousAuxLemma",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousEval",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousConst",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousMatch",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousExistsElim",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.vacuousDataArg",
+   "reasons": [
+    "forward 1: vacuous",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.automationSimp",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.automationRing",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.automationOmega",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.helperAutomation",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.proofField",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.decideCheck",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.implInBackward",
+   "reasons": [
+    "forward 1: missing",
+    "backward: audit_violation"
+   ]
+  },
+  {
+   "id": "SELFTEST.unreviewedBridge",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.staleBridge",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.launderingBridge",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.rejectedBridge",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.forgedReview",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.outOfScopeBridge",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.invalidBridges",
+   "reasons": [
+    "forward 1: audit_violation",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.mismatch",
+   "reasons": [
+    "forward 1: fail",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.sorryCheck",
+   "reasons": [
+    "forward 1: sorry",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.missingCheck",
+   "reasons": [
+    "forward 2: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.incompleteShadows",
+   "reasons": [
+    "incomplete: no sa_complete"
+   ]
+  },
+  {
+   "id": "SELFTEST.recordedFail",
+   "reasons": [
+    "forward 1: fail",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.trustedFreeShadow",
+   "reasons": [
+    "shadow_trusted_free: S1 (Alignment.Example.SelfTest.TrustedFreeShadow.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 5540191272585265229; review: unreviewed)"
+   ]
+  },
+  {
+   "id": "SELFTEST.trustedFreeStale",
+   "reasons": [
+    "shadow_trusted_free: S1 (Alignment.Example.SelfTest.TrustedFreeStale.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 16278705499424709584; review: stale)"
+   ]
+  },
+  {
+   "id": "SELFTEST.unusedBinderShadow",
+   "reasons": [
+    "shadow_trusted_free: S1 (Alignment.Example.SelfTest.UnusedBinderShadow.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 11480590810223777499; review: unreviewed)",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.tautologyShadow",
+   "reasons": [
+    "shadow_tautology: S1 (Alignment.Example.SelfTest.TautologyShadow.S1) holds by reflexivity or assumption at reducible transparency after inlining alignment helpers (content hash 15835174516839732522; review: unreviewed)",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.refutedHypothesis",
+   "reasons": [
+    "hypothesis_refuted: EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ (trusted); EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by Alignment.Example.SelfTest.AlignmentRefuter.refuter (alignment)"
+   ]
+  },
+  {
+   "id": "SELFTEST.witnessInvalid",
+   "reasons": [
+    "witness_invalid: Alignment.Example.SelfTest.WitnessInvalid.witness: statement is not `∃ x₁ … xₖ, True` over the binders of EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero up to its last hypothesis"
+   ]
+  },
+  {
+   "id": "SELFTEST.impossibilityImpl",
+   "reasons": [
+    "impl_untrusted: Alignment.Example.SelfTest.ImpossibilityImpl.noFlow is declared in Alignment.Example.SelfTest, not in the trusted library"
+   ]
+  },
+  {
+   "id": "SELFTEST.backwardVacuous",
+   "reasons": [
+    "backward: vacuous"
+   ]
+  },
+  {
+   "id": "SELFTEST.backwardVacuousEval",
+   "reasons": [
+    "backward: vacuous"
+   ]
+  },
+  {
+   "id": "SELFTEST.backwardBudget",
+   "reasons": [
+    "backward: audit_violation"
+   ]
+  },
+  {
+   "id": "SELFTEST.implUntrusted",
+   "reasons": [
+    "impl_untrusted: Nat.le_refl is declared in Init.Prelude, not in the trusted library",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.implUnsound",
+   "reasons": [
+    "impl_untrusted: Alignment.Example.SelfTest.ImplUnsound.unsoundImpl is declared in Alignment.Example.SelfTest, not in the trusted library",
+    "impl_unsound: Alignment.Example.SelfTest.ImplUnsound.unsoundImpl depends on [sorryAx]",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.duplicate",
+   "reasons": [
+    "duplicate: sa_claim registered 2 times",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.bad id!",
+   "reasons": [
+    "invalid_id: \"SELFTEST.bad id!\" does not match [A-Za-z0-9._-]+; registry id does not match [A-Za-z0-9._-]+",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.unlisted",
+   "reasons": [
+    "unlisted: not in the claims registry",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.textMismatch",
+   "reasons": [
+    "text_mismatch: sa_claim text differs from the registry text",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.groupMismatch",
+   "reasons": [
+    "group_mismatch: registry `Other` vs Lean `SelfTest`",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.implMismatch",
+   "reasons": [
+    "impl_mismatch: registry ['PGFData.poisson_excess_eq_mean'] vs Lean ['PGFData.poisson_variance_eq_mean']",
+    "forward 1: missing",
+    "backward: missing"
+   ]
+  },
+  {
+   "id": "SELFTEST.shadowReuse",
+   "reasons": [
+    "shadow_mismatch: Alignment.Example.SelfTest.ShadowReuse.S is registered more than once as a shadow/reference; Alignment.Example.SelfTest.ShadowReuse.S is registered more than once as a shadow/reference",
+    "forward 1: missing",
+    "forward 2: missing",
+    "backward: missing"
+   ]
+  }
+ ],
+ "offenders": [
+  {
+   "offender": "Mathlib.Meta.NormNum.isNat_ofNat [library theorem (Mathlib.Tactic.NormNum.Basic)]",
+   "count": 2,
+   "checks": [
+    "SELFTEST.automationRing forward 1",
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.add_pf_add_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 2,
+   "checks": [
+    "SELFTEST.automationRing forward 1",
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.atom_pf [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 2,
+   "checks": [
+    "SELFTEST.automationRing forward 1",
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.of_eq [library theorem (Mathlib.Tactic.Ring.Basic)]",
+   "count": 2,
+   "checks": [
+    "SELFTEST.automationRing forward 1",
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "of_decide_eq_true [library theorem (Init.Prelude)]",
+   "count": 2,
+   "checks": [
+    "SELFTEST.automationOmega forward 1",
+    "SELFTEST.decideCheck forward 1"
+   ]
+  },
+  {
+   "offender": "<vacuity guard could not decide: normalisation budget exhausted>",
+   "count": 1,
+   "checks": [
+    "SELFTEST.backwardBudget backward"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.PoissonVariance.bridge_variance [bridge registered for another claim (reviewed)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.outOfScopeBridge forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.ForgedReview.bridge [unreviewed bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.forgedReview forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.InvalidBridges.closedConj [invalid bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.invalidBridges forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.LaunderingBridge.bridge [invalid bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.launderingBridge forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.RejectedBridge.bridge [rejected bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.rejectedBridge forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.StaleBridge.bridge [stale bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.staleBridge forward 1"
+   ]
+  },
+  {
+   "offender": "Alignment.Example.SelfTest.UnreviewedBridge.bridge [unreviewed bridge]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.unreviewedBridge forward 1"
+   ]
+  },
+  {
+   "offender": "Decidable.byContradiction [classical reasoning / decision procedure]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Int.add_one_le_of_lt [library theorem (Init.Data.Int.Order)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Int.natCast_add [library theorem (Init.Data.Int.Lemmas)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Int.sub_nonneg_of_le [library theorem (Init.Data.Int.Order)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Constraint.addInequality_sat [library theorem (Init.Omega.Constraint)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Constraint.combine_sat' [library theorem (Init.Omega.Constraint)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Constraint.not_sat'_of_isImpossible [library theorem (Init.Omega.Constraint)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Int.add_congr [library theorem (Init.Omega.Int)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Int.ofNat_le_of_le [library theorem (Init.Omega.Int)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Int.ofNat_lt_of_lt [library theorem (Init.Omega.Int)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.Int.sub_congr [library theorem (Init.Omega.Int)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.LinearCombo.add_eval [library theorem (Init.Omega.LinearCombo)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.LinearCombo.coordinate_eval_0 [library theorem (Init.Omega.LinearCombo)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.LinearCombo.coordinate_eval_1 [library theorem (Init.Omega.LinearCombo)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.LinearCombo.sub_eval [library theorem (Init.Omega.LinearCombo)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Lean.Omega.tidy_sat [library theorem (Init.Omega.Constraint)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.add_congr [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.add_mul [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.cast_pos [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.cast_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.helperAutomation forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.mul_add [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.mul_congr [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.mul_pf_right [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.mul_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.one_mul [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Mathlib.Tactic.Ring.zero_mul [library theorem (Mathlib.Tactic.Ring.Common)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationRing forward 1"
+   ]
+  },
+  {
+   "offender": "Nat.lt_of_not_le [library theorem (Init.Prelude)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "PGFData.mean_pos [proof extracted from data (projection of PGFData)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.proofField forward 1"
+   ]
+  },
+  {
+   "offender": "SIRParams.transmissibility_pos [implementation theorem used outside the hypothesis]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.implInBackward backward"
+   ]
+  },
+  {
+   "offender": "add_zero [library theorem (Mathlib.Algebra.Group.Defs)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationSimp forward 1"
+   ]
+  },
+  {
+   "offender": "congrFun' [library theorem (Init.Prelude)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationSimp forward 1"
+   ]
+  },
+  {
+   "offender": "eq_self [library theorem (Init.SimpLemmas)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationSimp forward 1"
+   ]
+  },
+  {
+   "offender": "le_of_le_of_eq [library theorem (Init.Core)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationOmega forward 1"
+   ]
+  },
+  {
+   "offender": "of_eq_true [library theorem (Init.SimpLemmas)]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.automationSimp forward 1"
+   ]
+  },
+  {
+   "offender": "sorryAx [forbidden constant]",
+   "count": 1,
+   "checks": [
+    "SELFTEST.sorryCheck forward 1"
+   ]
+  }
+ ],
+ "bridges": [
+  {
+   "status": "unreviewed",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "",
+   "reasons": [],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.UnreviewedBridge.bridge",
+   "claims": [
+    "SELFTEST.unreviewedBridge"
+   ]
+  },
+  {
+   "status": "unreviewed",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "",
+   "reasons": [
+    "note: 1 review record(s) outside Alignment.ReviewedBridges ignored"
+   ],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.ForgedReview.bridge",
+   "claims": [
+    "SELFTEST.forgedReview"
+   ]
+  },
+  {
+   "status": "stale",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "review hash 0 does not match 16481377043707351972",
+   "reasons": [],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.StaleBridge.bridge",
+   "claims": [
+    "SELFTEST.staleBridge"
+   ]
+  },
+  {
+   "status": "rejected",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "SELFTEST: rejected bridge",
+   "reasons": [],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.RejectedBridge.bridge",
+   "claims": [
+    "SELFTEST.rejectedBridge"
+   ]
+  },
+  {
+   "status": "reviewed",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "EpiCategory.lean (PGFData.variance docstring): Var(k) = ψ''(1) + ψ'(1) − (ψ'(1))²; the RHS\n  ψ''(1) + ψ'(1)(1 − ψ'(1)) is the same polynomial in the PGF data, with no side condition",
+   "reasons": [],
+   "module": "Alignment.Example.ExampleChecks",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.PoissonVariance.bridge_variance",
+   "claims": [
+    "EXAMPLE.poissonVariance"
+   ]
+  },
+  {
+   "status": "invalid",
+   "statement": "∀ (n : ℕ), n.succ = n + 1",
+   "review_reason": "",
+   "reasons": [
+    "left-hand side head Nat.succ is not a definition of the trusted library"
+   ],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "6039523524133956966",
+   "decl": "Alignment.Example.SelfTest.InvalidBridges.natHead",
+   "claims": [
+    "SELFTEST.invalidBridges"
+   ]
+  },
+  {
+   "status": "invalid",
+   "statement": "PGFData.excessDegree = PGFData.excessDegree",
+   "review_reason": "",
+   "reasons": [
+    "closed right-hand side (mentions no bound variable)"
+   ],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "8616183590909859395",
+   "decl": "Alignment.Example.SelfTest.InvalidBridges.closedRhs",
+   "claims": [
+    "SELFTEST.invalidBridges"
+   ]
+  },
+  {
+   "status": "invalid",
+   "statement": "∀ (ψ : PGFData), ψ.variance = ψ.secondFactorial + ψ.mean * (1 - ψ.mean)",
+   "review_reason": "",
+   "reasons": [
+    "depends on implementation theorem PGFData.poisson_variance_eq_mean (via Alignment.Example.SelfTest.LaunderingBridge.bridge → PGFData.poisson_variance_eq_mean)"
+   ],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.LaunderingBridge.bridge",
+   "claims": [
+    "SELFTEST.launderingBridge"
+   ]
+  },
+  {
+   "status": "invalid",
+   "statement": "∀ (s : EBCMCategory.Marginalisation.MotifShape), s.isOrder3 ↔ s.order = 3 ∧ 1 = 1",
+   "review_reason": "",
+   "reasons": [
+    "closed conjunct on the right-hand side"
+   ],
+   "module": "Alignment.Example.SelfTest",
+   "hash": "16262042253474658934",
+   "decl": "Alignment.Example.SelfTest.InvalidBridges.closedConj",
+   "claims": [
+    "SELFTEST.invalidBridges"
+   ]
+  }
+ ],
+ "fail_records": [
+  {
+   "target": "forward 1",
+   "shadow_question": true,
+   "reason": "SHADOW?: the shadow speaks about the excess degree, the implementation about the variance",
+   "module": "Alignment.Example.SelfTest",
+   "claim": "SELFTEST.recordedFail"
+  }
+ ],
+ "orphans": [],
+ "ignored_reviews": [
+  {
+   "rejected": false,
+   "reason": "SELFTEST: forged review record",
+   "module": "Alignment.Example.SelfTest",
+   "kind": "bridge",
+   "hash": "16481377043707351972",
+   "decl": "Alignment.Example.SelfTest.ForgedReview.bridge",
+   "counted": false
+  }
+ ],
+ "trusted_free": [
+  {
+   "claim": "SELFTEST.trustedFreeShadow",
+   "review": "unreviewed",
+   "idx": 1,
+   "hash": "5540191272585265229",
+   "decl": "Alignment.Example.SelfTest.TrustedFreeShadow.S1"
+  },
+  {
+   "claim": "SELFTEST.trustedFreeReviewed",
+   "review": "reviewed",
+   "idx": 1,
+   "hash": "12124625975434494302",
+   "decl": "Alignment.Example.SelfTest.TrustedFreeReviewed.S1"
+  },
+  {
+   "claim": "SELFTEST.trustedFreeStale",
+   "review": "stale",
+   "idx": 1,
+   "hash": "16278705499424709584",
+   "decl": "Alignment.Example.SelfTest.TrustedFreeStale.S1"
+  },
+  {
+   "claim": "SELFTEST.unusedBinderShadow",
+   "review": "unreviewed",
+   "idx": 1,
+   "hash": "11480590810223777499",
+   "decl": "Alignment.Example.SelfTest.UnusedBinderShadow.S1"
+  }
+ ],
+ "tautological": [
+  {
+   "claim": "SELFTEST.tautologyShadow",
+   "review": "unreviewed",
+   "idx": 1,
+   "hash": "15835174516839732522",
+   "decl": "Alignment.Example.SelfTest.TautologyShadow.S1"
+  }
+ ],
+ "refuted": [
+  {
+   "claim": "SELFTEST.refutedHypothesis",
+   "sa_pass_without_flag": 1,
+   "refutations": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ (trusted)",
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by Alignment.Example.SelfTest.AlignmentRefuter.refuter (alignment)"
+   ]
+  }
+ ],
+ "refuters": [
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.InvariantRegion",
+   "heads": [
+    "Ne",
+    "Eq"
+   ],
+   "decl": "InvariantRegion.missing_seed_factor_overcounts",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.GaloisPair",
+   "heads": [
+    "Eq"
+   ],
+   "decl": "GF_ne_id._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqNetworkType._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "standardEbcmValid"
+   ],
+   "decl": "degreeCorr_breaks_standard",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MethodOfStages",
+   "heads": [
+    "LT.lt",
+    "Eq"
+   ],
+   "decl": "erlang_mean_preserved._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MarginalisationDynamicalGap",
+   "heads": [
+    "EBCMCategory.MarginalisationCharacterization.Equivariant"
+   ],
+   "decl": "EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CoarseGrain",
+   "heads": [
+    "Not"
+   ],
+   "decl": "coarseGrain_mono._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "MarginalisationObstruction.instDecidableEqIdx4._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "ebcmExists"
+   ],
+   "decl": "localised_genuine_obstruction",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MessagePassingBridge",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqModelFamily._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CategoricalComposition",
+   "heads": [
+    "Not"
+   ],
+   "decl": "monoidal_dim_unit_right._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "MarginalisationObstruction.instDecidableEqIdx3._proof_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Hierarchy",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqModelLevel._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "standardEbcmValid"
+   ],
+   "decl": "clustering_breaks_standard",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MethodOfStages",
+   "heads": [
+    "LT.lt",
+    "Eq"
+   ],
+   "decl": "erlang_variance._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CoarseGrain",
+   "heads": [
+    "Eq"
+   ],
+   "decl": "coarseGrain_not_injective._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.ClosureTheorem",
+   "heads": [
+    "LE.le",
+    "Not"
+   ],
+   "decl": "binomial_kappa_determines_n'._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqInitCondType._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MarginalisationDynamicalGap",
+   "heads": [
+    "EBCMCategory.Marginalisation.IsFlow"
+   ],
+   "decl": "EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MarginalisationDynamicalGap",
+   "heads": [
+    "Eq",
+    "Ne",
+    "EBCMCategory.MarginalisationCharacterization.Equivariant"
+   ],
+   "decl": "EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CategoricalComposition",
+   "heads": [
+    "Not"
+   ],
+   "decl": "monoidal_dim_unit_left._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.EpiCategory",
+   "heads": [
+    "Not"
+   ],
+   "decl": "edge_refines_node._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqSystemType._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MarginalisationFunctor",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "EBCMCategory.Marginalisation.instDecidableEqMotifShape._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.GaloisPair",
+   "heads": [
+    "Not"
+   ],
+   "decl": "poissonLift_mono._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Hierarchy",
+   "heads": [
+    "LE.le",
+    "Not"
+   ],
+   "decl": "edgeBased_lt_pair._proof_1_6",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.ClosureTheorem",
+   "heads": [
+    "LE.le",
+    "Eq"
+   ],
+   "decl": "binomial_recover_n'._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MessagePassingBridge",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqAssumption._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.SurvivalBridge",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqPTType._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CategoricalComposition",
+   "heads": [
+    "LT.lt",
+    "Eq"
+   ],
+   "decl": "stages_mean_preserved._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.GaloisPair",
+   "heads": [
+    "GaloisConnection"
+   ],
+   "decl": "not_galoisConnection_poissonLift_coarseGrain",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.MethodOfStages",
+   "heads": [
+    "LT.lt",
+    "Eq"
+   ],
+   "decl": "erlang_cv_squared._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.DynamicLimits",
+   "heads": [
+    "LE.le",
+    "Not"
+   ],
+   "decl": "dynamic_lt_pair._proof_1_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.GaloisPair",
+   "heads": [
+    "GaloisConnection"
+   ],
+   "decl": "not_galoisConnection_coarseGrain_poissonLift",
+   "auxiliary": false
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.CategoricalComposition",
+   "heads": [
+    "Not"
+   ],
+   "decl": "monoidal_dim_assoc._proof_1_1",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "trusted",
+   "module": "EBCMCategory.Obstructions",
+   "heads": [
+    "Not",
+    "Eq"
+   ],
+   "decl": "instDecidableEqTransitionType._proof_2",
+   "auxiliary": true
+  },
+  {
+   "status": "valid",
+   "reasons": [],
+   "origin": "alignment",
+   "module": "Alignment.Example.SelfTest",
+   "heads": [
+    "EBCMCategory.Marginalisation.IsFlow"
+   ],
+   "decl": "Alignment.Example.SelfTest.AlignmentRefuter.refuter",
+   "auxiliary": false
+  },
+  {
+   "status": "invalid",
+   "reasons": [
+    "uses non-standard axioms or sorry: [sorryAx]"
+   ],
+   "origin": "alignment",
+   "module": "Alignment.Example.SelfTest",
+   "heads": [
+    "EBCMCategory.Marginalisation.IsFlow"
+   ],
+   "decl": "Alignment.Example.SelfTest.AlignmentRefuter.unsoundRefuter",
+   "auxiliary": false
+  },
+  {
+   "status": "invalid",
+   "reasons": [
+    "statement is not `∀ ys, P₁ → … → Pₘ → False` (or `→ ¬ P`, `→ a ≠ b`)"
+   ],
+   "origin": "alignment",
+   "module": "Alignment.Example.SelfTest",
+   "decl": "Alignment.Example.SelfTest.AlignmentRefuter.notARefuter"
+  }
+ ],
+ "claims": [
+  {
+   "id": "EXAMPLE.poissonVariance",
+   "group": "Example",
+   "required": true,
+   "status": "implemented",
+   "n": 2,
+   "forward": [
+    "pass",
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.PoissonVariance.fwd1",
+     "bridges_used": [
+      "Alignment.Example.PoissonVariance.bridge_variance"
+     ]
+    },
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 2,
+     "decl": "Alignment.Example.PoissonVariance.fwd2",
+     "bridges_used": [
+      "Alignment.Example.PoissonVariance.bridge_variance"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [
+     2
+    ],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.PoissonVariance.bwd",
+    "bridges_used": [
+     "Alignment.Example.PoissonVariance.bridge_variance"
+    ]
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 1,
+   "soft": 1.0,
+   "identical_to_impl": [],
+   "hints": [
+    "backward_unused_shadows"
+   ],
+   "hint_details": [
+    {
+     "hint": "backward_unused_shadows",
+     "detail": "the backward checker does not use shadow(s) [2] (redundant given the others?)"
+    }
+   ],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "EXAMPLE.transmissibilityRange",
+   "group": "Example",
+   "required": true,
+   "status": "implemented",
+   "n": 2,
+   "forward": [
+    "pass",
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.Transmissibility.fwd1",
+     "bridges_used": []
+    },
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 2,
+     "decl": "Alignment.Example.Transmissibility.fwd2",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.Transmissibility.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 1,
+   "soft": 1.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos",
+    "SIRParams.transmissibility_lt_one"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    },
+    {
+     "name": "SIRParams.transmissibility_lt_one",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "EXAMPLE.trajectoryGapZero",
+   "group": "Example",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.TrajectoryGap.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.TrajectoryGap.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 1,
+   "soft": 1.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [
+    {
+     "status": "valid",
+     "impl": 1,
+     "decl": "Alignment.Example.TrajectoryGap.witness"
+    }
+   ],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousIgnore",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousIgnore.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousBeta",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousBeta.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousAndLeft",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousAndLeft.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousAuxLemma",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousAuxLemma.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousEval",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the proof still type-checks when the hypothesis is an arbitrary proposition",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousEval.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousConst",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousConst.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousMatch",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousMatch.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos",
+    "SIRParams.transmissibility_lt_one"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    },
+    {
+     "name": "SIRParams.transmissibility_lt_one",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousExistsElim",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis does not occur in the normalised proof",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousExistsElim.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "GF_ne_id"
+   ],
+   "impl_info": [
+    {
+     "name": "GF_ne_id",
+     "module": "EBCMCategory.GaloisPair",
+     "axioms": [
+      "propext",
+      "Quot.sound"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.vacuousDataArg",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "vacuous"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "vacuous",
+     "shadow_question": false,
+     "reason": "the hypothesis occurs only in types or in proofs inside data (proof-irrelevant)",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.VacuousDataArg.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.automationSimp",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "add_zero [library theorem (Mathlib.Algebra.Group.Defs)]",
+      "congrFun' [library theorem (Init.Prelude)]",
+      "eq_self [library theorem (Init.SimpLemmas)]",
+      "of_eq_true [library theorem (Init.SimpLemmas)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.AutomationSimp.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.automationRing",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Mathlib.Meta.NormNum.isNat_ofNat [library theorem (Mathlib.Tactic.NormNum.Basic)]",
+      "Mathlib.Tactic.Ring.add_mul [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.add_pf_add_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.atom_pf [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.cast_pos [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.mul_add [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.mul_congr [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.mul_pf_right [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.mul_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.of_eq [library theorem (Mathlib.Tactic.Ring.Basic)]",
+      "Mathlib.Tactic.Ring.one_mul [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.zero_mul [library theorem (Mathlib.Tactic.Ring.Common)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.AutomationRing.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.automationOmega",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Decidable.byContradiction [classical reasoning / decision procedure]",
+      "Int.add_one_le_of_lt [library theorem (Init.Data.Int.Order)]",
+      "Int.natCast_add [library theorem (Init.Data.Int.Lemmas)]",
+      "Int.sub_nonneg_of_le [library theorem (Init.Data.Int.Order)]",
+      "Lean.Omega.Constraint.addInequality_sat [library theorem (Init.Omega.Constraint)]",
+      "Lean.Omega.Constraint.combine_sat' [library theorem (Init.Omega.Constraint)]",
+      "Lean.Omega.Constraint.not_sat'_of_isImpossible [library theorem (Init.Omega.Constraint)]",
+      "Lean.Omega.Int.add_congr [library theorem (Init.Omega.Int)]",
+      "Lean.Omega.Int.ofNat_le_of_le [library theorem (Init.Omega.Int)]",
+      "Lean.Omega.Int.ofNat_lt_of_lt [library theorem (Init.Omega.Int)]",
+      "Lean.Omega.Int.sub_congr [library theorem (Init.Omega.Int)]",
+      "Lean.Omega.LinearCombo.add_eval [library theorem (Init.Omega.LinearCombo)]",
+      "Lean.Omega.LinearCombo.coordinate_eval_0 [library theorem (Init.Omega.LinearCombo)]",
+      "Lean.Omega.LinearCombo.coordinate_eval_1 [library theorem (Init.Omega.LinearCombo)]",
+      "Lean.Omega.LinearCombo.sub_eval [library theorem (Init.Omega.LinearCombo)]",
+      "Lean.Omega.tidy_sat [library theorem (Init.Omega.Constraint)]",
+      "Nat.lt_of_not_le [library theorem (Init.Prelude)]",
+      "le_of_le_of_eq [library theorem (Init.Core)]",
+      "of_decide_eq_true [library theorem (Init.Prelude)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.AutomationOmega.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "edge_refines_node"
+   ],
+   "impl_info": [
+    {
+     "name": "edge_refines_node",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.helperAutomation",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Mathlib.Meta.NormNum.isNat_ofNat [library theorem (Mathlib.Tactic.NormNum.Basic)]",
+      "Mathlib.Tactic.Ring.add_congr [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.add_pf_add_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.atom_pf [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.cast_zero [library theorem (Mathlib.Tactic.Ring.Common)]",
+      "Mathlib.Tactic.Ring.of_eq [library theorem (Mathlib.Tactic.Ring.Basic)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.HelperAutomation.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.proofField",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "PGFData.mean_pos [proof extracted from data (projection of PGFData)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.ProofField.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.decideCheck",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "of_decide_eq_true [library theorem (Init.Prelude)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.DecideCheck.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.implInBackward",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "audit_violation",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "audit_violation",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [
+     "SIRParams.transmissibility_pos [implementation theorem used outside the hypothesis]"
+    ],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.ImplInBackward.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.unreviewedBridge",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.UnreviewedBridge.bridge [unreviewed bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.UnreviewedBridge.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.UnreviewedBridge.bridge"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.staleBridge",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.StaleBridge.bridge [stale bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.StaleBridge.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.StaleBridge.bridge"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.launderingBridge",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.LaunderingBridge.bridge [invalid bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.LaunderingBridge.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.LaunderingBridge.bridge"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.rejectedBridge",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.RejectedBridge.bridge [rejected bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.RejectedBridge.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.RejectedBridge.bridge"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.forgedReview",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.ForgedReview.bridge [unreviewed bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.ForgedReview.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.ForgedReview.bridge"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.outOfScopeBridge",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.PoissonVariance.bridge_variance [bridge registered for another claim (reviewed)]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.OutOfScopeBridge.fwd1",
+     "bridges_used": [
+      "Alignment.Example.PoissonVariance.bridge_variance"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.invalidBridges",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "audit_violation"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "audit_violation",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "Alignment.Example.SelfTest.InvalidBridges.closedConj [invalid bridge]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.InvalidBridges.fwd1",
+     "bridges_used": [
+      "Alignment.Example.SelfTest.InvalidBridges.closedConj"
+     ]
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.mismatch",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "fail"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "fail",
+     "shadow_question": false,
+     "reason": "statement is not `T̂ → Alignment.Example.SelfTest.Mismatch.S1`; found: (∀ (κ : ℚ) (hκ : 0 < κ), (PGFData.poisson κ hκ).excessDegree = κ) → Alignment.Example.SelfTest.Mismatch.S1",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.Mismatch.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.sorryCheck",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "sorry"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "sorry",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [
+      "sorryAx [forbidden constant]"
+     ],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.SorryCheck.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [
+    0,
+    1
+   ],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.missingCheck",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 2,
+   "forward": [
+    "pass",
+    "missing"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.MissingCheck.fwd1",
+     "bridges_used": []
+    },
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 2,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [
+     2
+    ],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.MissingCheck.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.75,
+   "identical_to_impl": [],
+   "hints": [
+    "backward_unused_shadows"
+   ],
+   "hint_details": [
+    {
+     "hint": "backward_unused_shadows",
+     "detail": "the backward checker does not use shadow(s) [2] (redundant given the others?)"
+    }
+   ],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.incompleteShadows",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.IncompleteShadows.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.IncompleteShadows.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "incomplete": [
+     "no sa_complete"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "SIRParams.transmissibility_pos"
+   ],
+   "impl_info": [
+    {
+     "name": "SIRParams.transmissibility_pos",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.recordedFail",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "fail"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "fail",
+     "shadow_question": true,
+     "reason": "SHADOW?: the shadow speaks about the excess degree, the implementation about the variance",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": [
+    1
+   ]
+  },
+  {
+   "id": "SELFTEST.trustedFreeShadow",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.TrustedFreeShadow.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.TrustedFreeShadow.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "shadow_trusted_free": [
+     "S1 (Alignment.Example.SelfTest.TrustedFreeShadow.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 5540191272585265229; review: unreviewed)"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [
+    0,
+    1
+   ],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [
+    {
+     "review": "unreviewed",
+     "idx": 1,
+     "hash": "5540191272585265229",
+     "decl": "Alignment.Example.SelfTest.TrustedFreeShadow.S1"
+    }
+   ],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "pt_classification_exhaustive"
+   ],
+   "impl_info": [
+    {
+     "name": "pt_classification_exhaustive",
+     "module": "EBCMCategory.ClosureTheorem",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.trustedFreeReviewed",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.TrustedFreeReviewed.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.TrustedFreeReviewed.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 1,
+   "soft": 1.0,
+   "identical_to_impl": [
+    0,
+    1
+   ],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [
+    {
+     "review": "reviewed",
+     "idx": 1,
+     "hash": "12124625975434494302",
+     "decl": "Alignment.Example.SelfTest.TrustedFreeReviewed.S1"
+    }
+   ],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "monoidal_left_unit"
+   ],
+   "impl_info": [
+    {
+     "name": "monoidal_left_unit",
+     "module": "EBCMCategory.CategoricalComposition",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.trustedFreeStale",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.TrustedFreeStale.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.TrustedFreeStale.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "shadow_trusted_free": [
+     "S1 (Alignment.Example.SelfTest.TrustedFreeStale.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 16278705499424709584; review: stale)"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [
+    0,
+    1
+   ],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [
+    {
+     "review": "stale",
+     "idx": 1,
+     "hash": "16278705499424709584",
+     "decl": "Alignment.Example.SelfTest.TrustedFreeStale.S1"
+    }
+   ],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "monoidal_right_unit"
+   ],
+   "impl_info": [
+    {
+     "name": "monoidal_right_unit",
+     "module": "EBCMCategory.CategoricalComposition",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.unusedBinderShadow",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "shadow_trusted_free": [
+     "S1 (Alignment.Example.SelfTest.UnusedBinderShadow.S1) mentions no trusted-library constant after inlining alignment helpers, except in the domains of unused binders (content hash 11480590810223777499; review: unreviewed)"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [
+    {
+     "review": "unreviewed",
+     "idx": 1,
+     "hash": "11480590810223777499",
+     "decl": "Alignment.Example.SelfTest.UnusedBinderShadow.S1"
+    }
+   ],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.tautologyShadow",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "shadow_tautology": [
+     "S1 (Alignment.Example.SelfTest.TautologyShadow.S1) holds by reflexivity or assumption at reducible transparency after inlining alignment helpers (content hash 15835174516839732522; review: unreviewed)"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [
+    {
+     "review": "unreviewed",
+     "idx": 1,
+     "hash": "15835174516839732522",
+     "decl": "Alignment.Example.SelfTest.TautologyShadow.S1"
+    }
+   ],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.refutedHypothesis",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.RefutedHypothesis.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.RefutedHypothesis.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "hypothesis_refuted": [
+     "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ (trusted); EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by Alignment.Example.SelfTest.AlignmentRefuter.refuter (alignment)"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by EBCMCategory.MarginalisationDynamicalGap.no_flow_F3Kℝ (trusted)",
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness: hypothesis h₃ : EBCMCategory.Marginalisation.IsFlow EBCMCategory.MarginalisationDynamicalGap.F3Kℝ φ₃ refuted by Alignment.Example.SelfTest.AlignmentRefuter.refuter (alignment)"
+   ],
+   "witnesses": [],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.witnessMissing",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.WitnessMissing.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.WitnessMissing.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 1,
+   "soft": 1.0,
+   "identical_to_impl": [],
+   "hints": [
+    "witness_missing"
+   ],
+   "hint_details": [
+    {
+     "hint": "witness_missing",
+     "detail": "impl 1 (EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero): its hypotheses headed by [EBCMCategory.Marginalisation.IsFlow] are also assumed by every shadow, and no @[sa_witness \"SELFTEST.witnessMissing\" 1] certificate shows they can hold"
+    }
+   ],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.witnessInvalid",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.WitnessInvalid.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.WitnessInvalid.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "witness_invalid": [
+     "Alignment.Example.SelfTest.WitnessInvalid.witness: statement is not `∃ x₁ … xₖ, True` over the binders of EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero up to its last hypothesis"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [
+    "witness_missing"
+   ],
+   "hint_details": [
+    {
+     "hint": "witness_missing",
+     "detail": "impl 1 (EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero): its hypotheses headed by [EBCMCategory.Marginalisation.IsFlow] are also assumed by every shadow, and no @[sa_witness \"SELFTEST.witnessInvalid\" 1] certificate shows they can hold"
+    }
+   ],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [
+    {
+     "status": "invalid",
+     "impl": 1,
+     "decl": "Alignment.Example.SelfTest.WitnessInvalid.witness"
+    }
+   ],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.impossibilityImpl",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "pass",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.ImpossibilityImpl.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "pass",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.ImpossibilityImpl.bwd",
+    "bridges_used": []
+   },
+   "flags": {
+    "impl_untrusted": [
+     "Alignment.Example.SelfTest.ImpossibilityImpl.noFlow is declared in Alignment.Example.SelfTest, not in the trusted library"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [
+    0,
+    1
+   ],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "Alignment.Example.SelfTest.ImpossibilityImpl.noFlow"
+   ],
+   "impl_info": [
+    {
+     "name": "Alignment.Example.SelfTest.ImpossibilityImpl.noFlow",
+     "module": "Alignment.Example.SelfTest",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.backwardVacuous",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "vacuous",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.BackwardVacuous.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [
+     1
+    ],
+    "status": "vacuous",
+    "shadow_question": false,
+    "reason": "no shadow hypothesis occurs in a proof-relevant position of the normalised proof",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.BackwardVacuous.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.5,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.backwardVacuousEval",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "vacuous",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.BackwardVacuousEval.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "vacuous",
+    "shadow_question": false,
+    "reason": "the proof still type-checks when every shadow is an arbitrary proposition",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.BackwardVacuousEval.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.5,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.backwardBudget",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "pass"
+   ],
+   "backward": "audit_violation",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "pass",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": "Alignment.Example.SelfTest.BackwardBudget.fwd1",
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "audit_violation",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [
+     "<vacuity guard could not decide: normalisation budget exhausted>"
+    ],
+    "kind": "backward",
+    "idx": 0,
+    "decl": "Alignment.Example.SelfTest.BackwardBudget.bwd",
+    "bridges_used": []
+   },
+   "flags": {},
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.5,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply"
+   ],
+   "impl_info": [
+    {
+     "name": "EBCMCategory.MarginalisationDynamicalGap.MℝLinCLM_apply",
+     "module": "EBCMCategory.MarginalisationDynamicalGap",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.implUntrusted",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "impl_untrusted": [
+     "Nat.le_refl is declared in Init.Prelude, not in the trusted library"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "Nat.le_refl"
+   ],
+   "impl_info": [
+    {
+     "name": "Nat.le_refl",
+     "module": "Init.Prelude",
+     "axioms": []
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.implUnsound",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "impl_untrusted": [
+     "Alignment.Example.SelfTest.ImplUnsound.unsoundImpl is declared in Alignment.Example.SelfTest, not in the trusted library"
+    ],
+    "impl_unsound": [
+     "Alignment.Example.SelfTest.ImplUnsound.unsoundImpl depends on [sorryAx]"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "Alignment.Example.SelfTest.ImplUnsound.unsoundImpl"
+   ],
+   "impl_info": [
+    {
+     "name": "Alignment.Example.SelfTest.ImplUnsound.unsoundImpl",
+     "module": "Alignment.Example.SelfTest",
+     "axioms": [
+      "sorryAx"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.gap",
+   "group": "SelfTest",
+   "required": false,
+   "status": "missing",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "gap": [
+     "no implementation theorem"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [],
+   "impl_info": [],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.duplicate",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "duplicate": [
+     "sa_claim registered 2 times"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.bad id!",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "invalid_id": [
+     "\"SELFTEST.bad id!\" does not match [A-Za-z0-9._-]+",
+     "registry id does not match [A-Za-z0-9._-]+"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.unlisted",
+   "group": "SelfTest",
+   "required": true,
+   "status": null,
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "unlisted": [
+     "not in the claims registry"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.textMismatch",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "text_mismatch": [
+     "sa_claim text differs from the registry text"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.groupMismatch",
+   "group": "Other",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "group_mismatch": [
+     "registry `Other` vs Lean `SelfTest`"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.requiredMismatch",
+   "group": "SelfTest",
+   "required": false,
+   "status": "informal",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "required_mismatch": [
+     "registry required=False vs Lean True"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.implMismatch",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 1,
+   "forward": [
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "impl_mismatch": [
+     "registry ['PGFData.poisson_excess_eq_mean'] vs Lean ['PGFData.poisson_variance_eq_mean']"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  },
+  {
+   "id": "SELFTEST.shadowReuse",
+   "group": "SelfTest",
+   "required": true,
+   "status": "implemented",
+   "n": 2,
+   "forward": [
+    "missing",
+    "missing"
+   ],
+   "backward": "missing",
+   "forward_detail": [
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 1,
+     "decl": null,
+     "bridges_used": []
+    },
+    {
+     "unused_shadows": [],
+     "status": "missing",
+     "shadow_question": false,
+     "reason": "",
+     "offenders": [],
+     "kind": "forward",
+     "idx": 2,
+     "decl": null,
+     "bridges_used": []
+    }
+   ],
+   "backward_detail": {
+    "unused_shadows": [],
+    "status": "missing",
+    "shadow_question": false,
+    "reason": "",
+    "offenders": [],
+    "kind": "backward",
+    "idx": 0,
+    "decl": null,
+    "bridges_used": []
+   },
+   "flags": {
+    "shadow_mismatch": [
+     "Alignment.Example.SelfTest.ShadowReuse.S is registered more than once as a shadow/reference",
+     "Alignment.Example.SelfTest.ShadowReuse.S is registered more than once as a shadow/reference"
+    ]
+   },
+   "warnings": [],
+   "sa_pass": 0,
+   "soft": 0.0,
+   "identical_to_impl": [],
+   "hints": [],
+   "hint_details": [],
+   "trusted_free_shadows": [],
+   "tautological_shadows": [],
+   "refutations": [],
+   "witnesses": [],
+   "impl": [
+    "PGFData.poisson_variance_eq_mean"
+   ],
+   "impl_info": [
+    {
+     "name": "PGFData.poisson_variance_eq_mean",
+     "module": "EBCMCategory.EpiCategory",
+     "axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+     ]
+    }
+   ],
+   "shadow_question": []
+  }
+ ],
+ "unregistered": []
+}

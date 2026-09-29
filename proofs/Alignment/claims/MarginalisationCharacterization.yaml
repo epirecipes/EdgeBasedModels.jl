@@ -1,0 +1,398 @@
+# SA-PASS claim registry fragment -- group MarginalisationCharacterization
+# Source module: EBCMCategory/MarginalisationCharacterization.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: MarginalisationCharacterization.header.T2witness
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 9-10
+  text: the witness there shows the diagram fails for one specific Kirkwood-style closure,
+  kind: existence
+  impl:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  supporting: []
+  impl_note: 'T2 (Obstructions): ∃ u, M_witness (F4_Kirkwood u) ≠ F3_Kirkwood (M_witness u) over ℚ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationCharacterization.header.T1forces
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 11-15
+  text: and Theorem T1 (`MarginalisationFunctor.lean`) shows that, for systems with global flows, any such algebraic failure forces a dynamical failure of subgraph marginalisation. The T2 witness has no global order-3 flow, so there the local form `rhs_commute_of_local_traj_commute` is the one that applies.
+  kind: structural
+  impl:
+  - EBCMCategory.Marginalisation.rhs_commute_of_traj_commute
+  supporting: []
+  impl_note: By contraposition of rhs_commute_of_traj_commute, only under IsFlow F₄ φ₄ and IsFlow F₃ φ₃.
+  required: true
+  status: implemented
+  notes: 'Vacuous at the Kirkwood order-3 witness: F₃(c) = c²/4 has no global flow (c(t) = 4/(1-t) from c(0) = 4 blows up at t = 1; IsFlow quantifies over all t ∈ ℝ), so IsFlow F₃ φ₃ is unsatisfiable there. So "forces a dynamical failure" is vacuous for the T2 witness. WP4b (TRIAGE P1.4/P2): text corrected; previous text: and Theorem T1 (`MarginalisationFunctor.lean`) shows that any such algebraic failure forces a dynamical failure of subgraph marginalisation. -- Candidate impl: rhs_commute_of_local_traj_commute (new, local form of M3).'
+- id: MarginalisationCharacterization.header.T3
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 15-19
+  text: 'T3 — proved here — is an **existential** statement (T3b): *There is a linear marginalisation `M` and a non-additive order-4 closure `C₄` such that no order-3 closure `C₃` makes the diagram commute.*'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  supporting: []
+  impl_note: 'impl is EXISTENTIAL: ∃ V₄ V₃ (with ℝ-module structure), ∃ M : V₄ →ₗ[ℝ] V₃, ∃ C₄ with IsKirkwoodForm C₄ ∧ ∀ C₃, ¬ Equivariant M C₄.C C₃.C (witness MℝLin, F4Kℝ). IsKirkwoodForm C is only non-additivity (∃ u v, C(u+v) ≠ C u + C v). The text is UNIVERSAL over nontrivial Kirkwood-form families and generic M.'
+  required: true
+  status: implemented
+  notes: 'MAJOR ALIGNMENT GAP (∃ vs ∀). Under the Lean predicate the universal reading is false: for any M with a linear section s and any nonlinear G, C₄ := s ∘ G ∘ M is non-additive yet equivariant with C₃ := G (e.g. M = id, C₄ = C₃ = u ↦ u²). WP4b (TRIAGE P1.4/P2): text corrected; previous text: T3 — proved here — is the **structural** statement: *No nontrivial multiplicative-rational ("Kirkwood-form") closure family can yield marginalisation-equivariant closed dynamics with respect to a generic linear marginalisation `M`.*'
+- id: MarginalisationCharacterization.header.onlyTrivial
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 26-28
+  text: 'Non-additive closures can escape the obstruction: some `C₃` makes the diagram commute iff `C₄` maps each fibre of `M` into a single fibre (`exists_equivariant_iff_fibrewise`).'
+  kind: structural
+  impl: []
+  supporting:
+  - EBCMCategory.MarginalisationCharacterization.linear_closure_equivariant
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'No classification theorem; false under IsKirkwoodForm = non-additivity (see header.T3). WP4b (TRIAGE P1.4/P2): text corrected; previous text: Only the trivial / linear / exact case escapes the obstruction. -- Now implementable: exists_equivariant_iff_fibrewise, exists_kirkwoodForm_equivariant (candidate impl; status could become implemented).'
+- id: MarginalisationCharacterization.header.kkrCharacterization
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 32-37
+  text: The Kiss–Kenah–Rempala (2023) characterization gives **necessary and sufficient conditions on the degree distribution** (Poisson, binomial or negative binomial) for the *pairwise* closure `[ASI] = κ · [AS][SI] / [S]` to be exact in the `N → ∞` limit; `ClosureTheorem.lean` (Results 51–59) checks only the sufficiency identities for these families.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'Claim about ClosureTheorem Results 51-59 (another group); context only here. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The Kiss–Kenah–Rempala (2023) characterization (`ClosureTheorem.lean`, Results 51–59) gives **necessary and sufficient conditions on the degree distribution** for the *pairwise* closure `[ASI] = κ · [AS][SI] / [S]` to be exact in the `N → ∞` limit.'
+- id: MarginalisationCharacterization.header.interLevel
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 39-43
+  text: 'T3 below is a different statement: a closure that is exact at the pairwise level constrains nothing at order 4, and the **inter-level marginalisation diagram need not commute**. The formal witness (T3c) only pairs a Poisson record, whose `closureKappa` is 1, with the unrelated surrogate of T3b.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting: []
+  impl_note: 'impl: ∃ ψ with closureKappa = 1 and ∃ (unrelated) V₄, V₃, M, Kirkwood-form C₄ with no equivariant C₃; the closure levels are not shown to be exact and C₄ is not derived from ψ.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: T3 below is a different, *higher*-order statement: even when each closure level is exact (or as close to exact as KKR allows), the **inter-level marginalisation diagrams need not commute**.'
+- id: MarginalisationCharacterization.header.kkrNecessary
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 44-45
+  text: No result here shows that the KKR conditions are necessary for marginalisation equivariance at order ≥ 4.
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: No theorem shows that marginalisation equivariance implies the KKR condition.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The KKR conditions are necessary [...] for marginalisation equivariance at order ≥ 4.'
+- id: MarginalisationCharacterization.header.kkrNotSufficient
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 46-47
+  text: T3c shows only that a KKR-exact degree record can be paired with an order-4 closure that is **not** equivariant.
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting: []
+  impl_note: 'See header.interLevel: ψ and the obstruction witness are decoupled, so non-sufficiency is shown only in that weak sense.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The KKR conditions are [...] **not sufficient** for marginalisation equivariance at order ≥ 4.'
+- id: MarginalisationCharacterization.table.T3a
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 51-51
+  text: '| T3a | A linear `L₄` admits an equivariant `F₃` iff `L₄(ker M) ⊆ ker M` |'
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.linear_closure_equivariant
+  supporting: []
+  impl_note: impl requires the intertwining hypothesis ∀u, M (L₄ u) = L₃ (M u), which is literally the conclusion; the text says "for any linear M".
+  required: true
+  status: implemented
+  notes: 'FALSE as stated: a linear L₄ admits an equivariant linear L₃ for M iff L₄(ker M) ⊆ ker M. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Linear closures are equivariant for any linear `M` -- Candidate impl: linear_admits_equivariant_iff (the former impl linear_closure_equivariant is tautological).'
+- id: MarginalisationCharacterization.table.T3b
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 52-53
+  text: |-
+    | T3b | Some linear `M` and non-additive `C₄` admit no equivariant `C₃` |
+    [...]
+    | | (existential; no `sorry`) |
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  supporting: []
+  impl_note: 'impl is EXISTENTIAL: ∃ V₄ V₃ (with ℝ-module structure), ∃ M : V₄ →ₗ[ℝ] V₃, ∃ C₄ with IsKirkwoodForm C₄ ∧ ∀ C₃, ¬ Equivariant M C₄.C C₃.C (witness MℝLin, F4Kℝ). IsKirkwoodForm C is only non-additivity (∃ u v, C(u+v) ≠ C u + C v). Surjectivity of M is not part of the statement.'
+  required: true
+  status: implemented
+  notes: 'Stale table text: the proof contains no sorry. Same ∃-vs-∀ gap as header.T3. WP4b (TRIAGE P1.4/P2): text corrected; previous text: A nontrivial multiplicative Kirkwood closure cannot be [...] equivariant for a generic surjective `M` (sketch w/ `sorry`)'
+- id: MarginalisationCharacterization.table.T3c.a
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 54-54
+  text: 'Corollary: KKR-exactness ⇒ pairwise-level closure exact,'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: Restates the ClosureTheorem characterisation (other group).
+- id: MarginalisationCharacterization.table.T3c.b
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 54-55
+  text: |-
+    Corollary: KKR-exactness
+    [...]
+    | | a KKR-exact record pairs with a non-equivariant order-4 closure |
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting: []
+  impl_note: See header.interLevel (decoupled witness).
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Corollary: KKR-exactness [...] does NOT imply order-4 marginalisation equivariance'
+- id: MarginalisationCharacterization.closureFamilies.linear
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 76-79
+  text: '* **Linear** closures: `C(u) = L u` for some linear `L`. (Includes truncation and moment-zero closures. Exact closures of the unclosed CTMC are in general nonlinear: the KKR-exact pairwise closure `[ASI] = κ·[AS][SI]/[S]` is rational.)'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'Asserts exact closures of the unclosed CTMC are linear -- unproved and doubtful (exact closures are generally nonlinear in lower moments). WP4b (TRIAGE P1.4/P2): text corrected; previous text: * **Linear** closures: `C(u) = L u` for some linear `L`. (Includes truncation closures, exact closures of the unclosed CTMC at the given order, and any moment-zero closure.)'
+- id: MarginalisationCharacterization.closureFamilies.kirkwood
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 81-83
+  text: '* **Kirkwood / multiplicative** closures: `C(u)_i = ∏_j u_{α(i,j)}^{p(i,j)} / ∏_k u_{β(i,k)}^{q(i,k)}` — a tuple of monomial ratios. Pair-Kirkwood triple closure `[ASI] = [AS][SI] / [S]` is the canonical example.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: Definition intent for IsKirkwoodForm. The Lean predicate is only ∃ u v, C(u+v) ≠ C u + C v (non-additivity); a bridge equating it with monomial-ratio form must be rejected.
+- id: MarginalisationCharacterization.linearClosureEquivariant.a
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 107-108
+  text: A linear closure paired with an `M`-compatible linear `L₃` at order 3 yields an equivariant closed RHS
+  kind: structural
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.linear_closure_equivariant
+  supporting: []
+  impl_note: 'impl: (∀u, M (L₄ u) = L₃ (M u)) → Equivariant M L₄ L₃; the hypothesis ("M-compatible") is definitionally the conclusion.'
+  required: true
+  status: implemented
+  notes: TAUTOLOGICAL but faithful to the "M-compatible" reading.
+- id: MarginalisationCharacterization.linearClosureEquivariant.b
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 112-113
+  text: 'It is not the only case in which the diagram commutes: see `exists_equivariant_iff_fibrewise` and `exists_kirkwoodForm_equivariant`.'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: '"only" is a classification claim with no theorem (and false under the Lean predicate, see header.T3). WP4b (TRIAGE P1.4/P2): text corrected; previous text: this is the *trivial* (and only) case in which the order-4/order-3 diagram commutes for free. -- Now implementable: exists_kirkwoodForm_equivariant (candidate impl). P1.4: linear_closure_equivariant is relabelled tautological in its docstring.'
+- id: MarginalisationCharacterization.isLinearAdmitsEquivariant
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 122-127
+  text: '**Vacuous; kept for compatibility.** The statement is `∃ F₃, Equivariant M C₄.C F₃ ∨ True`, which holds because of the disjunct `True`; it does not show that an `IsLinear` closure admits an equivariant `F₃`. The correct criterion is `linear_admits_equivariant_iff`: a linear `L₄` admits an equivariant `F₃` iff `L₄` maps `ker M` into `ker M`.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.isLinear_admits_equivariant
+  supporting: []
+  impl_note: 'impl: IsLinear C₄ → ∃ F₃, Equivariant M C₄.C F₃ ∨ True -- trivially true (witness 0 with Or.inr trivial); no intertwining hypothesis.'
+  required: true
+  status: implemented
+  notes: 'VACUOUS: the disjunct "∨ True" makes the statement hold for every M and C₄. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Corollary: an `IsLinear` closure family at order 4 admits an equivariant `F₃` whenever `M` intertwines the two linear pieces. -- P1.4 relabel. The text now describes the vacuous statement itself; the corrected criterion is the new claim MarginalisationCharacterization.linearAdmitsEquivariantIff.'
+- id: MarginalisationCharacterization.c4RealIsKirkwoodForm
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 186-188
+  text: 'The Kirkwood-form predicate holds for `C4ℝ`: the bilinear `a·b` component is non-additive. Witnessed by `u = (1,0)`, `v = (0,1)`: `F₄(u+v) = (1,1)` while `F₄(u) + F₄(v) = (0,1)`.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.C4ℝ_isKirkwoodForm
+  supporting: []
+  impl_note: 'impl: C4ℝ.IsKirkwoodForm, i.e. ∃ u v, F4Kℝ (u+v) ≠ F4Kℝ u + F4Kℝ v; the proof uses the stated witnesses (1,0), (0,1).'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationCharacterization.kirkwoodFormNotEquivariant
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 202-206
+  text: '**Theorem T3b (Kirkwood obstruction, concrete form).** There exist concrete real vector spaces `V₄`, `V₃`, a surjective linear marginalisation `M`, and a Kirkwood-form order-4 closure `C₄` such that no order-3 closure family `C₃` makes the closure diagram commute.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kirkwood_form_not_equivariant
+  supporting: []
+  impl_note: 'impl is EXISTENTIAL: ∃ V₄ V₃ (with ℝ-module structure), ∃ M : V₄ →ₗ[ℝ] V₃, ∃ C₄ with IsKirkwoodForm C₄ ∧ ∀ C₃, ¬ Equivariant M C₄.C C₃.C (witness MℝLin, F4Kℝ). IsKirkwoodForm C is only non-additivity (∃ u v, C(u+v) ≠ C u + C v). "surjective" is NOT part of the statement (MℝLin happens to be surjective).'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationCharacterization.kkrNecessaryNotSufficient.necessary
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 250-254
+  text: |-
+    **Theorem T3c.** The Kiss–Kenah–Rempala pairwise-closure exactness conditions (cf. `ClosureTheorem.lean`, Results 51–59)
+    [...]
+    Nothing here shows that they are necessary.
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: No theorem that equivariance implies the KKR condition.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Theorem T3c.** The Kiss–Kenah–Rempala pairwise-closure exactness conditions (cf. `ClosureTheorem.lean`, Results 51–59) are *necessary* [...] for marginalisation equivariance with the order-4 closed system used to generate `F₄`.'
+- id: MarginalisationCharacterization.kkrNecessaryNotSufficient.notSufficient
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 250-253
+  text: |-
+    **Theorem T3c.** The Kiss–Kenah–Rempala pairwise-closure exactness conditions (cf. `ClosureTheorem.lean`, Results 51–59)
+    [...]
+    **not sufficient** for marginalisation equivariance with the order-4 closed system used to generate `F₄`.
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting: []
+  impl_note: 'impl: ∃ ψ : PGFData, closureKappa ψ = 1 ∧ ∃ V₄ V₃ M C₄, IsKirkwoodForm C₄ ∧ ∀ C₃, ¬ Equivariant M C₄.C C₃.C. ψ plays no role in V₄, M, C₄ (they are the T3b witness), so "the order-4 closed system used to generate F₄" is not tied to ψ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MarginalisationCharacterization.kkrNecessaryNotSufficient.concretely
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 255-259
+  text: 'The order-4 closure `C₄` is independent data: a degree record that meets the KKR criterion (`closureKappa = 1` for Poisson) can be paired with the non-equivariant surrogate of T3b. It is false that T3b applies to every Kirkwood-form `C₄`: with `M = id`, `x ↦ x²` is Kirkwood-form and equivariant (`exists_kirkwoodForm_equivariant`).'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: missing
+  notes: 'FALSE under the Lean IsKirkwoodForm (non-additivity): V₄ = V₃ = ℝ, M = id, C₄ = u ↦ u² is Kirkwood-form yet equivariant with C₃ = C₄. T3b is an ∃-statement and does not "apply to" arbitrary Kirkwood-form C₄. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Concretely, even when the order-3 closure is KKR-exact in the `N → ∞` limit (e.g. `closureKappa = 1` for Poisson), the order-4 closure `C₄` is *independent data*, and Theorem T3b applies to it whenever it has Kirkwood form.'
+- id: MarginalisationCharacterization.kkrNecessaryNotSufficient.formal
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 261-265
+  text: 'The formal statement: there exists a degree distribution `ψ` whose `closureKappa` is `1` (so the KKR pairwise-exactness criterion of Result 52 is met) together with concrete `V₄`/`V₃` and a Kirkwood-form order-4 closure `C₄` for which marginalisation equivariance against `M` still fails.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.kkr_necessary_not_sufficient
+  supporting: []
+  impl_note: Accurate description of the impl; the "KKR pairwise-exactness criterion of Result 52" is represented by PGFData.closureKappa ψ = 1 with ψ = PGFData.poisson 1.
+  required: true
+  status: implemented
+  notes: ''
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented theorems: none (lemma C4ℝ_isKirkwoodForm has a docstring; claim c4RealIsKirkwoodForm).
+# The proof-sketch paragraphs of kirkwood_form_not_equivariant (lines 187-201) are not registered.
+# Definitions/structures (vocabulary, see Alignment/DataTypes/MarginalisationCharacterization.md):
+#   Equivariant, ClosureFamily, ClosureFamily.IsLinear, ClosureFamily.IsKirkwoodForm, U4ℝ, U3ℝ, MℝLin,
+#   F4Kℝ, C4ℝ, u₁, u₂ (plus Idx4/Idx3 from Obstructions, PGFData/closureKappa from EpiCategory/SurvivalBridge).
+
+# --- WP4b additions (new corrected trusted theorems) ---
+- id: MarginalisationCharacterization.existsEquivariantIffFibrewise
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 280-282
+  text: '**Fibre criterion.** For any field `F` on `V₄`, some order-3 field `F₃` satisfies `M ∘ F = F₃ ∘ M` iff `F` maps each fibre of `M` into a single fibre: `M u = M u'' → M (F u) = M (F u'')`.'
+  kind: equivalence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.exists_equivariant_iff_fibrewise
+  supporting: []
+  impl_note: (∃ F₃, Equivariant M F F₃) ↔ ∀ u u', M u = M u' → M (F u) = M (F u'), for any ℝ-modules and any F (uses Classical.choice).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationCharacterization.linearAdmitsEquivariantIff
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 302-304
+  text: '**Theorem T3a (corrected).** A linear field `L₄` admits an order-3 field `F₃` with `M ∘ L₄ = F₃ ∘ M` iff `L₄` maps `ker M` into `ker M`. So linear closures are *not* equivariant for every linear `M`.'
+  kind: equivalence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.linear_admits_equivariant_iff
+  supporting: []
+  impl_note: (∃ F₃, Equivariant M L₄ F₃) ↔ ∀ u, M u = 0 → M (L₄ u) = 0. The 'not for every M' sentence is a consequence, not a separate statement.
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'
+- id: MarginalisationCharacterization.existsKirkwoodFormEquivariant
+  group: MarginalisationCharacterization
+  source:
+    file: EBCMCategory/MarginalisationCharacterization.lean
+    lines: 321-323
+  text: 'A non-additive (`IsKirkwoodForm`) closure can be equivariant: with `M = id` on `ℝ`, the field `x ↦ x²` is non-additive and commutes with itself.'
+  kind: existence
+  impl:
+  - EBCMCategory.MarginalisationCharacterization.exists_kirkwoodForm_equivariant
+  supporting: []
+  impl_note: ∃ M C₄ C₃ over ℝ, C₄.IsKirkwoodForm ∧ C₃.IsKirkwoodForm ∧ Equivariant M C₄.C C₃.C (witness M = id, C = x²).
+  required: true
+  status: implemented
+  notes: 'WP4b: new corrected trusted theorem (TRIAGE P1.4/P2). NEEDS BLIND SHADOWS (no sa_claim yet).'

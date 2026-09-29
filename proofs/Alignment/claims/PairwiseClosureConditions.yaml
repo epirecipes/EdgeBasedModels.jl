@@ -1,0 +1,309 @@
+# SA-PASS claim registry fragment -- group PairwiseClosureConditions
+# Source module: EBCMCategory/PairwiseClosureConditions.lean  (paths relative to proofs/)
+# Registrar: claim registrar 3/3 (non-blind). Merge with scripts/merge into Alignment/claims.yaml.
+#
+# Conventions
+#   id       <Group>.R<N>[a|b|...]  for a '**Result N.**' docstring (split parts get a letter suffix,
+#            or '.1', '.2', ... when the Result label already ends in a letter, e.g. R105c.2);
+#            <Group>.<lowerCamelDeclName>[.a|.b]  for other docstrings;
+#            <Group>.header.<slug> / <Group>.table.<row>  for module-header / header-table claims
+#            that have no docstring of their own.
+#   text     VERBATIM (whitespace-normalised) quote; fragments separated by a line '[...]'.
+#            Lean comment delimiters (/--, /-!, -/) are not part of the text.
+#   status   implemented  -> impl lists trusted theorems; required: true
+#            axiomatized  -> impl lists the 'axiom' declaration(s); audit reports impl_unsound
+#            missing      -> checkable claim with no implementing theorem (coverage gap)
+#            informal     -> prose that is definitional, interpretive or meta (not a theorem claim)
+#   impl_note/notes describe the Lean statements: BLIND shadow authors must not read this file.
+
+claims:
+- id: PairwiseClosureConditions.header.safeRegime
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 9-21
+  text: 'If a closed triple is written in the form `[ASI]_A = B * p_A` where `B = (n - 1)[SI]` is a nonnegative base term and the weights `p_A` satisfy * `∑_A p_A = 1`, * `p_A ≥ 0` for every state `A`, then two things follow: 1. the total triple mass is conserved: `∑_A [ASI]_A = B`, 2. each triple count is nonnegative.'
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.normalized_nonnegative_closure_safe
+  supporting:
+  - PairwiseClosureConditions.triple_mass_conserved
+  - PairwiseClosureConditions.triple_term_nonneg
+  impl_note: 'impl: for finite α, base ≥ 0, p ≥ 0 pointwise, ∑ p = 1: (∑ a, tripleTerm base p a = base) ∧ (∀ a, 0 ≤ tripleTerm base p a) over ℚ, with tripleTerm base p a := base·p a. The base is arbitrary (not tied to (n-1)[SI]).'
+  required: true
+  status: implemented
+  notes: One claim with two conclusions under shared hypotheses; shadows may split the conjuncts.
+- id: PairwiseClosureConditions.header.normalizationOnly
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 23-23
+  text: The first conclusion only needs normalization.
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.triple_mass_conserved
+  supporting: []
+  impl_note: 'impl: the only hypothesis on p is ∑ p = 1 (no sign condition on p or on base).'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.header.nonnegNeedsPointwise
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 23-24
+  text: The second additionally needs pointwise nonnegativity of the weights.
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.triple_term_nonneg
+  - PairwiseClosureConditions.negative_weight_gives_negative_triple
+  supporting: []
+  impl_note: 'Sufficiency: triple_term_nonneg (0 ≤ base, ∀ b, 0 ≤ p b ⇒ 0 ≤ tripleTerm base p a; normalization unused). Necessity only in the pointwise sense: negative_weight_gives_negative_triple (0 < base, p a < 0 ⇒ tripleTerm base p a < 0).'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.header.conservationNotPositivity
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 24-26
+  text: 'This is exactly the distinction that matters for auditing clustered pairwise closures: conservation alone does not imply positivity.'
+  kind: existence
+  impl:
+  - PairwiseClosureConditions.negative_weight_gives_negative_triple
+  supporting: []
+  impl_note: impl shows a negative weight with positive base yields a negative triple. It does not exhibit normalized weights (∑ p = 1) with a negative entry, so the non-implication "normalization ⇏ nonnegativity" is only implicit.
+  required: true
+  status: implemented
+  notes: Forward check against a shadow "∃ α p base, ∑ p = 1 ∧ ∃ a, tripleTerm base p a < 0" should fail (no existence statement).
+- id: PairwiseClosureConditions.tripleMassConserved
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 58-59
+  text: Normalization of the closure weights is enough to conserve the total triple mass. No sign condition on `p` is needed for this statement.
+  kind: algebraic-identity
+  impl:
+  - PairwiseClosureConditions.triple_mass_conserved
+  supporting: []
+  impl_note: 'impl: ∑ p = 1 → ∑ a, tripleTerm base p a = base, for any base : ℚ and p : α → ℚ.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.tripleTermNonneg
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 72-73
+  text: If the base term and all closure weights are nonnegative, then every closed triple term is nonnegative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.triple_term_nonneg
+  supporting: []
+  impl_note: 'impl: 0 ≤ base → (∀ b, 0 ≤ p b) → 0 ≤ tripleTerm base p a.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.weightInUnitInterval
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 81-82
+  text: Under nonnegative normalized weights, each individual closure weight lies in `[0,1]`.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.weight_in_unit_interval
+  supporting: []
+  impl_note: 'impl: (∀ b, 0 ≤ p b) → ∑ b, p b = 1 → 0 ≤ p a ∧ p a ≤ 1.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.negativeWeightGivesNegativeTriple.a
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 100-101
+  text: If some closure weight is negative and the base term is strictly positive, then the corresponding closed triple is negative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.negative_weight_gives_negative_triple
+  supporting: []
+  impl_note: 'impl: 0 < base → p a < 0 → tripleTerm base p a < 0.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.negativeWeightGivesNegativeTriple.b
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 101-102
+  text: This shows why mass conservation alone cannot certify positivity.
+  kind: existence
+  impl:
+  - PairwiseClosureConditions.negative_weight_gives_negative_triple
+  supporting: []
+  impl_note: Same impl; no statement combines ∑ p = 1 with a negative weight (see header.conservationNotPositivity).
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.normalizedNonnegativeClosureSafe
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 110-111
+  text: 'A packaged version of the safe regime: normalized nonnegative weights yield both total-mass conservation and pointwise nonnegativity of the triple terms.'
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.normalized_nonnegative_closure_safe
+  supporting: []
+  impl_note: impl additionally assumes 0 ≤ base (implicit in the text); conclusion is the conjunction (∑ = base) ∧ (∀ a, 0 ≤ term).
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.convexMixNonneg
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 123-123
+  text: A convex mixture of nonnegative weights is nonnegative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.convexMix_nonneg
+  supporting: []
+  impl_note: 'impl: 0 ≤ φ ≤ 1, 0 ≤ x, 0 ≤ y → 0 ≤ convexMix φ x y ("convex" = φ ∈ [0,1]).'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.barnardWeightsNormalized.a
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 135-135
+  text: A convex mixture of normalized weight families is normalized.
+  kind: algebraic-identity
+  impl:
+  - PairwiseClosureConditions.barnardWeights_normalized
+  supporting: []
+  impl_note: 'impl: ∑ p_uc = 1 → ∑ p_c = 1 → ∑ a, barnardWeights φ p_uc p_c a = 1 for ANY φ (affine combination), i.e. stronger than "convex".'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.barnardWeightsNormalized.b
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 135-139
+  text: 'This is the key algebraic fact behind Barnard''s improved closure: it mixes the unclustered weights (probability 1 − φ) with the normalised clustered weights (probability φ), which gives Σ_A [ASI] = (n − 1)[SI] (Barnard 2018, PhD thesis, University of Sussex, §4.3.2, "Improved closure").'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: ''
+  required: false
+  status: informal
+  notes: 'Whether Barnard''s improved closure has this convex-mixture form is only asserted by the docstrings of convexMix / barnardWeights. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the key algebraic fact behind Barnard''s improved closure.'
+- id: PairwiseClosureConditions.barnardWeightsNonneg
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 156-157
+  text: Barnard-style mixed weights stay nonnegative when both the unclustered and clustered probability models are pointwise nonnegative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.barnardWeights_nonneg
+  supporting: []
+  impl_note: impl adds 0 ≤ φ ≤ 1, which the text does not mention.
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.barnardStyleClosureSafe
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 168-169
+  text: Barnard-style closures are safe whenever both constituent probability models are normalized and nonnegative.
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.barnard_style_closure_safe
+  supporting: []
+  impl_note: '"safe" = (∑ tripleTerm = base) ∧ (∀ a, 0 ≤ tripleTerm); impl adds 0 ≤ base and 0 ≤ φ ≤ 1, not in the text.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.keelingFactorNonneg
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 186-187
+  text: If the Keeling correlation correction stays nonnegative, then the Keeling weight factor is nonnegative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.keelingFactor_nonneg
+  supporting: []
+  impl_note: impl adds 0 ≤ φ ≤ 1.
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.keelingWeightsNonneg
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 198-199
+  text: If the baseline weights and the correlation correction are both nonnegative, then the Keeling-reweighted weights are nonnegative.
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.keelingWeights_nonneg
+  supporting: []
+  impl_note: impl adds 0 ≤ φ ≤ 1.
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.keelingStyleClosureSafe.a
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 211-212
+  text: Keeling-style closures are safe only after an *additional normalization theorem* is supplied.
+  kind: structural
+  impl:
+  - PairwiseClosureConditions.keeling_style_closure_safe
+  supporting: []
+  impl_note: 'impl proves SUFFICIENCY: with the extra hypothesis ∑ keelingWeights = 1 (plus base ≥ 0, φ ∈ [0,1], p ≥ 0, corr ≥ 0) the closure is safe. The "only after" (necessity: without it conservation can fail) is not proved.'
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.keelingStyleClosureSafe.b
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 212-213
+  text: Positivity follows from nonnegative baseline weights and nonnegative correlation corrections,
+  kind: inequality
+  impl:
+  - PairwiseClosureConditions.keelingWeights_nonneg
+  - PairwiseClosureConditions.triple_term_nonneg
+  supporting: []
+  impl_note: keelingWeights_nonneg gives weight nonnegativity (with φ ∈ [0,1]); positivity of the triple terms needs triple_term_nonneg and base ≥ 0 in addition.
+  required: true
+  status: implemented
+  notes: ''
+- id: PairwiseClosureConditions.keelingStyleClosureSafe.c
+  group: PairwiseClosureConditions
+  source:
+    file: EBCMCategory/PairwiseClosureConditions.lean
+    lines: 213-214
+  text: but conservation must be assumed separately.
+  kind: existence
+  impl: []
+  supporting: []
+  impl_note: No counterexample (∃ nonneg p, corr with ∑ a, keelingWeights φ p corr a ≠ 1) is proved.
+  required: false
+  status: missing
+  notes: The non-implication is true (take corr ≡ 2, φ = 1) but unformalised.
+
+# ---------------------------------------------------------------------------------------
+# Coverage notes (registrar 3)
+#
+# Undocumented theorems: none -- every theorem in this module carries a docstring.
+# Definitions with docstrings (vocabulary, see Alignment/DataTypes/PairwiseClosureConditions.md):
+#   tripleTerm, convexMix, keelingFactor, barnardWeights, keelingWeights.
+# All statements are over ℚ with a finite index type α ([Fintype α] [DecidableEq α]).

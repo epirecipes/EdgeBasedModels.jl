@@ -1,0 +1,263 @@
+# SA-PASS claim registry fragment: group ClusteringExtension
+# Source module: EBCMCategory/ClusteringExtension.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: 'R<N>' / 'R<N>a' for '**Result N.**' docstrings; 'R<N>-sec[-x]' for the
+#   '/-! ## Result N: ... -/' section text preceding them; '<lowerCamelName>' for other docstrings.
+- id: ClusteringExtension.R69
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 34-40
+  text: '**Result 69.** The triangle stub fraction 2⟨t⟩/(2⟨t⟩+⟨s⟩): the fraction of stubs that are triangle stubs (named `clustering_coefficient` for compatibility). It is not the clustering coefficient, which is C = 2⟨t⟩/⟨k(k−1)⟩ with k = s + 2t (the fraction of connected triples that are closed); for independent Poisson single and triangle degrees with means κ_s, κ_t, C = 2κ_t/((κ_s + 2κ_t)² + 2κ_t).'
+  kind: structural
+  impl: []
+  supporting:
+  - clustering_in_unit_interval
+  impl_note: Def docstring of clustering_coefficient (it spells out the body); definitional, bridge material.
+  required: false
+  status: informal
+  notes: 'Suspicious definition: Volz et al. (2011) (papers/clustering1.md l.73-75) define C = 3N_Δ/N_3 = g_y(1,1)/(½G''''(1)) with G(x) = g(x,x²), i.e. C = 2⟨t⟩/⟨k(k−1)⟩; the module''s 2⟨t⟩/(2⟨t⟩+⟨s⟩) = 2⟨t⟩/⟨k⟩ is the fraction of edge-ends lying in triangles, which that paper uses only to calibrate the HK model. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 69.** Clustering coefficient C = 2⟨t⟩/(2⟨t⟩+⟨s⟩).'
+- id: ClusteringExtension.clusteringInUnitInterval
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 44-44
+  text: The triangle stub fraction lies in [0,1].
+  kind: inequality
+  impl:
+  - clustering_in_unit_interval
+  supporting: []
+  impl_note: Good match for clustering_coefficient (uses single_pos, triangle_nonneg).
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The clustering coefficient lies in [0,1].'
+- id: ClusteringExtension.R70-sec
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 56-56
+  text: 'Result 70: Zero clustering recovers standard EBCM'
+  kind: structural
+  impl: []
+  supporting:
+  - zero_clustering_iff_no_triangles
+  impl_note: No clustered or standard EBCM model is defined in the module; only C = 0 ↔ ⟨t⟩ = 0 is proved.
+  required: false
+  status: missing
+  notes: Section heading.
+- id: ClusteringExtension.R70
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 58-58
+  text: '**Result 70.** Clustering is zero iff there are no triangle edges.'
+  kind: equivalence
+  impl:
+  - zero_clustering_iff_no_triangles
+  supporting: []
+  impl_note: 'Good match: clustering_coefficient d = 0 ↔ d.mean_triangle = 0 (''no triangle edges'' read as mean triangle count 0).'
+  required: true
+  status: implemented
+  notes: ''
+- id: ClusteringExtension.R71-sec-a
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 75-77
+  text: Within a triangle, a susceptible node can be infected directly (prob T) or indirectly via the third node. The total probability of infection through a triangle pair is 1 - (1-T)(1-T²) = T + T² - T³ (independent edges).
+  kind: algebraic-identity
+  impl:
+  - triangle_pair_transmission
+  supporting: []
+  impl_note: impl is the ring identity 1 − (1−T)(1−T²) = T + T² − T³; the probabilistic derivation (independent direct path T and indirect path T²) is not formalised.
+  required: true
+  status: implemented
+  notes: 'The T² indirect path assumes independent edge transmissions, exact only for a fixed infectious period (Volz et al. 2011 note overestimation otherwise). WP4b (TRIAGE P1.4/P2): text corrected; previous text: Within a triangle, a susceptible node can be infected directly (prob T) or indirectly via the third node. The total probability of infection through a triangle pair is 1 - (1-T)(1-T²) = T + T² - T³,'
+- id: ClusteringExtension.R71-sec-b
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 78-79
+  text: This is not T(2-T) = 1 - (1-T)², the probability that at least one of two independent edges transmits.
+  kind: algebraic-identity
+  impl:
+  - triangle_per_partner
+  supporting: []
+  impl_note: impl is the ring identity T(2−T) = 2T − T².
+  required: true
+  status: implemented
+  notes: 'Suspicious: T(2−T) = 1 − (1−T)² ≠ T + T² − T³ in general; it is the probability that at least one of two independent T-trials succeeds, not a ''per partner'' version of the preceding expression. WP4b (TRIAGE P1.4/P2): text corrected; previous text: or T(2-T) per partner.'
+- id: ClusteringExtension.R71a
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 81-81
+  text: '**Result 71a.** Pair transmission through a triangle.'
+  kind: algebraic-identity
+  impl:
+  - triangle_pair_transmission
+  supporting: []
+  impl_note: Docstring names the quantity but states no equation; impl is the ring identity 1 − (1−T)(1−T²) = T + T² − T³.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClusteringExtension.R71b
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 85-87
+  text: '**Result 71b.** The ring identity T(2 − T) = 2T − T². It is not the per-partner transmissibility in a triangle, which is T + T² − T³ (Result 71a); at T = 1/2 the two are 3/4 and 5/8.'
+  kind: algebraic-identity
+  impl:
+  - triangle_per_partner
+  supporting: []
+  impl_note: impl T(2−T) = 2T − T² has no connection to triangles or transmissibility.
+  required: true
+  status: implemented
+  notes: 'See R71-sec-b. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 71b.** Per-partner effective transmissibility in a triangle.'
+- id: ClusteringExtension.R72
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 99-105
+  text: '**Result 72.** The scalar `clustered_R0` = T·(⟨s(s-1)⟩/⟨s+2t⟩) + T·(2⟨t⟩/⟨s+2t⟩)·(1+T), kept for compatibility. It is not the R₀ of a clustered network: its triangle term does not scale with the excess triangle degree. For triangle-clustered configuration models, R₀ is the spectral radius of the next-generation matrix over single-edge and triangle-edge infection types (Miller 2009); it is not formalised here.'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: clustered_R0 is a definition; no theorem connects it to an epidemic threshold or to a clustered EBCM.
+  required: false
+  status: missing
+  notes: 'Suspicious formula: the triangle term does not depend on the excess triangle count and cross moments ⟨st⟩ are absent. E.g. with ⟨s(s−1)⟩ = 0 (s ∈ {0,1}), every node in exactly one triangle and ⟨s⟩ → 0, clustered_R0 → T(1+T) = 2 at T = 1, although such near-disjoint triangles cannot sustain a large outbreak. Also excess_single is a free field unrelated to mean_single. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 72.** R₀ for a clustered network: R₀ = T·(⟨s(s-1)⟩/⟨s+2t⟩) + T·(2⟨t⟩/⟨s+2t⟩)·(1+T).'
+- id: ClusteringExtension.R73-sec-a
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 112-116
+  text: Converting a triangle (⟨t⟩→⟨t⟩-1) to two single edges (⟨s⟩→⟨s⟩+2) preserves mean degree ⟨k⟩ = ⟨s⟩+2⟨t⟩. In the scalar formula `clustered_R0`, a triangle's two stubs contribute T·(1+T) in total, i.e. T(1+T)/2 per stub, which is at most the contribution T of a single-edge stub. This is a statement about that formula, not a derivation of R₀ for clustered networks.
+  kind: inequality
+  impl: []
+  supporting:
+  - triangle_per_edge_le_single
+  - degree_conversion_preserves_mean
+  impl_note: No theorem compares clustered_R0 before and after the conversion.
+  required: false
+  status: missing
+  notes: 'Reasoning is self-contradictory as written (''T·(1+T) > T'' is offered as the reason R₀ is LOWER); with the module''s clustered_R0 the comparison would also depend on the free field excess_single. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Converting a triangle (⟨t⟩→⟨t⟩-1) to two single edges (⟨s⟩→⟨s⟩+2) preserves mean degree ⟨k⟩ = ⟨s⟩+2⟨t⟩ but the triangle contribution T·(1+T) > T alone, so the original clustered R₀ is LOWER than the unclustered one because the triangle terms contribute less per mean degree.'
+- id: ClusteringExtension.R73-sec-b
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 118-120
+  text: 'The key inequality: for 0 < T ≤ 1, T(1+T)/2 ≤ T, since T(1+T)/2 ≤ T ↔ (1+T)/2 ≤ 1 ↔ T ≤ 1. The per-stub value T(1+T)/2 comes from `clustered_R0` and is not sourced.'
+  kind: inequality
+  impl:
+  - triangle_per_edge_le_single
+  supporting: []
+  impl_note: 'impl: 0 < T → T ≤ 1 → T(1+T)/2 ≤ T. Only the ⇐ direction of the stated ↔ chain is proved; the reading ''per-edge R₀ from a triangle partner is T(1+T)/2'' is not derived.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The key inequality: for 0 < T ≤ 1, the effective per-edge R₀ from a triangle partner is T(1+T)/2, vs T for a single-edge partner. Since T(1+T)/2 ≤ T ↔ (1+T)/2 ≤ 1 ↔ T ≤ 1.'
+- id: ClusteringExtension.R73
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 122-122
+  text: '**Result 73.** Triangle edges contribute less per edge than single edges to R₀.'
+  kind: inequality
+  impl:
+  - triangle_per_edge_le_single
+  supporting: []
+  impl_note: impl is the scalar inequality T(1+T)/2 ≤ T for 0 < T ≤ 1; no R₀, clustered_R0 or edge types appear.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClusteringExtension.R74
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 132-132
+  text: '**Result 74.** Mean total degree ⟨k⟩ = ⟨s⟩ + 2⟨t⟩.'
+  kind: structural
+  impl: []
+  supporting:
+  - mean_degree_positive
+  impl_note: Def docstring of mean_total_degree (spells out the body); definitional.
+  required: false
+  status: informal
+  notes: Consistent only if t counts triangles (each contributing 2 edges); the module header says 't counts triangle-edge stubs', which would give ⟨s⟩ + ⟨t⟩.
+- id: ClusteringExtension.meanDegreePositive
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 136-136
+  text: Mean total degree is positive.
+  kind: inequality
+  impl:
+  - mean_degree_positive
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClusteringExtension.R75-sec
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 144-147
+  text: 'For independent Poisson single/triangle edges with means κ_s, κ_t: g(x,y) = exp(κ_s(x-1) + κ_t(y-1)). The triangle stub fraction equals 2κ_t/(2κ_t + κ_s); the clustering coefficient is 2⟨t⟩/⟨k(k−1)⟩ = 2κ_t/((κ_s + 2κ_t)² + 2κ_t).'
+  kind: algebraic-identity
+  impl:
+  - poisson_clustering
+  supporting: []
+  impl_note: 'impl: 2κ_t/(2κ_t+κ_s) = clustering_coefficient ⟨κ_s, κ_t, κ_s, …⟩ — an unfolding of the definition for a record whose means are κ_s, κ_t. The PGF exp(κ_s(x−1)+κ_t(y−1)) and the Poisson assumption play no role (it holds for any law with those means). The record''s excess_single is set to κ_s, whereas for this PGF ⟨s(s−1)⟩/⟨s+2t⟩ = κ_s²/(κ_s+2κ_t) (irrelevant to C).'
+  required: true
+  status: implemented
+  notes: 'Under the literature definition (C = 2⟨t⟩/⟨k(k−1)⟩) the Poisson value would be 2κ_t/((κ_s+2κ_t)² + 2κ_t) (sympy, from g_y(1,1)/(½G′′(1))), not 2κ_t/(2κ_t+κ_s). WP4b (TRIAGE P1.4/P2): text corrected; previous text: For independent Poisson single/triangle edges with means κ_s, κ_t: g(x,y) = exp(κ_s(x-1) + κ_t(y-1)). The clustering coefficient equals 2κ_t/(2κ_t + κ_s).'
+- id: ClusteringExtension.R75
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 149-151
+  text: '**Result 75.** A Poisson clustered network has triangle stub fraction 2κ_t/(2κ_t+κ_s). Its clustering coefficient is 2κ_t/((κ_s + 2κ_t)² + 2κ_t).'
+  kind: algebraic-identity
+  impl:
+  - poisson_clustering
+  supporting: []
+  impl_note: 'See R75-sec: definitional unfolding; no Poisson structure used.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 75.** Poisson clustered network has clustering coefficient 2κ_t/(2κ_t+κ_s). -- The clustering-coefficient sentence has no Lean counterpart (the record lacks ⟨k(k−1)⟩); consider splitting it into a separate missing claim.'
+- id: ClusteringExtension.R76-sec
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 159-160
+  text: 'Replacing 1 triangle with 2 single edges: ⟨s''⟩ = ⟨s⟩+2, ⟨t''⟩ = ⟨t⟩-1 preserves mean total degree.'
+  kind: algebraic-identity
+  impl:
+  - degree_conversion_preserves_mean
+  supporting: []
+  impl_note: 'impl: (s+2) + 2(t−1) = s + 2t on raw rationals; mean_total_degree is not referenced.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ClusteringExtension.R76
+  group: ClusteringExtension
+  source:
+    file: EBCMCategory/ClusteringExtension.lean
+    lines: 162-162
+  text: '**Result 76.** Triangle-to-single conversion preserves mean degree.'
+  kind: algebraic-identity
+  impl:
+  - degree_conversion_preserves_mean
+  supporting: []
+  impl_note: See R76-sec.
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text, see DataTypes/ClusteringExtension.md):
+#   module header 'A clustered network is described by g(x,y) = Σ p_{s,t} x^s y^t ...' (lines 7-10),
+#   ClusteredPGFData, ClusteredR0Data ('Data for R₀ computation in a clustered network.'), clustered_R0
+#   (its docstring is registered as R72), clustering_coefficient (R69), mean_total_degree (R74).

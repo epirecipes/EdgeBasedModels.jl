@@ -1,0 +1,43 @@
+# Claim registry for the worked example (ids EXAMPLE.*). Same format as Alignment/claims/<Group>.yaml.
+- id: EXAMPLE.poissonVariance
+  group: Example
+  source: {file: EBCMCategory/EpiCategory.lean, lines: '56-56'}
+  text: "**Result 2.** For Poisson, the variance equals the mean (equidispersion)."
+  kind: algebraic-identity
+  impl: [PGFData.poisson_variance_eq_mean]
+  supporting: []
+  impl_note: >-
+    States (PGFData.poisson κ hκ).variance = κ for every κ > 0, with variance defined as
+    ψ''(1) + ψ'(1) - ψ'(1)^2; the Poisson data has mean κ, so both readings of "the mean" agree.
+  required: true
+  status: implemented
+  notes: Worked example; a weak pass (shadows written by the checker author).
+- id: EXAMPLE.transmissibilityRange
+  group: Example
+  source: {file: EBCMCategory/EpiCategory.lean, lines: '82,88'}
+  text: |
+    Transmissibility is positive.
+    [...]
+    Transmissibility is less than 1.
+  kind: inequality
+  impl: [SIRParams.transmissibility_pos, SIRParams.transmissibility_lt_one]
+  supporting: []
+  impl_note: >-
+    The conjunction of the two theorems states 0 < β/(β+γ) and β/(β+γ) < 1 for all SIR parameters
+    with β, γ > 0 (transmissibility is defined as β/(β+γ)).
+  required: true
+  status: implemented
+  notes: Worked example with two implementation theorems (T̂ is their conjunction).
+- id: EXAMPLE.trajectoryGapZero
+  group: Example
+  source: {file: EBCMCategory/MarginalisationDynamicalGap.lean, lines: '128-128'}
+  text: "The trajectory gap vanishes at `t = 0`."
+  kind: algebraic-identity
+  impl: [EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_at_zero]
+  supporting: []
+  impl_note: >-
+    For flows φ₄, φ₃ of F₄, F₃ on normed spaces in arbitrary universes, trajectoryGap M φ₄ φ₃ u 0 = 0,
+    where trajectoryGap is M (φ₄ u t) - φ₃ (M u) t.
+  required: true
+  status: implemented
+  notes: Worked example for universe-polymorphic implementation theorems.

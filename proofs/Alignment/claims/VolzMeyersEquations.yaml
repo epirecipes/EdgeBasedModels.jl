@@ -1,0 +1,433 @@
+# SA-PASS claim registry fragment: group VolzMeyersEquations
+# Source module: EBCMCategory/VolzMeyersEquations.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: VolzMeyersEquations.header.equationLevel
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 7-13
+  text: 'This file states scalar identities motivated by the **Volz–Meyers (2007) neighbour-exchange (NE) model**: sign conditions and conservation identities for pointwise right-hand-side expressions, and initial-condition bookkeeping. No full ODE system is formalised: only the θ, pop_I and pop_R right-hand sides are defined, as scalar expressions of a state record; the P_S, P₁ and M₁ equations are not, and nothing is proved about solutions.'
+  kind: structural
+  impl: []
+  supporting:
+  - theta_nonincreasing
+  - population_influx
+  - fast_mixing_P1_equilibrium
+  impl_note: Only the rate expressions dθ, incidence (Poisson-specialised), dI, dR and the derived P_R are defined; the P_S, P₁ and M₁ equations of VM Table 4 are absent, S = ψ(θ) is absent, and no ODE solution or limit is formalised ('limiting behaviour' results VM5/VM6 are algebraic evaluations at ρ = 0 or under P₁ = M₁).
+  required: false
+  status: missing
+  notes: 'Module-header meta-claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This file formalises the **Volz–Meyers (2007) neighbour-exchange (NE) model** at the ODE equation level, providing machine-checked guarantees about conservation laws, limiting behaviour, and initial-condition consistency. [...] by verifying the actual ODE system'
+- id: VolzMeyersEquations.header.table4System
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 21-32
+  text: |-
+    Variables: θ, P₁, P_S, M₁ (4 ODEs + 2 population-level: pop_I, pop_R)
+    [...]
+    Susceptible fraction: S = ψ(θ)
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: VMState has fields θ, P₁, P_S, M₁, I, R, but only θ̇ (dθ), pop_I (dI) and pop_R (dR) have rate definitions; Ṗ_S, Ṗ₁, Ṁ₁ (table lines 24-26) are not defined; S = ψ(θ) is not defined (no PGF function).
+  required: false
+  status: missing
+  notes: Definitional table; Ṗ_S/Ṗ₁/Ṁ₁ rows match VM 2007 Table 4 (papers/rspb20071159.md l.196); pop_I/pop_R rows are additions not in Table 4.
+- id: VolzMeyersEquations.header.popIEquation
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 29-92
+  text: |-
+    | pop_I | = β P₁ θ ψ'(θ) − γ pop_I |
+    [...]
+    The Lean incidence β·P₁·θ·κ. The Volz–Meyers incidence is β·P₁·θ·ψ'(θ); for Poisson, ψ'(θ) = κ·ψ(θ), so it is β·P₁·θ·κ·ψ(θ). This definition drops the factor ψ(θ) and agrees with the model only while ψ(θ) = 1, i.e. at θ = 1.
+  kind: dynamical
+  impl: []
+  supporting:
+  - population_influx
+  impl_note: 'dI s p := incidence − γ·I with incidence := β·P₁·θ·κ. For Poisson ψ''(θ) = κ·ψ(θ), so the table''s β·P₁·θ·ψ''(θ) equals β·P₁·θ·κ·ψ(θ): the def drops the factor ψ(θ) = S and agrees with the table only at θ = 1 (or for ψ(x) = x).'
+  required: false
+  status: missing
+  notes: 'Second fragment is the docstring of def VMState.incidence; the two fragments are mutually inconsistent. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | pop_I | = β P₁ θ ψ''(θ) − γ pop_I | [...] Incidence = β·P₁·θ·κ (for Poisson, ψ''(θ) = κ·ψ(θ)).'
+- id: VolzMeyersEquations.table.VM1
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 38-38
+  text: '| VM1 | θ is non-increasing (dθ/dt ≤ 0) |'
+  kind: inequality
+  impl:
+  - theta_nonincreasing
+  supporting: []
+  impl_note: Sign of the rate expression −β·P₁·θ under P₁, θ ≥ 0; not monotonicity of a solution.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as thetaNonincreasing.
+- id: VolzMeyersEquations.table.VM2
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 39-39
+  text: '| VM2 | Edge partition: P₁ + P_S + P_R = 1 (where P_R = 1-P₁-P_S) |'
+  kind: algebraic-identity
+  impl:
+  - edge_partition
+  supporting: []
+  impl_note: Tautology by the definition of P_R.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as edgePartition.
+- id: VolzMeyersEquations.table.VM3
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 40-40
+  text: '| VM3 | Population conservation: d(pop_I + pop_R)/dt = incidence |'
+  kind: algebraic-identity
+  impl:
+  - population_influx
+  supporting: []
+  impl_note: dI + dR = incidence. Calling this 'conservation' would additionally need incidence = −dS/dt, which is not stated (and fails for the Poisson incidence def, see header.popIEquation).
+  required: true
+  status: implemented
+  notes: Header-table row; see populationInflux-a.
+- id: VolzMeyersEquations.table.VM4
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 41-41
+  text: '| VM4 | S is non-increasing (follows from VM1 and PGF monotonicity) |'
+  kind: inequality
+  impl:
+  - S_nonincreasing
+  supporting: []
+  impl_note: 'impl: κ·dθ ≤ 0; S does not appear.'
+  required: true
+  status: implemented
+  notes: Header-table row; see sNonincreasing-a.
+- id: VolzMeyersEquations.table.VM5
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 42-42
+  text: '| VM5 | Static limit (ρ=0): θ̇ = −β P₁ θ reduces to static EBCM |'
+  kind: limit
+  impl:
+  - static_theta_eq
+  supporting: []
+  impl_note: Unfolding of dθ at staticParams (ρ = 0); no static EBCM appears.
+  required: true
+  status: implemented
+  notes: Header-table row; see staticThetaEq-a/-c.
+- id: VolzMeyersEquations.table.VM6
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 43-43
+  text: '| VM6 | Swap term ρ(M₁ − P₁) vanishes at P₁ = M₁ (fast-mixing motivation) |'
+  kind: limit
+  impl:
+  - fast_mixing_P1_equilibrium
+  supporting: []
+  impl_note: 'impl: P₁ = M₁ → ρ(M₁ − P₁) = 0; no ρ → ∞ limit, and nothing about P_S.'
+  required: true
+  status: implemented
+  notes: 'Header-table row; see fastMixingP1Equilibrium-a/-b. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | VM6 | Fast-mixing limit (ρ→∞): P₁→M₁, P_S→ψ''(θ)/ψ''(1) |'
+- id: VolzMeyersEquations.table.VM7
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 44-44
+  text: '| VM7 | IC bookkeeping: with S(0) = ψ(1) = 1, S(0) + pop_I(0) + pop_R(0) = 1 + sf |'
+  kind: inequality
+  impl: []
+  supporting:
+  - ic_population
+  - ic_theta
+  - InvariantRegion.missing_seed_factor_overcounts
+  impl_note: 'No theorem. With S = ψ(θ) (header) and vmInitialState (θ(0) = 1, I(0) = sf, R(0) = 0), S(0) + I(0) + R(0) = 1 + sf > 1 for sf > 0: the claim is false for the formalised initial condition. This is the seed over-count regression that InvariantRegion Result 120b / missing_seed_factor_overcounts guards against.'
+  required: false
+  status: missing
+  notes: 'Header-table row; differs from the VM7 docstring (which is about the edge partition). VM 2007 eqs 2.19-2.20 (papers/rspb20071159.md l.204-210) seed via θ(0) = 1 − ε instead. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | VM7 | IC consistency: S(0) + pop_I(0) + pop_R(0) ≤ 1 |'
+- id: VolzMeyersEquations.table.VM8
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 45-45
+  text: '| VM8 | Mass-action recovery for ψ(x)=x (k=1) in the fast-mixing limit |'
+  kind: equivalence
+  impl:
+  - mass_action_incidence
+  supporting: []
+  impl_note: Only incidence = I·S at one state with β = γ = κ = 1, ρ = 0.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see massActionIncidence-a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | VM8 | Mass-action recovery: for ψ(x)=x (k=1), VM = standard SIR |'
+- id: VolzMeyersEquations.thetaNonincreasing
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 109-109
+  text: '**VM1.** θ is non-increasing: dθ/dt ≤ 0 whenever β > 0, P₁ ≥ 0, θ ≥ 0.'
+  kind: inequality
+  impl:
+  - theta_nonincreasing
+  supporting: []
+  impl_note: 'impl: 0 ≤ s.P₁ → 0 ≤ s.θ → s.dθ p ≤ 0 (β > 0 is a VMParams field). A sign condition on the rate expression −β·P₁·θ at a state, which is what ''dθ/dt ≤ 0'' denotes here; monotonicity of a trajectory θ(t) is not formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.edgePartition
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 117-117
+  text: '**VM2.** Edge partition: P₁ + P_S + P_R = 1 (by definition of P_R).'
+  kind: algebraic-identity
+  impl:
+  - edge_partition
+  supporting: []
+  impl_note: 'Tautology: P_R is defined as 1 − P₁ − P_S (the text says so). No non-negativity of P₁, P_S, P_R is asserted.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.populationInflux-a
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 122-122
+  text: '**VM3.** Population dynamics: d(I + R)/dt = incidence.'
+  kind: algebraic-identity
+  impl:
+  - population_influx
+  supporting: []
+  impl_note: 'impl: s.dI p + s.dR p = s.incidence p by ring (dI = incidence − γI, dR = γI). Faithful to the displayed identity.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.populationInflux-b
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 123-125
+  text: This is the influx of newly infected from the susceptible pool, with the Lean incidence (which drops the factor ψ(θ); see `VMState.incidence`).
+  kind: dynamical
+  impl: []
+  supporting:
+  - population_influx
+  impl_note: No S or dS/dt is defined. With S = ψ(θ), −dS/dt = β·P₁·θ·ψ'(θ) = β·P₁·θ·κ·S for Poisson, which differs from the def incidence = β·P₁·θ·κ unless S = 1.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the influx of newly infected from the susceptible pool.'
+- id: VolzMeyersEquations.sNonincreasing-a
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 130-131
+  text: '**VM4.** S is non-increasing (for Poisson PGF, S = exp(κ(θ-1))). Since θ is non-increasing (VM1) and exp is monotone, S is non-increasing.'
+  kind: inequality
+  impl:
+  - S_nonincreasing
+  supporting:
+  - theta_nonincreasing
+  impl_note: 'impl: 0 ≤ P₁ → 0 ≤ θ → 0 < κ → κ·(s.dθ p) ≤ 0. S (and exp) do not appear, so this is a sign statement about κ·dθ, not about S or dS/dt.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.sNonincreasing-b
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 132-134
+  text: 'Motivated by: dS/dt = κ·S·dθ/dt ≤ 0 when κ > 0. The Lean statement is only κ·dθ/dt ≤ 0 (the factor S ≥ 0 is omitted); nothing is proved about S along solutions.'
+  kind: inequality
+  impl:
+  - S_nonincreasing
+  supporting: []
+  impl_note: The factor S (with S ≥ 0) is missing from the formal statement p.κ * s.dθ p ≤ 0; the equation dS/dt = κ·S·dθ/dt is not stated.
+  required: true
+  status: implemented
+  notes: 'Text says ''Formalised as'' but the formalisation omits S. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Formalised as: dS/dt = κ·S·dθ/dt ≤ 0 when κ > 0.'
+- id: VolzMeyersEquations.staticThetaEq-a
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 153-154
+  text: '**VM5.** In the static limit, the θ equation dθ/dt = −β P₁ θ is independent of ρ'
+  kind: limit
+  impl:
+  - static_theta_eq
+  supporting: []
+  impl_note: impl evaluates dθ at staticParams β γ κ (ρ = 0) and gets −(β·P₁·θ); since dθ never mentions ρ this is definitional; independence of ρ (∀ ρ₁ ρ₂, same dθ) is not stated.
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.staticThetaEq-b
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 154-154
+  text: (the ρ terms only appear in the P₁, P_S equations)
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: The P₁ and P_S equations are not defined in the module.
+  required: false
+  status: missing
+  notes: ''
+- id: VolzMeyersEquations.staticThetaEq-c
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 42-156
+  text: |-
+    reduces to static EBCM
+    [...]
+    The static EBCM's dθ/dt = −β·φ_I corresponds to P₁ playing the role of φ_I/θ.
+  kind: equivalence
+  impl: []
+  supporting:
+  - static_theta_eq
+  - InvariantRegion.theta_dot_nonpos
+  impl_note: No static-EBCM θ equation or φ_I appears in this module; the correspondence is not formalised. First fragment is from header-table row VM5.
+  required: false
+  status: missing
+  notes: ''
+- id: VolzMeyersEquations.fastMixingP1Equilibrium-a
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 163-163
+  text: '**VM6.** In the fast-mixing limit, P₁ → M₁'
+  kind: limit
+  impl:
+  - fast_mixing_P1_equilibrium
+  supporting: []
+  impl_note: 'impl: s.P₁ = s.M₁ → p.ρ·(s.M₁ − s.P₁) = 0, i.e. the swap term vanishes when P₁ = M₁ (trivial). No ρ → ∞ limit and no convergence P₁ → M₁ is formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.fastMixingP1Equilibrium-b
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 163-163
+  text: and P_S → ψ'(θ)/ψ'(1).
+  kind: limit
+  impl: []
+  supporting:
+  - fast_mixing_P1_equilibrium
+  impl_note: No theorem mentions P_S; ψ' is not formalised. First fragment is from header-table row VM6.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: P_S→ψ''(θ)/ψ''(1) [...] and P_S → ψ''(θ)/ψ''(1).'
+- id: VolzMeyersEquations.fastMixingP1Equilibrium-c
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 164-164
+  text: 'For Poisson: ψ''(θ)/ψ''(1) = ψ(θ) = S (since ψ''(θ) = κ·ψ(θ) and ψ''(1) = κ).'
+  kind: algebraic-identity
+  impl: []
+  supporting: []
+  impl_note: No PGF function is formalised in this module.
+  required: false
+  status: missing
+  notes: ''
+- id: VolzMeyersEquations.fastMixingP1Equilibrium-d
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 166-169
+  text: 'Motivated by: the swap terms ρ(M₁ − P₁) and ρ(ψ''(θ)/ψ''(1) − P_S) drive P₁ and P_S to their population-level values at rate ρ. The Lean statement is only that the swap term ρ(M₁ − P₁) vanishes when P₁ = M₁; no limit ρ → ∞ is formalised.'
+  kind: dynamical
+  impl:
+  - fast_mixing_P1_equilibrium
+  supporting: []
+  impl_note: Only the P₁ swap term is treated and only in the direction P₁ = M₁ ⇒ ρ(M₁ − P₁) = 0; the equilibrium characterisation (swap term = 0 with ρ > 0 ⇒ P₁ = M₁), the 'drive at rate ρ' dynamics, and the P_S part are absent.
+  required: true
+  status: implemented
+  notes: 'Text says ''Formalised as'' but most of it is not formalised. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Formalised as: the swap terms ρ(M₁ − P₁) and ρ(ψ''(θ)/ψ''(1) − P_S) drive P₁ and P_S to their population-level values at rate ρ. At equilibrium: P₁ = M₁ and P_S = ψ''(θ)/ψ''(1).'
+- id: VolzMeyersEquations.icEdgePartition
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 189-189
+  text: '**VM7.** IC consistency: the edge partition holds at t=0.'
+  kind: algebraic-identity
+  impl:
+  - ic_edge_partition
+  supporting:
+  - edge_partition
+  impl_note: 'impl: edge partition at vmInitialState sf, an instance of the tautology edge_partition. Faithful.'
+  required: true
+  status: implemented
+  notes: vmInitialState (θ = 1, P₁ = sf, P_S = 1 − sf, M₁ = sf, I = sf, R = 0) differs from VM 2007 eqs 2.19-2.20.
+- id: VolzMeyersEquations.icPopulation
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 194-194
+  text: '**VM7b.** IC consistency: I(0) + R(0) = sf.'
+  kind: algebraic-identity
+  impl:
+  - ic_population
+  supporting: []
+  impl_note: 'impl: (vmInitialState sf).I + (vmInitialState sf).R = sf. Faithful; S(0) is not addressed.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.icTheta
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 199-199
+  text: '**VM7c.** IC consistency: θ(0) = 1 (no transmission at t=0).'
+  kind: algebraic-identity
+  impl:
+  - ic_theta
+  supporting: []
+  impl_note: 'impl: (vmInitialState sf).θ = 1. Faithful. Together with S = ψ(θ) and I(0) = sf this implies the over-count noted at table.VM7.'
+  required: true
+  status: implemented
+  notes: ''
+- id: VolzMeyersEquations.massActionIncidence-a
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 206-212
+  text: '**VM8.** For a homogeneous network with ψ(x) = x (every node has degree 1, κ=1), the VM model reduces to the standard SIR in the fast-mixing limit ρ → ∞. At ρ = 0 it describes isolated pairs, not mass action. In the fast-mixing limit: S = θ, P₁ = I, and the equations become dS/dt = −β·I·S, dI/dt = β·I·S − γ·I, dR/dt = γ·I.'
+  kind: equivalence
+  impl:
+  - mass_action_incidence
+  supporting: []
+  impl_note: impl only checks incidence = I·S at the state ⟨S, I, 1 − I, I, I, 0⟩ with β = γ = κ = 1 and ρ = 0. No dS/dt is defined, dI/dR equations are not compared, 'any ρ' is instantiated only at ρ = 0, and general β, γ are not covered.
+  required: true
+  status: implemented
+  notes: 'Volz–Meyers (2007, §2b) derive the ψ(x) = x reduction only after the fast-mixing substitution P₁ = M₁ (ρ → ∞); on a static degree-1 network (ρ = 0: isolated pairs) the dynamics are not mass-action, so ''at any ρ'' is doubtful. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **VM8.** For a homogeneous network with ψ(x) = x (every node has degree 1, κ=1), the VM model at any ρ reduces to the standard SIR. In this case: S = θ, P₁ = I, and the equations become dS/dt = −β·I·S, dI/dt = β·I·S − γ·I, dR/dt = γ·I.'
+- id: VolzMeyersEquations.massActionIncidence-b
+  group: VolzMeyersEquations
+  source:
+    file: EBCMCategory/VolzMeyersEquations.lean
+    lines: 214-214
+  text: We verify that the incidence = β·P₁·θ·κ = β·I·S when κ=1 and P₁=I, θ=S.
+  kind: algebraic-identity
+  impl:
+  - mass_action_incidence
+  supporting: []
+  impl_note: impl fixes β = 1 (VMParams ⟨1, 1, 0, 1, …⟩), so β·I·S is only verified for β = 1.
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text only, see DataTypes/VolzMeyersEquations.md):
+#   structures VMState, VMParams; VMState.excessRatio ("For Poisson(κ): this equals κ·θ" - its body; unused),
+#   VMState.edgeHazard (unused), VMState.dθ, VMState.dI, VMState.dR, VMState.P_R, staticParams,
+#   vmInitialState; header table rows for θ̇, Ṗ_S, Ṗ₁, Ṁ₁, pop_R (lines 23-28, definitional; summarised in
+#   header.table4System; pop_I row registered as header.popIEquation).

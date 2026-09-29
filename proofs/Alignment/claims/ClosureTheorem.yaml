@@ -1,0 +1,420 @@
+# SA-PASS claim registry fragment: group ClosureTheorem
+# Source module: EBCMCategory/ClosureTheorem.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: 'R<N>' for '**Result N.**' docstrings; '<lowerCamelTheoremName>' (primes dropped) for
+#   other docstrings; 'table.R<N>' = module-header table rows; 'header.*' = header prose.
+- id: ClosureTheorem.header.closureExact
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 18-21
+  text: 'The pairwise model approximates triples in terms of pairs: [ASI] = kappa * [AS][SI] / [S] where kappa = psi''''(theta) psi(theta) / psi''(theta)^2. This closure is exact (N -> infinity) iff kappa is constant for all theta.'
+  kind: equivalence
+  impl: []
+  supporting:
+  - closure_ode_gives_ratio
+  impl_note: No pairwise model, triples, closure exactness or N→∞ limit is formalised.
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: ClosureTheorem.header.verificationStrategy
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 25-30
+  text: 'We check the sufficiency identities for PT families: for each PT family, the values psi(theta), psi''(theta), psi''''(theta) of its PGF, written as monomials in free scalars, satisfy psi'''' psi = kappa (psi'')^2 as ring identities. The necessity direction of KKR Theorem 1 (only PT laws have constant kappa) is not formalised; we only exhibit one non-PT law, psi = 1/2 + theta^2/2, whose ratio kappa(theta) takes two different values.'
+  kind: algebraic-identity
+  impl:
+  - poisson_closure_ode
+  - binomial_closure_ode
+  - negbin_general_closure_ode
+  - nonPT_closure_ratio_varies
+  supporting: []
+  impl_note: 'Conjunction: Poisson, Binomial(n+2) and NegBin(m+1) identities plus two literal PGFEval records with different ratios. ''Each PT family'' is covered only for Binomial with n ≥ 2 and NegBin with integer r ≥ 1 (real r > 0 is not). ψ, ψ'', ψ'''' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family''s PGF (no deriv/HasDerivAt), so ''at every θ'' is represented only by universally quantifying the free variable. The ''converse'' (non-constant κ ⇒ not exact / ODE ⇒ PT) is not formalised; a single non-PT example is not a converse.'
+  required: true
+  status: implemented
+  notes: 'Module-header meta-claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: We verify the closure ODE psi'''' psi = kappa (psi'')^2 algebraically for each PT family at every point theta. For the converse, we exhibit a non-PT distribution where kappa varies.'
+- id: ClosureTheorem.header.paperProofCorrect
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 32-32
+  text: The paper's proof is not checked in Lean.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: The necessity direction (solving ψ'' ψ = κ ψ'² ⇒ ψ' = αψ^κ ⇒ ψ is Poisson/Binomial/NegBin, with integrality constraints) and the exactness argument are not formalised, so no Lean artefact certifies the paper's proof.
+  required: false
+  status: missing
+  notes: 'Overclaim: see also table.R59 (the κ < 1 case is not exhaustive without 1/(1−κ) ∈ ℕ). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The paper''s proof is correct. The ODE characterization is clean, the case analysis is exhaustive,'
+- id: ClosureTheorem.header.sorryFree
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 33-33
+  text: All algebraic content here is sorry-free.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Meta-claim about the build; consistent with the axiom audit (no sorry/non-standard axioms in this module).
+  required: false
+  status: informal
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: and all algebraic content is sorry-free.'
+- id: ClosureTheorem.table.R52
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 38-38
+  text: '| 52 | Poisson closure ODE: kappa = 1 at every theta |'
+  kind: algebraic-identity
+  impl:
+  - poisson_closure_ratio
+  supporting: []
+  impl_note: '∀ λ > 0, ψ > 0: closureRatio ⟨ψ, λψ, λ²ψ⟩ = 1. ψ, ψ'', ψ'''' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family''s PGF (no deriv/HasDerivAt), so ''at every θ'' is represented only by universally quantifying the free variable.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R53
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 39-39
+  text: '| 53 | Binomial(n+2) closure ODE: kappa = (n+1)/(n+2) |'
+  kind: algebraic-identity
+  impl:
+  - binomial_closure_ratio
+  supporting: []
+  impl_note: closureRatio ⟨w^(n+2), (n+2)p·w^(n+1), (n+2)(n+1)p²·w^n⟩ = (n+1)/(n+2) for p, w > 0. ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R54
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 40-40
+  text: '| 54 | NegBin(2) closure ODE: kappa = 3/2 at every theta |'
+  kind: algebraic-identity
+  impl:
+  - negbin2_closure_ratio
+  supporting: []
+  impl_note: closureRatio ⟨c²w², 2pc²w³, 6p²c²w⁴⟩ = 3/2. ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R55
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 41-41
+  text: '| 55 | NegBin(3) closure ODE: kappa = 4/3 at every theta |'
+  kind: algebraic-identity
+  impl:
+  - negbin3_closure_ratio
+  supporting: []
+  impl_note: closureRatio ⟨c³w³, 3pc³w⁴, 12p²c³w⁵⟩ = 4/3. ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R56
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 42-42
+  text: '| 56 | General NegBin ODE algebraic identity |'
+  kind: algebraic-identity
+  impl:
+  - negbin_general_closure_ode
+  supporting: []
+  impl_note: Ring identity for NegBin(m+1), integer r = m+1 ≥ 1 only.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R57
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 43-43
+  text: '| 57 | Non-PT counterexample: kappa varies with theta |'
+  kind: existence
+  impl:
+  - nonPT_closure_ratio_varies
+  supporting: []
+  impl_note: Two literal PGFEval records (1,1,1) and (5/8,1/2,1) have different closureRatio; the PGF and θ are not in the statement.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R58
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 44-44
+  text: '| 58 | Connection: closureRatio at theta=1 = closureKappa |'
+  kind: algebraic-identity
+  impl:
+  - closure_ratio_at_one'
+  supporting: []
+  impl_note: 'Good match: closureRatio ⟨1, mean, secondFactorial⟩ = closureKappa (ψ(1) = 1 hard-coded).'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: ClosureTheorem.table.R59
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 45-45
+  text: '| 59 | Trichotomy kappa < 1, = 1, > 1 (not a classification) |'
+  kind: structural
+  impl:
+  - pt_classification_exhaustive
+  supporting: []
+  impl_note: impl is real-number trichotomy κ < 1 ∨ κ = 1 ∨ 1 < κ (lt_trichotomy; hypothesis 0 < κ unused); it says nothing about PT families.
+  required: true
+  status: implemented
+  notes: 'Suspicious/false as a classification: for κ ∈ (0,1) a Binomial(n,p) needs n = 1/(1−κ) ∈ ℕ (e.g. κ = 0.3 has no binomial), so ''exhaustive'' fails unless restricted to κ = (n−1)/n. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 59 | PT classification is exhaustive for kappa > 0 |'
+- id: ClosureTheorem.R51
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 64-65
+  text: '**Result 51.** If psi'''' psi = kappa (psi'')^2 at a point, then the closure ratio equals kappa at that point.'
+  kind: algebraic-identity
+  impl:
+  - closure_ode_gives_ratio
+  supporting: []
+  impl_note: 'Good match: e.ψ'''' * e.ψ = κ * e.ψ''^2 → e.closureRatio = κ (uses e.ψ'' > 0 from the record).'
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R52
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 75-75
+  text: '**Result 52.** Poisson ODE identity.'
+  kind: algebraic-identity
+  impl:
+  - poisson_closure_ode
+  supporting: []
+  impl_note: Ring identity (λ²ψ)ψ = 1·(λψ)²; 'Poisson' enters only through the chosen expressions ψ' = λψ, ψ'' = λ²ψ.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.poissonClosureRatio
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 80-80
+  text: Poisson has constant closure ratio kappa = 1.
+  kind: algebraic-identity
+  impl:
+  - poisson_closure_ratio
+  supporting: []
+  impl_note: '''constant'' is rendered as ∀ psi_val > 0. ψ, ψ'', ψ'''' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family''s PGF (no deriv/HasDerivAt), so ''at every θ'' is represented only by universally quantifying the free variable.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R53
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 89-89
+  text: '**Result 53.** Binomial ODE identity, general in n.'
+  kind: algebraic-identity
+  impl:
+  - binomial_closure_ode
+  supporting: []
+  impl_note: Ring/field identity for Binomial(n+2, p) with w = 1−p+pθ implicit; 'general in n' means n+2 ≥ 2.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.binomialClosureRatio
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 97-97
+  text: Binomial(n+2, p) has constant closure ratio (n+1)/(n+2).
+  kind: algebraic-identity
+  impl:
+  - binomial_closure_ratio
+  supporting: []
+  impl_note: ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R54
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 108-108
+  text: '**Result 54.** NegBin(2) ODE identity.'
+  kind: algebraic-identity
+  impl:
+  - negbin2_closure_ode
+  supporting: []
+  impl_note: Ring identity; the expressions match NegBin(2) with c = success prob, p = 1 − c, w = 1/(1−pθ) (checked by hand).
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.negbin2ClosureRatio
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 114-114
+  text: NegBin(2) has constant closure ratio 3/2.
+  kind: algebraic-identity
+  impl:
+  - negbin2_closure_ratio
+  supporting: []
+  impl_note: ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R55
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 122-122
+  text: '**Result 55.** NegBin(3) ODE identity.'
+  kind: algebraic-identity
+  impl:
+  - negbin3_closure_ode
+  supporting: []
+  impl_note: Ring identity for NegBin(3) expressions.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.negbin3ClosureRatio
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 128-128
+  text: NegBin(3) has constant closure ratio 4/3.
+  kind: algebraic-identity
+  impl:
+  - negbin3_closure_ratio
+  supporting: []
+  impl_note: ψ, ψ', ψ'' are supplied as explicit expressions in free variables (w or psi_val) inside a PGFEval record; nothing derives them as derivatives of the family's PGF (no deriv/HasDerivAt), so 'at every θ' is represented only by universally quantifying the free variable.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R56
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 136-136
+  text: '**Result 56.** General NegBin(m+1) ODE identity.'
+  kind: algebraic-identity
+  impl:
+  - negbin_general_closure_ode
+  supporting: []
+  impl_note: Ring identity for NegBin(m+1) expressions; no closure-ratio corollary for general m is stated.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R57
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 147-147
+  text: '**Result 57.** Non-PT: mixture psi = 1/2 + theta^2/2 has varying kappa.'
+  kind: existence
+  impl:
+  - nonPT_closure_ratio_varies
+  supporting:
+  - nonPT_kappa_at_one'
+  - nonPT_kappa_at_half'
+  impl_note: 'impl compares two literal PGFEval records (1,1,1) and (5/8,1/2,1). These are indeed (ψ, ψ'', ψ'''') of ψ = ½ + θ²/2 at θ = 1 and θ = ½ (checked with sympy: κ(θ) = (1+θ²)/(2θ²)), but neither the mixture nor θ appears in the statement.'
+  required: true
+  status: implemented
+  notes: 'Note κ(1) = 1 for this non-PT law, the same value as Poisson: this refutes the converse of SurvivalBridge ''κ = 1 iff Poisson'' when κ is evaluated at θ = 1 (closureKappa).'
+- id: ClosureTheorem.R58
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 166-166
+  text: '**Result 58.** At theta = 1, closureRatio = closureKappa.'
+  kind: algebraic-identity
+  impl:
+  - closure_ratio_at_one'
+  supporting: []
+  impl_note: Good match, given the record ⟨ψ(1)=1, ψ'(1)=mean, ψ''(1)=secondFactorial⟩.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.R59
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 175-175
+  text: '**Result 59.** Trichotomy: kappa < 1, = 1, or > 1.'
+  kind: structural
+  impl:
+  - pt_classification_exhaustive
+  supporting: []
+  impl_note: Good match for the literal trichotomy (lt_trichotomy); the hypothesis 0 < κ is unused.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.binomialKappaDeterminesN
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 186-186
+  text: For Binomial, kappa = (n-1)/n < 1.
+  kind: inequality
+  impl:
+  - binomial_kappa_determines_n'
+  supporting: []
+  impl_note: 'impl: (n−1)/n < 1 for n ≥ 2; that the Binomial''s κ equals (n−1)/n is not stated here.'
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.binomialRecoverN
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 193-193
+  text: For Binomial, 1/(1 - (n-1)/n) = n.
+  kind: algebraic-identity
+  impl:
+  - binomial_recover_n'
+  supporting: []
+  impl_note: Good match (for n ≥ 2).
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.negbinKappaDeterminesR
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 200-200
+  text: For NegBin, kappa > 1 gives r = 1/(kappa-1) > 0.
+  kind: inequality
+  impl:
+  - negbin_kappa_determines_r'
+  supporting: []
+  impl_note: impl only proves 1/(κ−1) > 0 for κ > 1; that this r reproduces κ = (r+1)/r is not stated.
+  required: true
+  status: implemented
+  notes: ''
+- id: ClosureTheorem.poissonKappaIsOne
+  group: ClosureTheorem
+  source:
+    file: EBCMCategory/ClosureTheorem.lean
+    lines: 205-205
+  text: Poisson matches Result 42 from SurvivalBridge.
+  kind: algebraic-identity
+  impl:
+  - poisson_kappa_is_one'
+  supporting: []
+  impl_note: Restates SurvivalBridge Result 42 (closureKappa (PGFData.poisson λ) = 1).
+  required: true
+  status: implemented
+  notes: ''
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text of their own):
+#   nonPT_kappa_at_one'   (closureRatio ⟨1,1,1⟩ = 1; supports R57)
+#   nonPT_kappa_at_half'  (closureRatio ⟨5/8,1/2,1⟩ = 5/2; supports R57)
+# Header-table row '| 51 | Closure ODE core lemma |' is a label, not an assertion; the claim is R51.
+# Not registered (definitions / intent text, see DataTypes/ClosureTheorem.md): PGFEval, PGFEval.closureRatio.

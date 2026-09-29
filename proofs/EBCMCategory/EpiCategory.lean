@@ -3,14 +3,18 @@ import Mathlib.Tactic
 /-!
 # EpiCategory — Categories of epidemiological models
 
-This file defines the two categories at the heart of the EBCM theory:
+This file defines scalar records motivated by two informal classes of
+epidemic models; no categorical structure is formalised:
 
-* **Node**: ODE systems on population-level state spaces (S, I, R)
-* **Edge**: ODE systems on edge-probability state spaces (θ, φ, R),
+* **Node** models: ODE systems on population-level state spaces (S, I, R)
+* **Edge** models: ODE systems on edge-probability state spaces (θ, φ, R),
   parameterised by a probability generating function (PGF)
 
-Both are formalised as preorders under a "refinement" relation: M₁ ≤ M₂
-iff M₂ carries at least as much structural information as M₁.
+Neither class is defined as a category. Both kinds of model are values of
+the single record `EpiModel`, which stores only a state-space dimension
+and an R₀. No ODE, morphism or composition is formalised. The only order
+is the preorder `M₁ ≤ M₂ iff M₁.dim ≤ M₂.dim`; "refinement" below means
+"has at least as many state variables" and nothing more.
 
 ## References
 
@@ -59,8 +63,22 @@ theorem poisson_variance_eq_mean (κ : ℚ) (hκ : 0 < κ) :
   simp only [variance, poisson]
   ring
 
-/-- Index of dispersion: σ²/κ. Equals 1 iff Poisson. -/
+/-- Index of dispersion: σ²/κ. Poisson ⇒ dispersion index 1
+    (`poisson_dispersion_eq_one`). The converse is false for degree
+    distributions: the law with P(0) = P(2) = 1/2, ψ(u) = (1 + u²)/2, has
+    mean 1 and variance 1 but is not Poisson. -/
 def dispersionIndex (ψ : PGFData) : ℚ := ψ.variance / ψ.mean
+
+/-- A `PGFData` record has dispersion index 1 iff it is the Poisson record
+    of its own mean, i.e. iff ψ''(1) = ψ'(1)². This is a statement about
+    two-moment records, not about degree distributions: the record of the
+    non-Poisson law ψ(u) = (1 + u²)/2 (ψ'(1) = 1, ψ''(1) = 1) is `poisson 1`. -/
+theorem dispersionIndex_eq_one_iff (ψ : PGFData) :
+    ψ.dispersionIndex = 1 ↔ ψ = poisson ψ.mean ψ.mean_pos := by
+  obtain ⟨m, s, hm, hs⟩ := ψ
+  simp only [dispersionIndex, variance, poisson, mk.injEq, true_and]
+  rw [div_eq_one_iff_eq hm.ne']
+  constructor <;> intro h <;> linarith
 
 end PGFData
 

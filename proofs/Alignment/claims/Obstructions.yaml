@@ -1,0 +1,714 @@
+# SA-PASS claim registry fragment: group Obstructions
+# Source module: EBCMCategory/Obstructions.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 1/3 (non-blind). Text fields are verbatim (whitespace-normalised);
+#   non-adjacent fragments are separated by a line containing only [...].
+# Id convention: '<Group>.R<N>' for '**Result N.**' docstrings (a,b,... suffix for splits),
+#   '<Group>.<lowerCamelTheoremName>' otherwise ('-a'/'-b' for splits),
+#   '<Group>.table.R<N>' for module-header table rows, '<Group>.header.<name>' for header prose.
+- id: Obstructions.header.standardAssumptions
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 6-9
+  text: 'The **standard** EBCM (4 ODE variables, single θ) rests on three assumptions: 1. The network is a **configuration model** (tree-like local structure) 2. Disease transitions are **Markovian** (exponential waiting times) 3. Initial infections are **uniform** (i.i.d. across nodes)'
+  kind: structural
+  impl: []
+  supporting:
+  - standard_ebcm_valid
+  impl_note: Encoded definitionally by standardEbcmValid (a conjunction of three constructor equalities); to be checked by a bridge rather than a theorem.
+  required: false
+  status: informal
+  notes: Module-header modelling statement.
+- id: Obstructions.header.networkNotObstruction
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 14-17
+  text: 'Network structure (assumption 1) For the specific network classes below an EBCM variant is known, at a dimension cost; this is a literature summary, not a statement about network structure in general:'
+  kind: existence
+  impl:
+  - clustering_ebcm_exists
+  - degreeCorr_ebcm_exists
+  - multiplex_ebcm_exists
+  supporting:
+  - standard_most_compact
+  - clustering_dimension_cost
+  impl_note: Each impl is ebcmExists net .markovian .uniform for one non-standard network type, which unfolds to .uniform = .uniform (rfl); ebcmExists ignores its network argument, so 'not an obstruction' holds by definition. Only Markovian transitions are covered; the dimension cost is a hard-coded table.
+  required: true
+  status: implemented
+  notes: 'Module-header section claim. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Network structure (assumption 1) Not an obstruction at all — just a dimension cost:'
+- id: Obstructions.header.clusteringAddsVariables
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 18-20
+  text: '**Clustering** (triangles): the triangle EBCM of Volz, Miller, Galvani & Meyers (2011) tracks line states φ_X and triangle states φ_{XY} on configuration-model networks with triangles; their system has 7 ODEs.'
+  kind: inequality
+  impl: []
+  supporting:
+  - clustering_dimension_cost
+  impl_note: No theorem states the increment; the hard-coded extensionDim table gives 13 − 4 = 9 extra variables for clustered vs configuration-model (Markovian). No triangle EBCM or φ_{XY} is formalised.
+  required: false
+  status: missing
+  notes: 'Attribution: the references list Miller (2009, JRSI 6) for clustering; ''Koch & Britton (2018)'' is listed as an SEIR static/dynamic-network paper; not verified against the papers corpus. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Clustering** (triangles): Triangle EBCM of Koch & Britton (2018) tracks joint triangle-neighbour states φ_{XY}. Adds ~10 ODE variables.'
+- id: Obstructions.header.pdeCollapsesToOde
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 32-32
+  text: For Markovian dynamics, the PDE collapses back to the standard ODE.
+  kind: limit
+  impl: []
+  supporting:
+  - markov_is_ode
+  impl_note: No PDE is formalised; markov_is_ode (systemRequired .markovian .uniform = .ode) is a lookup-table fact, not a reduction of an age-structured system.
+  required: false
+  status: missing
+  notes: Module-header claim.
+- id: Obstructions.table.R17
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 48-48
+  text: '| 17 | Standard ODE EBCM valid under all three assumptions |'
+  kind: structural
+  impl:
+  - standard_ebcm_valid
+  supporting: []
+  impl_note: ebcmExists net trans init is *defined* as init = .uniform and systemRequired / standardEbcmValid / extensionDim are lookup tables, so these facts hold by rfl or constructor disequality; no EBCM, ODE, PDE or validity semantics is formalised.
+  required: true
+  status: implemented
+  notes: Header-table row; same content as R17.
+- id: Obstructions.table.R18
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 49-49
+  text: '| 18 | Triangle clustering: standard fails, triangle EBCM (ODE) |'
+  kind: structural
+  impl:
+  - clustering_breaks_standard
+  - clustering_ebcm_exists
+  supporting:
+  - markov_is_ode
+  impl_note: 'ebcmExists net trans init is *defined* as init = .uniform and systemRequired / standardEbcmValid / extensionDim are lookup tables, so these facts hold by rfl or constructor disequality; no EBCM, ODE, PDE or validity semantics is formalised. The ''(ODE)'' part is not about clustering: systemRequired has no network argument.'
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R18a/R18b. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 18 | Clustering: standard fails, triangle EBCM works (ODE) |'
+- id: Obstructions.table.R19
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 50-50
+  text: '| 19 | Non-Markovian: ODE fails, PDE EBCM works (exact) |'
+  kind: structural
+  impl:
+  - nonmarkov_requires_pde
+  - nonmarkov_ebcm_exists
+  supporting: []
+  impl_note: ebcmExists net trans init is *defined* as init = .uniform and systemRequired / standardEbcmValid / extensionDim are lookup tables, so these facts hold by rfl or constructor disequality; no EBCM, ODE, PDE or validity semantics is formalised. 'exact' has no formal counterpart.
+  required: true
+  status: implemented
+  notes: Header-table row; see R19a/R19b.
+- id: Obstructions.table.R20
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 51-51
+  text: '| 20 | Localised initials: genuine obstruction (all variants) |'
+  kind: structural
+  impl:
+  - localised_genuine_obstruction
+  - localised_impossible
+  supporting: []
+  impl_note: ebcmExists net trans init is *defined* as init = .uniform and systemRequired / standardEbcmValid / extensionDim are lookup tables, so these facts hold by rfl or constructor disequality; no EBCM, ODE, PDE or validity semantics is formalised.
+  required: true
+  status: implemented
+  notes: Header-table row; see R20a/R20b.
+- id: Obstructions.table.R21
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 52-52
+  text: '| 21 | Degree correlations: multi-type EBCM works (ODE) |'
+  kind: structural
+  impl:
+  - degreeCorr_ebcm_exists
+  supporting:
+  - markov_is_ode
+  impl_note: ebcmExists net trans init is *defined* as init = .uniform and systemRequired / standardEbcmValid / extensionDim are lookup tables, so these facts hold by rfl or constructor disequality; no EBCM, ODE, PDE or validity semantics is formalised.
+  required: true
+  status: implemented
+  notes: Header-table row; see R21b.
+- id: Obstructions.table.R22
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 53-53
+  text: '| 22 | Hard-coded counts: clustered (13) > 3·standard (4) − 1 |'
+  kind: inequality
+  impl:
+  - clustering_dimension_cost
+  - standard_most_compact
+  supporting: []
+  impl_note: The row names a topic; the theorems compare hard-coded extensionDim entries.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R22a. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 22 | Dimension cost of network structure extensions |'
+- id: Obstructions.table.R23
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 54-54
+  text: '| 23 | `systemRequired` is ODE, PDE or impossible as tabulated |'
+  kind: structural
+  impl:
+  - system_classification
+  supporting: []
+  impl_note: Conjunction of three implications over the lookup table systemRequired.
+  required: true
+  status: implemented
+  notes: 'Header-table row; see R23a-d. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 23 | System type classification: ODE vs PDE vs impossible |'
+- id: Obstructions.table.R24
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 55-55
+  text: '| 24 | Erlang staging needs more variables than Markovian |'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - erlang_costs_more
+  impl_note: No stage count n exists (TransitionType.erlangStaged is a bare constructor) and no theorem states 2+n; extensionDim .configurationModel .erlangStaged = 6 for the '2-stage example', contradicting 2+n = 4.
+  required: false
+  status: missing
+  notes: 'Header-table row; same content as R24b. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 24 | Erlang approximation: n-stage gives 2+n ODE variables | -- Candidate impl: erlang_costs_more (the corrected row states what it proves).'
+- id: Obstructions.R17
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 128-128
+  text: '**Result 17.** The standard EBCM is valid under all correct assumptions.'
+  kind: structural
+  impl:
+  - standard_ebcm_valid
+  supporting: []
+  impl_note: impl proves standardEbcmValid .configurationModel .markovian .uniform, where standardEbcmValid is defined as the conjunction of exactly these three equalities (proof ⟨rfl, rfl, rfl⟩); no model or validity semantics is involved.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R18a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 135-135
+  text: '**Result 18.** Clustering breaks the *standard* EBCM,'
+  kind: structural
+  impl:
+  - clustering_breaks_standard
+  supporting: []
+  impl_note: impl proves ¬ standardEbcmValid .clusteredTriangles .markovian .uniform, i.e. the constructor disequality clusteredTriangles ≠ configurationModel.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R18b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 135-142
+  text: |-
+    but NOT the EBCM framework.
+    [...]
+    But an EBCM variant exists for clustered networks.
+  kind: existence
+  impl:
+  - clustering_ebcm_exists
+  supporting: []
+  impl_note: impl proves ebcmExists .clusteredTriangles .markovian .uniform, which unfolds to .uniform = .uniform; existence is definitional (ebcmExists ignores the network type). The second fragment is the docstring of clustering_ebcm_exists.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R18c
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 136-136
+  text: The triangle EBCM handles it with more variables.
+  kind: inequality
+  impl:
+  - clustering_dimension_cost
+  supporting:
+  - standard_most_compact
+  impl_note: impl states extensionDim .clusteredTriangles .markovian > 3 * extensionDim .configurationModel .markovian − 1 (13 > 11 on ℕ with hard-coded values); 'more variables than standard' (13 > 4) is only an arithmetic consequence; no triangle EBCM is formalised.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R21a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 147-147
+  text: '**Result 21.** Degree correlations break the standard EBCM,'
+  kind: structural
+  impl:
+  - degreeCorr_breaks_standard
+  supporting: []
+  impl_note: impl proves ¬ standardEbcmValid .degreeCorrelated .markovian .uniform (constructor disequality).
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R21b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 21-148
+  text: |-
+    **Degree correlations**: Multi-type EBCM of Miller & Volz (2013) with mixing matrix. Still an ODE system.
+    [...]
+    but multi-type EBCM handles them.
+  kind: existence
+  impl:
+  - degreeCorr_ebcm_exists
+  supporting:
+  - markov_is_ode
+  impl_note: impl (undocumented theorem) proves ebcmExists .degreeCorrelated .markovian .uniform, i.e. .uniform = .uniform; 'multi-type', 'mixing matrix' and 'ODE' are not formalised for this network type.
+  required: true
+  status: implemented
+  notes: First fragment is the module-header bullet.
+- id: Obstructions.R19a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 30-165
+  text: |-
+    The system becomes a **PDE** (von Foerster age-structured equation) rather than an ODE, with infinite-dimensional state space.
+    [...]
+    **Result 19.** Non-Markovian dynamics change the system type from ODE to PDE,
+  kind: structural
+  impl:
+  - nonmarkov_requires_pde
+  supporting: []
+  impl_note: impl proves systemRequired .generalNonMarkov .uniform = .pde by rfl (lookup table). 'Change from ODE' and 'infinite-dimensional' are not stated (extensionDim returns the sentinel 0 for PDE systems).
+  required: true
+  status: implemented
+  notes: First fragment is the module-header bullet.
+- id: Obstructions.R19b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 26-175
+  text: |-
+    Changes the *type* of system, not an absolute obstruction:
+    [...]
+    but the EBCM framework still works exactly.
+    [...]
+    Non-Markovian + uniform: an EBCM exists (as a PDE system).
+  kind: existence
+  impl:
+  - nonmarkov_ebcm_exists
+  supporting:
+  - nonmarkov_requires_pde
+  impl_note: impl proves ∀ net, ebcmExists net .generalNonMarkov .uniform, which unfolds to .uniform = .uniform; 'works exactly' and 'as a PDE system' have no formal content. Last fragment is the docstring of nonmarkov_ebcm_exists.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R19c
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 27-168
+  text: |-
+    Sherborne, Miller, Blyuss & Kiss (2018, J. Math. Biol. 76, 755–778) proved the non-Markovian EBCM is equivalent to message passing for general τ(a), q(a).
+    [...]
+    Sherborne, Miller, Blyuss & Kiss (2018) proved the non-Markovian EBCM is equivalent to message passing for general τ(a), q(a).
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Citation of an external result; not formalised here (MessagePassingBridge covers the MP ↔ EBCM relationship).
+  required: false
+  status: informal
+  notes: 'Reference inconsistency: the listed reference ''Sherborne, Kiss, Simon (2018). Bursting endemic bubbles in an adaptive network. J. Math. Biol. 76, 1467–1493'' carries DOI 10.1007/s00285-017-1155-0, which is Sherborne, Miller, Blyuss, Kiss (2018) ''Mean-field models for non-Markovian epidemics on networks'' (papers/s00285-017-1155-0.md). WP4b (TRIAGE P1.4/P2): text corrected; previous text: Sherborne, Kiss et al. (2018, J. Math. Biol.) proved the non-Markovian EBCM is equivalent to message passing for general τ(a), q(a). [...] Sherborne, Kiss et al. (2018) proved the non-Markovian EBCM (system 8 in their paper) is equivalent to message passing for general τ(a), q(a).'
+- id: Obstructions.R19d
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 169-170
+  text: The von Foerster equation (∂/∂t + ∂/∂a)φ_I = -[ζ(a)+ρ(a)]φ_I tracks the infection-age distribution, giving an infinite-dimensional state.
+  kind: dynamical
+  impl: []
+  supporting:
+  - nonmarkov_requires_pde
+  impl_note: No PDE, infection-age variable or state space is formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: Obstructions.erlangIsOde
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 180-180
+  text: The Erlang-staged approximation recovers an ODE system.
+  kind: structural
+  impl:
+  - erlang_is_ode
+  supporting: []
+  impl_note: impl proves systemRequired .erlangStaged .uniform = .ode by rfl (lookup table); only uniform initials.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.markovIsOde
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 185-185
+  text: Markovian dynamics with uniform initial infection give an ODE system.
+  kind: structural
+  impl:
+  - markov_is_ode
+  supporting:
+  - localised_impossible
+  impl_note: impl proves systemRequired .markovian .uniform = .ode only; 'always' is false in the library's own classification, since systemRequired .markovian .localised = .impossible (localised_impossible).
+  required: true
+  status: implemented
+  notes: 'Text overclaims relative to the formal statement. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Markovian is always ODE.'
+- id: Obstructions.R20a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 37-193
+  text: |-
+    Localised initial conditions (assumption 3) Among the three standard assumptions, only localised seeding has no EBCM variant.
+    [...]
+    **Result 20.** Among the three standard assumptions, only localised seeding has no EBCM variant.
+  kind: equivalence
+  impl:
+  - localised_genuine_obstruction
+  supporting:
+  - nonmarkov_ebcm_exists
+  - clustering_ebcm_exists
+  - degreeCorr_ebcm_exists
+  - multiplex_ebcm_exists
+  impl_note: impl proves ∀ net trans, ¬ ebcmExists net trans .localised (constructor disequality). The 'ONLY' direction (∀ net trans, ebcmExists net trans .uniform, i.e. nothing else obstructs) is not stated as a theorem for all net/trans; only four instances are proved (supporting).
+  required: true
+  status: implemented
+  notes: 'First fragment is the module-header section text. WP4b (TRIAGE P1.4/P2): text corrected; previous text: Localised initial conditions (assumption 3) The only **genuine** obstruction to all EBCM variants. [...] **Result 20.** Localised initial conditions are the ONLY genuine obstruction.'
+- id: Obstructions.R20b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 193-193
+  text: They break ALL EBCM variants (ODE and PDE alike)
+  kind: structural
+  impl:
+  - localised_genuine_obstruction
+  - localised_impossible
+  supporting: []
+  impl_note: ¬ ebcmExists net trans .localised and systemRequired trans .localised = .impossible for every trans; both by definition / case analysis; 'variants' exist only as lookup-table entries.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R20c
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 39-195
+  text: |-
+    When initial infections are spatially correlated, edge states are correlated through shared proximity to the seed, breaking the factorisation that all EBCM variants (ODE and PDE) require.
+    [...]
+    because edge states become correlated through shared proximity to the seed, breaking the factorisation that underpins all EBCMs.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Mechanistic explanation; no edge-state correlation or factorisation is formalised.
+  required: false
+  status: informal
+  notes: ''
+- id: Obstructions.R22a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 227-229
+  text: '**Result 22.** In the hard-coded table `extensionDim`, the triangle-clustered EBCM has 13 variables, more than 3·4 − 1 for the standard EBCM.'
+  kind: inequality
+  impl:
+  - clustering_dimension_cost
+  supporting: []
+  impl_note: 'impl: extensionDim .clusteredTriangles .markovian > 3 * extensionDim .configurationModel .markovian − 1, i.e. 13 > 11 with ℕ subtraction; ''~3×'' is rendered as a one-sided strict lower bound, with no upper bound; values are hard-coded in extensionDim.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 22.** Handling clustering costs ~3× the variables of the standard EBCM.'
+- id: Obstructions.R22b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 229-229
+  text: This is the price of tracking joint triangle states.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Interpretive.
+  required: false
+  status: informal
+  notes: ''
+- id: Obstructions.standardMostCompact
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 237-237
+  text: The standard EBCM is the most compact ODE variant.
+  kind: inequality
+  impl:
+  - standard_most_compact
+  supporting: []
+  impl_note: 'impl: ∀ net, extensionDim .configurationModel .markovian ≤ extensionDim net .markovian. Only Markovian variants are compared (Erlang-staged ODE variants are not quantified over, though they are larger); extensionDim uses the sentinel 0 for PDE systems.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R24a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 244-245
+  text: '**Result 24.** The Erlang approximation turns the PDE into an ODE at the cost of extra variables.'
+  kind: inequality
+  impl:
+  - erlang_costs_more
+  - erlang_is_ode
+  supporting: []
+  impl_note: 'erlang_costs_more: ∀ net, extensionDim net .markovian ≤ extensionDim net .erlangStaged (≤, and it compares with the Markovian ODE, not with the PDE); erlang_is_ode is a lookup-table fact. No PDE → ODE approximation is formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R24b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 33-247
+  text: |-
+    The ODE approximation via n-stage Erlang needs 2n + 2 variables in the counting convention of `extensionDim` (θ, n edge stages φ_{I_j}, n node stages I_j, and R): 4 for n = 1 and 6 for n = 2.
+    [...]
+    For an n-stage Erlang infectious period on a configuration model, the standard 4 variables become 2n + 2 (θ, n edge stages φ_{I_j}, n node stages I_j, and R).
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - erlang_costs_more
+  impl_note: No stage count n exists and no theorem states the 2+n count. The hard-coded extensionDim .configurationModel .erlangStaged = 6 ('2-stage example') contradicts 2+n = 4 for n = 2; n = 1 would give 3, not the standard 4.
+  required: false
+  status: missing
+  notes: 'First fragment is the module-header bullet. Internally inconsistent text. WP4b (TRIAGE P1.4/P2): text corrected; previous text: The ODE approximation via n-stage Erlang gives 2+n variables. [...] For an n-stage Erlang infectious period on a configuration model, the standard 4 variables become 2+n (θ plus n φ-stages plus R).'
+- id: Obstructions.R24c
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 249-250
+  text: Here we show the Erlang variant always needs more variables than the Markovian variant on the same network.
+  kind: inequality
+  impl:
+  - erlang_costs_more
+  supporting: []
+  impl_note: impl proves ≤ (not strictly more), by case analysis on hard-coded values.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R23a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 257-257
+  text: '**Result 23.** Complete classification of what system type is needed.'
+  kind: structural
+  impl:
+  - system_classification
+  supporting: []
+  impl_note: impl is a conjunction of three implications; exhaustiveness ('complete') is not stated, though the antecedents happen to cover every (trans, init) pair; each implication is a case of the lookup-table definition systemRequired.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R23b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 258-258
+  text: Uniform + Markovian/Erlang → ODE (always works)
+  kind: structural
+  impl:
+  - system_classification
+  supporting: []
+  impl_note: 'First conjunct: init = .uniform ∧ (trans = .markovian ∨ trans = .erlangStaged) → systemRequired trans init = .ode. ''(always works)'' is not formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R23c
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 259-259
+  text: Uniform + general non-Markov → PDE (always works, infinite-dim)
+  kind: structural
+  impl:
+  - system_classification
+  supporting: []
+  impl_note: 'Second conjunct: init = .uniform ∧ trans = .generalNonMarkov → systemRequired trans init = .pde. ''infinite-dim'' is not formalised.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R23d
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 260-260
+  text: Localised → impossible (by definition of `systemRequired`)
+  kind: structural
+  impl:
+  - system_classification
+  supporting:
+  - localised_genuine_obstruction
+  impl_note: 'Third conjunct: init = .localised → systemRequired trans init = .impossible.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Localised → impossible (no EBCM variant works)'
+- id: Obstructions.header.kirkwoodHierarchyInconsistent
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 275-291
+  text: |-
+    For a two-variable surrogate of a closed order-4 moment system and a one-variable surrogate of a closed order-3 system (defined below), the closed dynamics do **not** project consistently under the surrogate marginalisation `M(a,b) = a + b`.
+    [...]
+    does **not** commute at the witness state.
+  kind: existence
+  impl:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  supporting:
+  - EBCMCategory.MarginalisationDynamicalGap.kirkwood_not_equivariant_via_T4
+  impl_note: 'impl is a ℚ surrogate: U4 = Idx4 → ℚ (two coordinates), U3 = Idx3 → ℚ (one), M(u) = u a + u b, F4(u) = (u a·u b, u b), F3(v) = (v c)²/4, all hand-chosen. The actual order-4/order-3 Kirkwood closed right-hand sides and the marginalisation matrix Mat_3from4 are not formalised; the theorem shows one surrogate square fails to commute at one point.'
+  required: true
+  status: implemented
+  notes: 'Module-header claim (Theorem T2 section). WP4b (TRIAGE P1.4/P2): text corrected; previous text: The closed pairwise/Kirkwood moment hierarchy at order 4 does **not** project consistently to the closed hierarchy at order 3 under subgraph-marginalisation. [...] does **not** commute.'
+- id: Obstructions.header.T1ImpliesTrajectoryFailure
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 291-353
+  text: |-
+    Theorem T1 (`dynamic_marginalisation_iff_equivariance` in `MarginalisationFunctor.lean`) needs global flows of both systems, and the order-3 surrogate `c ↦ c²/4` has none (`no_flow_F3Kℝ`), so T1 does not apply to this witness. The local statement does hold: for any local solutions of the two surrogate systems from `u` and `M u`, `M · u₄(t) ≠ u₃(t)` for all small `t > 0` (`MarginalisationDynamicalGap.witness_localGap_ge`).
+    [...]
+    T1 does not apply here (the order-3 field has no global flow); the local consequence, `M · u₄(t) ≠ u₃(t)` for small `t > 0`, is `MarginalisationDynamicalGap.witness_localGap_ge`.
+  kind: dynamical
+  impl: []
+  supporting:
+  - EBCMCategory.Marginalisation.dynamic_marginalisation_iff_equivariance
+  - EBCMCategory.MarginalisationDynamicalGap.trajectoryGap_rate_two_at_witness
+  impl_note: 'No theorem instantiates T1 with the witness: T2 is over ℚ (Idx4 → ℚ) while T1 needs real normed spaces and a continuous linear M, and Obstructions does not import MarginalisationFunctor. The ℝ corollary trajectoryGap_rate_two_at_witness assumes IsFlow F3Kℝ φ₃, which is unsatisfiable: v'' = v²/4 with v(0) = 4 gives v(t) = 4/(1 − t), blowing up at t = 1, so no global flow exists and the chain is vacuous.'
+  required: false
+  status: missing
+  notes: 'Second fragment is from the Result 25 docstring. The phrase ''matching the empirical finding in NodeBasedModels.jl'' is not registered (empirical). WP4b (TRIAGE P1.4/P2): text corrected; previous text: By Theorem T1 (`dynamic_marginalisation_iff_equivariance` in `MarginalisationFunctor.lean`), non-commutation of the RHS implies that `M · u₄(t) = u₃(t)` cannot hold identically along the closed trajectories [...] By T1, dynamic marginalisation `M · u₄(t) = u₃(t)` cannot hold along the closed trajectories. -- P1.4: now implementable by MarginalisationDynamicalGap.witness_localGap_ge (candidate impl).'
+- id: Obstructions.header.witnessCollapse
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 302-304
+  text: 'The labels are mnemonic only: `M` is not the subgraph marginalisation of these classes (deleting a vertex of C₄ SISI gives P₃ SIS or P₃ ISI, and deleting a vertex of C₄ SSSS gives P₃ SSS).'
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: No graphs or motifs are formalised (Idx4, Idx3 are bare labels).
+  required: false
+  status: missing
+  notes: 'Combinatorially doubtful: deleting one vertex of the 4-cycle S-I-S-I yields P₃ I-S-I (delete an S) or P₃ S-I-S (delete an I), so the reachable order-3 class is not unique; deleting a vertex of C₄ SSSS (entry b) yields P₃ SSS, not P₃ SIS, so summing b into c is not an induced-subgraph marginalisation. WP4b (TRIAGE P1.4/P2): text corrected; previous text: the marginalisation `M(a,b) = a + b` collapses the two order-4 entries onto the unique order-3 class reachable by deleting one vertex of `C₄ SISI`.'
+- id: Obstructions.header.surrogateForms
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 305-307
+  text: 'The surrogate right-hand sides are chosen, not derived from a closure: `F₄(a,b) = (a·b, b)` is bilinear, as a pair-Kirkwood closure is, and `F₃(c) = c²/4` is quadratic.'
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Modelling claim that the surrogate is faithful to Kirkwood closures; F4_Kirkwood and F3_Kirkwood are defined by these formulas, not derived from any closure.
+  required: false
+  status: informal
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The closed RHS at order 4 has the bilinear form characteristic of a Kirkwood pairwise closure (`F₄(a,b) = (a·b, b)`), and the closed RHS at order 3 has the quadratic-rational form (`F₃(c) = c²/4`) of the analogous order-3 Kirkwood closure on the collapsed variable.'
+- id: Obstructions.header.smallestFaithfulWitness
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 309-312
+  text: 'This is one arithmetic witness for one pair of surrogate fields, not a general law: with `M = id` a quadratic field commutes with itself, and at the witness state the quadratic field `c ↦ 3c²/8` agrees with `M ∘ F₄` (both give 6; `MarginalisationDynamicalGap.kirkwoodForm_matches_at_witness`).'
+  kind: structural
+  impl: []
+  supporting:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  - EBCMCategory.MarginalisationDynamicalGap.fibre_collapse_obstruction
+  impl_note: '''smallest'' and the universal ''cannot survive'' are not formalised; only one instance is proved.'
+  required: false
+  status: missing
+  notes: 'As a universal statement it needs side conditions (e.g. a bilinear term lying in ker M survives: F₄(a,b) = (ab, −ab), M(a,b) = a + b gives M ∘ F₄ = 0 = F₃ ∘ M for the degenerate F₃ = 0). WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the smallest faithful arithmetic witness of the structural failure: a bilinear order-4 RHS cannot survive linear pushforward followed by a quadratic-rational order-3 RHS.'
+- id: Obstructions.R25a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 345-346
+  text: '**Result 25 — Theorem T2 (Marginalisation obstruction).** There exists a state at which `M ∘ F₄_Kirkwood ≠ F₃_Kirkwood ∘ M`.'
+  kind: existence
+  impl:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  supporting: []
+  impl_note: 'impl: ∃ u : U4, M_witness (F4_Kirkwood u) ≠ F3_Kirkwood (M_witness u) (function inequality in U3) over the ℚ surrogate. Faithful to this sentence at the surrogate level.'
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.R25b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 348-351
+  text: 'Witness: `u = (a ↦ 1, b ↦ 3)`. * `M (F₄_Kirkwood u) (c) = 1·3 + 3 = 6`. * `F₃_Kirkwood (M u) (c) = (1+3)² / 4 = 4`. The diagram fails by `6 ≠ 4`.'
+  kind: algebraic-identity
+  impl:
+  - MarginalisationObstruction.kirkwood_obstruction_witness_value
+  supporting:
+  - MarginalisationObstruction.kirkwood_marginalisation_obstruction
+  impl_note: kirkwood_obstruction_witness_value proves that at u = (1, 3) the c-component difference LHS − RHS equals 2; the individual values 6 and 4 are not stated (their difference is).
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.kirkwoodObstructionWitnessValue-a
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 362-363
+  text: 'The witness explicitly evaluated: the LHS minus the RHS is a fixed nonzero rational.'
+  kind: algebraic-identity
+  impl:
+  - MarginalisationObstruction.kirkwood_obstruction_witness_value
+  supporting: []
+  impl_note: impl proves the difference equals 2 (a specific nonzero rational) at the witness. Faithful.
+  required: true
+  status: implemented
+  notes: ''
+- id: Obstructions.kirkwoodObstructionWitnessValue-b
+  group: Obstructions
+  source:
+    file: EBCMCategory/Obstructions.lean
+    lines: 363-366
+  text: The value 2 is a property of the two surrogate fields only. Nothing links it to the order-3 and order-4 moment equations of the Julia implementation, so it is not a test oracle for them.
+  kind: other
+  impl: []
+  supporting: []
+  impl_note: Claim about the Julia implementation; the surrogate values are not formally linked to Mat_3from4.
+  required: false
+  status: informal
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: Useful as a *numeric oracle* for cross-checking the Julia implementation: any correct evaluation of `Mat_3from4 · F_4_Kirkwood(u) - F_3_Kirkwood(Mat_3from4 · u)` at the analogous SISI configuration must be **nonzero**, never within floating-point tolerance of zero.'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text):
+#   degreeCorr_ebcm_exists (used as impl of R21b), multiplex_ebcm_exists (impl of
+#   header.networkNotObstruction; constructor comment '-- static+dynamic layers (multiplex EBCM works)'
+#   is a Lean comment, not a docstring), localised_impossible (impl of R20b).
+# Not registered (definitions / intent text only, see DataTypes/Obstructions.md):
+#   NetworkType, TransitionType ("Non-Markovian dynamics are NOT an absolute obstruction ..."), InitCondType,
+#   SystemType, standardEbcmValid ("valid iff: configuration model + Markovian + uniform initials" - its body),
+#   ebcmExists ("An EBCM variant exists ... provided initials are uniform" - its body), systemRequired,
+#   extensionDim ("Returns 0 for PDE systems"), MarginalisationObstruction.{Idx4, Idx3, U4, U3, M_witness,
+#   F4_Kirkwood, F3_Kirkwood}; header bullet '**Population structure**: Multi-type EBCM with biased mixing.'
+#   and the introductory 'Violations of these assumptions do NOT necessarily break the EBCM *framework*'.

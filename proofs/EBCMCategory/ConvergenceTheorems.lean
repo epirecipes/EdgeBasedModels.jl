@@ -4,19 +4,23 @@ import Mathlib.Tactic
 /-!
 # Convergence and Exactness Theorems
 
-Formalizes key convergence results connecting the edge-based compartmental model
-(EBCM) to classical mass-action SIR, the exactness of pair approximations on
-trees, PGF moment identities, R₀ amplification by degree heterogeneity, the
-final-size fixed-point equation, CLT scaling, and the epidemic threshold.
+States scalar identities motivated by convergence results connecting the
+edge-based compartmental model (EBCM) to classical mass-action SIR, the
+exactness of pair approximations on trees, the final-size fixed-point equation
+and CLT scaling, together with PGF moment identities, R₀ amplification by
+degree heterogeneity and the epidemic threshold. No convergence result, limit
+theorem or ODE solution is formalised; the tree-exactness and CLT results are
+cited prose (Results 106 and 111).
 
 ## References
 
-* Rempała GA (2025). Equivalence of Poisson EBCM and mass-action SIR.
-* Sharkey KJ, Kiss IZ, Maybank P, Sherborne N (2013).
-  Pair-level approximations to the spatio-temporal dynamics of epidemics on
-  asymmetric contact networks. J Math Biol 71:1297–1320.
-* Ball F (2021). Central limit theorems for SIR epidemics on
-  configuration-model networks.
+* Rempała GA (2023). Equivalence of mass action and Poisson network SIR
+  epidemic models. arXiv:2310.13866.
+* Sharkey KJ, Kiss IZ, Wilkinson RR, Simon PL (2015). Exact equations for
+  SIR epidemics on tree graphs. Bull Math Biol 77:614–645
+  (doi:10.1007/s11538-013-9923-5).
+* Ball F (2021). Central limit theorems for SIR epidemics and percolation
+  on configuration model random graphs. Ann Appl Probab 31:2091–2142.
 -/
 
 noncomputable section
@@ -38,12 +42,16 @@ structure PoissonEBCMData where
 /-! ## Result 105: Poisson network ≡ mass-action (Rempała 2025)
 
 For a Poisson(κ) degree distribution with per-edge transmission rate β̃ and
-recovery γ̃, the EBCM reduces to classical SIR with effective rates:
-  β = κ β̃     and     γ = γ̃ + β̃.
+recovery γ̃, the susceptible curve S(t) of the EBCM coincides with that of
+classical SIR with effective rates:
+  β = κ β̃     and     γ = γ̃ + β̃;
+the infected curves differ (Rempała 2023).
 
 Key algebraic identity: the Poisson EBCM ODE
   θ̇ = -β̃ θ + β̃ exp(κ(θ-1)) + γ̃(1-θ)
-reduces to dS/dt = -β S I when S = exp(κ(θ-1)).
+reduces to dS/dt = -β S I when S = exp(κ(θ-1)) and I := φ_I (the probability
+that a partner is infectious and has not yet transmitted), not the network
+prevalence.
 
 We verify the effective-rate identities algebraically. -/
 
@@ -65,12 +73,11 @@ theorem effective_gamma_pos (d : PoissonEBCMData) : 0 < effective_gamma d := by
   unfold effective_gamma
   linarith [d.gamma_tilde_pos, d.beta_tilde_pos]
 
-/-- **Result 105c.** Transmissibility consistency: β/(β+γ) reduces correctly.
-With β = κβ̃ and γ = γ̃ + β̃, the mass-action transmissibility is
-T_MA = κβ̃/(κβ̃ + γ̃ + β̃). For the edge-based transmissibility
-T_edge = β̃/(β̃ + γ̃), we verify the R₀ identity:
-R₀_MA = T_MA · (κ-1) and R₀_EBCM = T_edge · κ.
-When κ is large (continuous approximation), these are asymptotically equivalent.
+/-- **Result 105c.** Transmissibility consistency: with β = κβ̃ and
+γ = γ̃ + β̃, the mass-action R₀ is β/γ = κβ̃/(β̃ + γ̃).
+With the edge-based transmissibility T_edge = β̃/(β̃ + γ̃), the mass-action
+R₀ is exactly T_edge · κ, the Poisson EBCM R₀ (`R0_massAction_eq_edge`).
+There is no large-κ approximation: the two R₀ agree for every κ.
 
 Here we verify the simpler identity: κ · β̃/(β̃ + γ̃) = κβ̃/(β̃ + γ̃). -/
 theorem poisson_R0_edge_formula (kappa beta_tilde gamma_tilde : ℝ)
@@ -89,33 +96,46 @@ theorem poisson_excess_degree_real (kappa : ℝ) (hk : 0 < kappa) :
 
 /-- **Result 105e.** S-substitution identity: if S = exp(κ(θ-1)) and θ̇ = f(θ),
 then dS/dt = κ·S·θ̇. This is the chain rule d/dt[exp(κ(θ-1))] = κ·exp(κ(θ-1))·θ̇.
-We verify the algebraic coefficient: κ · exp(κ(θ-1)) = κ · S. -/
+The Lean statement `kappa * S = kappa * S` is tautological: it holds by
+reflexivity. The chain rule itself is `S_theta_chain_rule`. -/
 theorem S_theta_chain_rule_coeff (kappa S : ℝ) :
     kappa * S = kappa * S := by ring
 
-/-! ## Result 106: Tree-exactness of pair closure (Sharkey et al 2013)
+/-- The mass-action R₀ β/γ with β = κβ̃ and γ = γ̃ + β̃ equals the Poisson
+    EBCM R₀ κ · T_edge = κ · β̃/(β̃ + γ̃), exactly. -/
+theorem R0_massAction_eq_edge (d : PoissonEBCMData) :
+    effective_beta d / effective_gamma d =
+      d.kappa * (d.beta_tilde / (d.beta_tilde + d.gamma_tilde)) := by
+  unfold effective_beta effective_gamma
+  rw [add_comm d.gamma_tilde]
+  ring
 
-On tree networks (no cycles), the pair approximation is exact: the pair closure
-assumption [ABC] = [AB][BC]/[B] introduces no error when the network has no
-cycles.
+/-- The chain rule behind Result 105e: if `θ` has derivative `θ'` at `t`, then
+    `S = exp(κ(θ − 1))` has derivative `κ · S · θ'` at `t`. -/
+theorem S_theta_chain_rule (kappa : ℝ) {θ : ℝ → ℝ} {θ' t : ℝ}
+    (h : HasDerivAt θ θ' t) :
+    HasDerivAt (fun s => Real.exp (kappa * (θ s - 1)))
+      (kappa * Real.exp (kappa * (θ t - 1)) * θ') t := by
+  have := ((h.sub_const 1).const_mul kappa).exp
+  convert this using 1
+  ring
 
-This is fundamentally a combinatorial/probabilistic result about the conditional
-independence structure of tree-structured random processes. We state it as an
-axiom. -/
+/-! ## Result 106: Tree-exactness of pair closure (Sharkey et al 2015)
 
-/-- Network acyclicity: an abstract proposition for tree-structured networks. -/
-class TreeNetwork (network : Type) where
-  acyclic : Prop
+On tree networks (no cycles), the pair approximation is exact. Precisely
+(Sharkey, Kiss, Wilkinson and Simon 2015, Theorem 1.1): for Markovian SIR
+dynamics on a network whose underlying graph is a tree, started from a pure
+state (or from uncorrelated initial node states), the individual-level closure
+(A_i S_j B_k)·(S_j) = (A_i S_j)·(S_j B_k) holds exactly for every triple in
+the pair equations, so the closed pair-based system reproduces the exact node
+and pair probabilities.
 
-/-- Pair closure error for a given network and approximation scheme. -/
-class PairClosureError (network : Type) where
-  error : ℝ
-
-/-- **Result 106.** On tree networks, pair approximation is exact
-(pair closure error = 0). Stated as an axiom (combinatorial result). -/
-axiom tree_pair_exactness (network : Type) [TreeNetwork network]
-    [PairClosureError network] (h_tree : TreeNetwork.acyclic (network := network)) :
-    PairClosureError.error (network := network) = 0
+**Result 106** (not formalised; cited). This library models no contact
+network, pair probabilities or ODE solutions, so the result has no Lean
+counterpart. (The former axiom `tree_pair_exactness` was stated over two
+unconstrained type classes and was inconsistent: the instances `⟨True⟩` and
+`⟨1⟩` on `Unit` gave `(1 : ℝ) = 0`. It has been removed together with those
+classes.) -/
 
 /-! ## PGF moment data for Results 107–112
 
@@ -255,10 +275,13 @@ The final size of an epidemic on a configuration-model network is determined
 by the fixed point θ∞ of:
   θ∞ = 1 - T + T · ψ'(θ∞)/ψ'(1).
 
-The disease-free fixed point θ = 1 is always a solution. It is stable iff R₀ ≤ 1.
+The disease-free fixed point θ = 1 is always a solution. For strictly convex
+f (some degree ≥ 3 has positive probability) it is the only fixed point in
+[0, 1] iff R₀ ≤ 1, where R₀ = f'(1) (not formalised here).
 
-We verify algebraically that θ = 1 satisfies the equation and prove the
-stability criterion. -/
+We verify algebraically that θ = 1 satisfies the equation and compute the
+derivative of f (`finalSizeMap_hasDerivAt`). The statements `fixed_point_derivative`
+and `dfe_stable_iff_R0_le_one` are tautological. -/
 
 /-- The final-size fixed-point function: f(θ) = 1 - T + T · g(θ)
 where g(θ) = ψ'(θ)/ψ'(1). At θ=1, g(1) = 1 (normalization). -/
@@ -273,18 +296,39 @@ theorem disease_free_fixed_point (T : ℝ) :
 
 /-- **Result 110b.** The derivative f'(θ) = T · g'(θ).
 At θ = 1: f'(1) = T · g'(1) = T · ψ''(1)/ψ'(1) = R₀.
-Stability of θ = 1 requires |f'(1)| < 1, i.e., R₀ < 1.
+Linear stability of θ = 1 needs |f'(1)| < 1, i.e. R₀ < 1; at R₀ = 1 the
+linearisation is inconclusive, and θ = 1 is still attracting from below when
+f is strictly convex.
 
-We verify: f'(1) = T · ψ''(1)/ψ'(1). -/
+**Tautological Lean statement:** `T * excessDeg = T * excessDeg`; the
+derivative is computed in `finalSizeMap_hasDerivAt`. -/
 theorem fixed_point_derivative (T excessDeg : ℝ) :
     T * excessDeg = T * excessDeg := by ring
 
 /-- **Result 110c.** When R₀ ≤ 1, the disease-free equilibrium θ = 1 is stable:
-|f'(1)| ≤ 1 iff T · excessDeg ≤ 1 (since both T and excessDeg are nonneg). -/
+|f'(1)| ≤ 1 iff T · excessDeg ≤ 1 (since both T and excessDeg are nonneg).
+**Tautological Lean statement:** `T * excessDeg ≤ 1 ↔ T * excessDeg ≤ 1`,
+proved by `Iff.rfl`; neither |f'(1)| nor stability appears in it. The
+absolute-value step is `dfe_derivative_abs_le_one_iff`. -/
 theorem dfe_stable_iff_R0_le_one (T excessDeg : ℝ)
     (_hT : 0 ≤ T) (_he : 0 ≤ excessDeg) :
     T * excessDeg ≤ 1 ↔ T * excessDeg ≤ 1 := by
   exact Iff.rfl
+
+/-- The derivative of the final-size map: if `g` has derivative `g'` at `x`,
+    then `θ ↦ f(θ) = 1 − T + T·g(θ)` has derivative `T·g'` at `x`. With
+    `g = ψ'/ψ'(1)` and `x = 1`, `g'(1) = ψ''(1)/ψ'(1)`, so `f'(1) = R₀`. -/
+theorem finalSizeMap_hasDerivAt (T : ℝ) {g : ℝ → ℝ} {g' x : ℝ}
+    (hg : HasDerivAt g g' x) :
+    HasDerivAt (fun θ => finalSizeMap T (g θ)) (T * g') x :=
+  (hg.const_mul T).const_add (1 - T)
+
+/-- For `T ≥ 0` and `excessDeg ≥ 0`, `|f'(1)| ≤ 1 ↔ R₀ ≤ 1`, where
+    `f'(1) = R₀ = T · excessDeg`. -/
+theorem dfe_derivative_abs_le_one_iff (T excessDeg : ℝ)
+    (hT : 0 ≤ T) (he : 0 ≤ excessDeg) :
+    |T * excessDeg| ≤ 1 ↔ T * excessDeg ≤ 1 := by
+  rw [abs_of_nonneg (mul_nonneg hT he)]
 
 /-- **Result 110d.** When T = 0 (no transmission), the fixed point is trivially θ = 1. -/
 theorem no_transmission_fixed_point (g_val : ℝ) :
@@ -294,30 +338,22 @@ theorem no_transmission_fixed_point (g_val : ℝ) :
 
 /-! ## Result 111: CLT for final size (Ball 2021)
 
-For the configuration model with n vertices, Poisson degree distribution, and
-transmissibility T:
-- The final epidemic size Z_n/n → z almost surely as n → ∞.
-- √n(Z_n/n - z) ⇒ N(0, σ²) where σ² depends on T and the degree distribution.
+For SIR epidemics on configuration-model random graphs with bounded degrees
+and an arbitrary infectious-period distribution, the final size Z_n satisfies
+√n(Z_n/n − ρ) ⇒ N(0, σ²) with an explicit σ² (so Z_n/n → ρ in probability) in
+any of three regimes (Ball 2021): the initially infected fraction converges
+to a limit ε ∈ (0, 1) (Theorem 2.1); R₀ > 1, the number of initial infectives
+is fixed, and the statement is conditional on a major outbreak, of size at
+least log n (Theorem 2.2); or R₀ > 1 and the number of initial infectives
+tends to infinity while their fraction tends to zero, without conditioning
+(Theorem 2.3). Without the conditioning of Theorem 2.2, Z_n/n does not
+converge to ρ > 0 for an epidemic started by a fixed number of infectives,
+because a minor outbreak has positive probability.
 
-This is a probabilistic convergence result. We state it as an axiom. -/
-
-/-- Asymptotic variance for the CLT of the final epidemic size.
-Depends on transmissibility and degree distribution moments. -/
-structure FinalSizeCLTData where
-  T : ℝ                -- transmissibility
-  z : ℝ                -- limiting final size proportion z ∈ (0,1)
-  sigma_sq : ℝ         -- asymptotic variance σ²
-  T_pos : 0 < T
-  T_lt_one : T < 1
-  z_pos : 0 < z
-  z_lt_one : z < 1
-  sigma_sq_pos : 0 < sigma_sq
-
-/-- **Result 111.** CLT for final epidemic size on configuration-model networks:
-Z_n/n → z a.s. and √n(Z_n/n - z) ⇒ N(0, σ²).
-Stated as an axiom (stochastic convergence result). -/
-axiom final_size_CLT (d : FinalSizeCLTData) :
-    True  -- CLT holds: √n(Z_n/n - z) ⇒ N(0, σ²)
+**Result 111** (not formalised; cited). This library models no random graph,
+epidemic process or limit theorem, so the result has no Lean counterpart.
+(The former axiom `final_size_CLT`, whose conclusion was `True`, has been
+removed together with the unused structure `FinalSizeCLTData`.) -/
 
 /-! ## Result 112: Epidemic threshold universality
 

@@ -6,7 +6,8 @@ import Mathlib.Tactic
 /-!
 # MessagePassingBridge — MP ↔ EBCM ↔ Pairwise hierarchy
 
-This file formalizes the model hierarchy from two papers:
+This file records the model hierarchy from two papers, as enumerations
+and scalar identities (no model equations are formalised):
 
 1. **Sherborne, Miller, Blyuss, Kiss (2018)**. Mean-field models for
    non-Markovian epidemics on networks. J. Math. Biol. 76, 755–778.
@@ -39,7 +40,8 @@ Mass-action SIR                -- Kermack & McKendrick (1927)
 
 The vertical lines represent:
 - ‖ : isomorphism (lossless, both directions)
-- | : specialization (lossy, one direction)
+- | : specialization (lossy, one direction); the last step, pairwise →
+  mass-action SIR, matches only S(t), after reparametrisation
 
 ## Key results
 
@@ -49,11 +51,11 @@ The vertical lines represent:
 | 61     | MP ≡ EBCM: message = edge probability               |
 | 62     | Re-parametrised pairwise from MP                     |
 | 63     | Markovian specialization to Volz ODE                 |
-| 64     | Model hierarchy: 6 levels with morphisms             |
-| 65     | Dimension tower: MP(∞) ≥ EBCM(PDE) ≥ ODE(3) ≥ SIR(2)|
+| 64     | Assumption-list lengths: none exceeds mass action    |
+| 65     | Dimension lookup table: SIR(2) ≤ Pairwise(4) ≤ ODE(5) ≤ PDE(∞) |
 | 66     | The bridge: [SI] connects MP/EBCM to pairwise world  |
 | 67     | Pairwise requires PT; MP/EBCM do not                 |
-| 68     | Full equivalence chain for Markov+PT                  |
+| 68     | Equivalence chain for Markov + Poisson (informal; mass action matches S(t) only) |
 -/
 
 /-! ## Model types in the hierarchy -/
@@ -88,8 +90,10 @@ def ModelFamily.requiredAssumptions : ModelFamily → List Assumption
   | .pairwise       => [.configModel, .markovTransmission, .markovRecovery, .poissonType]
   | .massAction     => [.configModel, .markovTransmission, .markovRecovery, .poissonDegree]
 
-/-- **Result 64.** Each model requires at least as many assumptions as
-    the one above it in the hierarchy. -/
+/-- **Result 64.** Every model family requires at most as many listed
+    assumptions as mass action (a comparison of list lengths only).
+    The lists are not nested: pairwise needs `poissonType`, mass action
+    `poissonDegree` instead. -/
 theorem hierarchy_monotone_assumptions :
     ∀ m : ModelFamily, m.requiredAssumptions.length ≤
       ModelFamily.massAction.requiredAssumptions.length := by
@@ -219,12 +223,16 @@ theorem markov_transmissibility (p : SIRParams) :
     p.transmissibility = p.β / (p.β + p.γ) := rfl
 
 /-- The Markovian EBCM dimension: 3 core variables (Θ, p_I, p_S)
-    plus 2 output variables (S, I). -/
+    plus 2 output variables (S, I).
+    **Arithmetic only:** the Lean statement is the numeral identity
+    3 + 2 = 5 and does not mention the model. -/
 theorem markov_ebcm_dim : (3 : ℕ) + 2 = 5 := rfl
 
 /-- The non-Markovian EBCM is infinite-dimensional (PDE).
     Markovian specialization reduces ∞ → 3 core variables.
-    This is a massive dimensional reduction. -/
+    This is a massive dimensional reduction.
+    **Tautological Lean statement:** `∀ n, 3 ≤ n → n ≤ n` holds by
+    reflexivity and says nothing about the models. -/
 theorem pde_to_ode_reduction :
     ∀ n : ℕ, 3 ≤ n → n ≤ n := fun _ _ => le_refl _
 
@@ -246,7 +254,9 @@ def ModelFamily.effectiveDim : ModelFamily → ℕ
   | .massAction     => 2
 
 /-- **Result 65.** The dimension tower is monotonically decreasing
-    as we specialize. -/
+    as we specialize.
+    The dimensions are the hard-coded values of `effectiveDim` (100 stands
+    for ∞), so this checks the lookup table, not the models. -/
 theorem dim_tower_monotone :
     ModelFamily.massAction.effectiveDim ≤
     ModelFamily.pairwise.effectiveDim ∧
@@ -267,9 +277,8 @@ theorem dim_tower_monotone :
     For PT degree distributions, the [SI] equation matches the
     standard pairwise model with closure κ·[AS][SI]/[S].
 
-    This is the ONLY path from MP to pairwise: you MUST go through
-    the edge-probability formulation. Direct MP → Pairwise requires
-    both Markovian transmission AND PT degree distribution. -/
+    The Lean theorem only compares assumption-list lengths: message
+    passing needs fewer listed assumptions than pairwise. -/
 theorem bridge_requires_edge_formulation :
     ModelFamily.messagePassing.requiredAssumptions.length <
     ModelFamily.pairwise.requiredAssumptions.length := by
@@ -284,18 +293,26 @@ theorem pairwise_needs_more_than_ebcm :
 
 /-! ## Full equivalence for Markov + PT -/
 
-/-- **Result 68.** Under full Markov + Poisson assumptions, ALL six models
-    in the hierarchy produce identical trajectories.
+/-- **Result 68.** Under full Markov + Poisson assumptions, MP, EBCM, DSA
+    and pairwise agree. Mass action matches only S(t), and only after
+    reparametrisation: with per-edge rates β̃, γ̃ and mean degree κ, the
+    mass-action rates are β = κβ̃ and γ = β̃ + γ̃, and the mass-action I(t)
+    corresponds to φ_I, not to the network prevalence (Rempała 2023).
 
     This is the maximum-equivalence scenario:
     * MP ≡ EBCM (always, by Sherborne et al.)
     * EBCM ODE = EBCM PDE (Markov collapses PDE → ODE)
     * EBCM ≡ DSA (always for finite variance, by Kiss et al.)
     * DSA ≡ Pairwise (PT closure is exact, by Kiss et al.)
-    * Pairwise ≡ Mass-action SIR (Poisson: κ=1 makes it homogeneous)
+    * Pairwise → Mass-action SIR (Poisson: κ = 1; S(t) agrees after
+      reparametrisation, the infected curves differ)
 
-    The proof is that the Poisson assumption implies all weaker
-    assumptions, so all models are in their validity regime. -/
+    Informally, the Poisson assumption implies all weaker assumptions, so
+    all models are in their validity regime; this implication is not
+    represented in Lean (`Assumption` is an unstructured enumeration).
+
+    **Tautological Lean statement:** `full_equivalence_poisson` is `n = n`
+    for a list length; it proves nothing about trajectories. -/
 theorem full_equivalence_poisson :
     ModelFamily.massAction.requiredAssumptions.length =
     ModelFamily.massAction.requiredAssumptions.length := rfl
@@ -312,7 +329,7 @@ The message-passing ↔ pairwise bridge works as follows:
 
 ### The isomorphism layer (lossless)
 * **MP ≡ EBCM**: H₁(t) = Θ(t) via f = f̂ (Result 60-61)
-* **EBCM ≡ DSA**: variable change x_{SI} = p_I·ψ'(θ) (SurvivalBridge)
+* **EBCM ≡ DSA**: variable change x_{SI} = p_I·θ·ψ'(θ) (SurvivalBridge)
 
 ### The specialization layer (lossy)
 * **EBCM PDE → ODE**: Markovian assumption collapses ∞-dim → 3-dim
@@ -333,5 +350,6 @@ we recover the standard pairwise model with closure:
   [ASI] = κ · [AS][SI] / [S]
 
 When it is not PT, the MP/EBCM/DSA models still work but the
-pairwise approximation breaks down (ClosureTheorem, Result 57).
+pairwise closure is not exact (Kiss, Kenah & Rempała 2023, Theorem 1;
+ClosureTheorem Result 57 gives one non-PT example).
 -/

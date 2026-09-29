@@ -133,7 +133,10 @@ theorem convexMix_nonneg
   exact add_nonneg (mul_nonneg h1mφ hx) (mul_nonneg hφ0 hy)
 
 /-- A convex mixture of normalized weight families is normalized. This is the
-key algebraic fact behind Barnard's improved closure. -/
+key algebraic fact behind Barnard's improved closure: it mixes the unclustered
+weights (probability 1 − φ) with the normalised clustered weights
+(probability φ), which gives Σ_A [ASI] = (n − 1)[SI] (Barnard 2018, PhD
+thesis, University of Sussex, §4.3.2, "Improved closure"). -/
 theorem barnardWeights_normalized
     (φ : ℚ) (p_uc p_c : α → ℚ)
     (huc : ∑ a, p_uc a = 1)

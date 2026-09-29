@@ -1,0 +1,605 @@
+# SA-PASS claim registry fragment: group MessagePassingBridge
+# Source module: EBCMCategory/MessagePassingBridge.lean (trusted library EBCMCategory.*)
+# Registrar: claim registrar 2/3 (non-blind). Text fields are verbatim (whitespace-normalised).
+# Id convention: 'R<N>' for '**Result N.**' docstrings, letter suffix for splits; '<lowerCamelName>' for
+#   other docstrings; 'table.R<N>' = module-header table rows; 'header.*' / 'summary.*' = module prose.
+- id: MessagePassingBridge.header.sherborneThm1
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 16-17
+  text: 'Theorem 1: The message passing (MP) model and the EBCM produce identical trajectories for any independent τ(a), q(a).'
+  kind: dynamical
+  impl: []
+  supporting:
+  - hazard_density_identity
+  - mp_ebcm_roundtrip
+  impl_note: No MP or EBCM dynamics/trajectories are formalised; only a pointwise product identity and a record relabelling.
+  required: false
+  status: missing
+  notes: Module-header claim (Sherborne et al. 2018).
+- id: MessagePassingBridge.header.kkrThm2
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 22-23
+  text: 'Theorem 2: The pairwise closure is exact iff the degree distribution is Poisson-type (PT).'
+  kind: equivalence
+  impl: []
+  supporting: []
+  impl_note: No pairwise model or exactness notion is formalised.
+  required: false
+  status: missing
+  notes: Module-header claim (Kiss, Kenah, Rempała 2023).
+- id: MessagePassingBridge.header.hierarchy
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 28-43
+  text: |-
+    Message Passing (MP) -- Karrer & Newman (2010) ‖ [f = f̂ identity] -- Sherborne et al. Theorem 1 EBCM (general, PDE) -- non-Markovian, any τ(a), q(a) | [Markovian τ,q] EBCM (ODE, 3+2 vars) -- Volz (2008), Miller et al. (2012) ‖ [variable change] -- Kiss, Kenah, Rempała (2023) DSA (survival vars) -- KhudaBukhsh et al. (2020) | [PT closure, κ=const] -- Kiss, Kenah, Rempała Theorem 2 Pairwise (ODE) -- Keeling (1999), Rand (1999) | [Poisson, κ=1] Mass-action SIR -- Kermack & McKendrick (1927)
+    [...]
+    The vertical lines represent: - ‖ : isomorphism (lossless, both directions) - | : specialization (lossy, one direction)
+  kind: categorical
+  impl: []
+  supporting:
+  - hierarchy_monotone_assumptions
+  - dim_tower_monotone
+  - mp_ebcm_roundtrip
+  - volz_dsa_roundtrip
+  impl_note: No morphisms between model families are defined; ModelFamily is a bare enum with hard-coded assumption lists and dimensions.
+  required: false
+  status: missing
+  notes: 'Module-header diagram. The ''Pairwise → Mass-action (Poisson, κ=1)'' edge is questionable: on a Poisson CM network the exact pairwise/Volz dynamics differ from classical mass-action SIR with the same β, γ (R₀ = β⟨k⟩/(β+γ) vs β⟨k⟩/γ).'
+- id: MessagePassingBridge.table.R60
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 50-50
+  text: '| 60 | Hazard-density identity: f(a) = f̂(a) |'
+  kind: algebraic-identity
+  impl:
+  - hazard_density_identity
+  supporting: []
+  impl_note: mul_assoc on three abstract rationals (see R60).
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R61
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 51-51
+  text: '| 61 | MP ≡ EBCM: message = edge probability |'
+  kind: equivalence
+  impl:
+  - mp_ebcm_roundtrip
+  - ebcm_mp_roundtrip
+  supporting: []
+  impl_note: Both record round trips (rfl); a relabelling of one number in (0,1], not an identity of dynamics.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R62
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 52-52
+  text: '| 62 | Re-parametrised pairwise from MP |'
+  kind: dynamical
+  impl:
+  - chain_rule_bridge
+  supporting: []
+  impl_note: impl is ψ'·(−β·x/ψ') = −β·x; no re-parametrised pairwise system.
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R63
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 53-53
+  text: '| 63 | Markovian specialization to Volz ODE |'
+  kind: dynamical
+  impl:
+  - markov_transmissibility
+  supporting: []
+  impl_note: 'impl is rfl: transmissibility p = β/(β+γ); no PDE/ODE.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R64
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 54-54
+  text: '| 64 | Assumption-list lengths: none exceeds mass action |'
+  kind: categorical
+  impl:
+  - hierarchy_monotone_assumptions
+  supporting: []
+  impl_note: No morphisms exist; impl compares list lengths. ModelFamily.requiredAssumptions is a hard-coded List Assumption; comparisons are of List.length only (decided by simp on literals), not of assumption-set inclusion or logical strength.
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 64 | Model hierarchy: 6 levels with morphisms |'
+- id: MessagePassingBridge.table.R65
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 55-55
+  text: '| 65 | Dimension lookup table: SIR(2) ≤ Pairwise(4) ≤ ODE(5) ≤ PDE(∞) |'
+  kind: inequality
+  impl:
+  - dim_tower_monotone
+  supporting: []
+  impl_note: 'impl: 2 ≤ 4 ≤ 5 ≤ 100 on the hard-coded effectiveDim table; MP is omitted, ∞ is the placeholder 100, and ebcmODE has effectiveDim 5 (not 3 as in the row).'
+  required: true
+  status: implemented
+  notes: 'Header-table row. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 65 | Dimension tower: MP(∞) ≥ EBCM(PDE) ≥ ODE(3) ≥ SIR(2)|'
+- id: MessagePassingBridge.table.R66
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 56-56
+  text: '| 66 | The bridge: [SI] connects MP/EBCM to pairwise world |'
+  kind: structural
+  impl:
+  - bridge_requires_edge_formulation
+  supporting: []
+  impl_note: 'impl: length [configModel] < length pairwise list (1 < 4); nothing about [SI].'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R67
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 57-57
+  text: '| 67 | Pairwise requires PT; MP/EBCM do not |'
+  kind: structural
+  impl:
+  - pairwise_needs_more_than_ebcm
+  supporting: []
+  impl_note: 'impl: 3 < 4 list lengths (ebcmODE vs pairwise); PT membership and MP are not mentioned.'
+  required: true
+  status: implemented
+  notes: Header-table row.
+- id: MessagePassingBridge.table.R68
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 58-58
+  text: '| 68 | Equivalence chain for Markov + Poisson (informal; mass action matches S(t) only) |'
+  kind: equivalence
+  impl:
+  - full_equivalence_poisson
+  supporting: []
+  impl_note: impl is x = x (rfl); no content.
+  required: true
+  status: implemented
+  notes: 'Header-table row. Note the row says Markov+PT, the Result 68 docstring says Markov+Poisson. WP4b (TRIAGE P1.4/P2): text corrected; previous text: | 68 | Full equivalence chain for Markov+PT |'
+- id: MessagePassingBridge.R64
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 93-96
+  text: '**Result 64.** Every model family requires at most as many listed assumptions as mass action (a comparison of list lengths only). The lists are not nested: pairwise needs `poissonType`, mass action `poissonDegree` instead.'
+  kind: inequality
+  impl:
+  - hierarchy_monotone_assumptions
+  supporting: []
+  impl_note: 'impl: ∀ m, (m.requiredAssumptions).length ≤ massAction''s length (4). It compares each family only with the bottom of the hierarchy, not with the family above it, and counts list entries instead of assumption inclusion (massAction''s list lacks poissonType, which pairwise requires). ModelFamily.requiredAssumptions is a hard-coded List Assumption; comparisons are of List.length only (decided by simp on literals), not of assumption-set inclusion or logical strength.'
+  required: true
+  status: implemented
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 64.** Each model requires at least as many assumptions as the one above it in the hierarchy.'
+- id: MessagePassingBridge.R60
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 130-135
+  text: |-
+    **Result 60.** The hazard-density identity: f(a) = f̂(a).
+    [...]
+    f(a) = τ(a)·ξ_q(a) = ζ(a)·ξ_τ(a)·ξ_q(a) = f̂(a)
+  kind: algebraic-identity
+  impl:
+  - hazard_density_identity
+  supporting: []
+  impl_note: 'impl: ζ·ξ_τ·ξ_q = ζ·(ξ_τ·ξ_q) for one EpiProcess record of rationals (mul_assoc). The age variable a, the functions τ, ξ_τ = exp(−∫ζ), ξ_q = exp(−∫ρ) and the substantive step τ = ζ·ξ_τ are absent; they are built into the definitions f_mp/f_ebcm.'
+  required: true
+  status: implemented
+  notes: The docstring itself concedes 'In Lean, this is associativity of multiplication in ℚ'.
+- id: MessagePassingBridge.R60b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 137-138
+  text: The identity follows from τ(a) = ζ(a)·ξ_τ(a) (definition of hazard). In Lean, this is associativity of multiplication in ℚ.
+  kind: other
+  impl: []
+  supporting:
+  - hazard_density_identity
+  impl_note: Proof commentary; accurate description of the Lean proof.
+  required: false
+  status: informal
+  notes: ''
+- id: MessagePassingBridge.ebcmState
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 155-155
+  text: On CM networks as N → ∞, Θ(t) = H₁(t).
+  kind: limit
+  impl: []
+  supporting:
+  - mp_ebcm_roundtrip
+  impl_note: No network, N → ∞ limit, or time-dependent H₁/Θ; the maps mpToEBCM/ebcmToMP simply copy the number.
+  required: false
+  status: missing
+  notes: Structure docstring of EBCMState.
+- id: MessagePassingBridge.R61a
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 173-173
+  text: '**Result 61.** The MP ↔ EBCM bridge is an isomorphism.'
+  kind: equivalence
+  impl:
+  - mp_ebcm_roundtrip
+  - ebcm_mp_roundtrip
+  supporting: []
+  impl_note: Both round trips are proved (rfl on structures carrying a single number in (0,1]); an isomorphism of state records, not of dynamical systems (no MP or EBCM equations appear).
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.R61b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 174-174
+  text: Round-trip EBCM → MP → EBCM is the identity.
+  kind: equivalence
+  impl:
+  - mp_ebcm_roundtrip
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.ebcmMpRoundtrip
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 179-179
+  text: Round-trip MP → EBCM → MP is the identity.
+  kind: equivalence
+  impl:
+  - ebcm_mp_roundtrip
+  supporting: []
+  impl_note: Good match.
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.R62a
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 186-189
+  text: '**Result 62.** The pairwise variable [SI] defined from MP quantities. From Eq. (14) of Sherborne et al.: ⟨SI⟩(t) = z·G₁(H₁)·[H₁ - z·G₁(H₁) - ∫g·(1-zG₁(H₁(t-a)))da]'
+  kind: dynamical
+  impl: []
+  supporting:
+  - chain_rule_bridge
+  impl_note: No [SI] definition from MP quantities exists; the docstring says the formal content is only the chain-rule algebra (R62d).
+  required: false
+  status: missing
+  notes: Formula matches Sherborne et al. (2018) Eq. (14b) for the proportion (SI)(t) (papers/s00285-017-1155-0.md).
+- id: MessagePassingBridge.R62b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 191-192
+  text: 'And the key derivative relation (Eq. 18): dH₁/dt = -β·[SI] / (z·⟨k⟩·N·G₁(H₁))'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: No derivative relation is formalised.
+  required: false
+  status: missing
+  notes: Matches the first line of Sherborne et al. (22a).
+- id: MessagePassingBridge.R62c
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 194-196
+  text: This defines [SI] purely from the message H₁, creating a bridge between the MP/EBCM world and the pairwise world WITHOUT requiring a moment closure approximation.
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: MessagePassingBridge.R62d
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 198-200
+  text: 'For the algebraic content: given S = ψ(Θ) and ψ'' = mean degree derivative at Θ, the edge-level [SI] relates to node-level I via the chain rule: dS/dt = ψ''(Θ)·dΘ/dt = -β·[SI].'
+  kind: algebraic-identity
+  impl:
+  - chain_rule_bridge
+  supporting: []
+  impl_note: 'impl: ψ'' ≠ 0 → ψ''·(−β·x/ψ'') = −β·x (field_simp). No S, Θ, ψ as a function, derivative or chain rule; the input relation dΘ/dt = −β·(SI/N)/ψ''(Θ) is assumed by writing it into the expression; the hypothesis β ≠ 0 is unnecessary.'
+  required: true
+  status: implemented
+  notes: Text says '[SI] relates to node-level I' but the identity is about dS/dt.
+- id: MessagePassingBridge.R63a
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 210-211
+  text: '**Result 63.** Under Markovian assumptions (τ = β·exp(-βa), q = γ·exp(-γa)), the EBCM PDE collapses to Volz''s 3-variable ODE.'
+  kind: dynamical
+  impl: []
+  supporting:
+  - markov_transmissibility
+  impl_note: No PDE or ODE is formalised; the docstring's own 'We verify' sentence (R63d) names the only formal content.
+  required: false
+  status: missing
+  notes: ''
+- id: MessagePassingBridge.R63b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 213-216
+  text: 'The integral terms vanish because: * ξ_τ(a) = exp(-βa), ξ_q(a) = exp(-γa) * f(a) = β·exp(-(β+γ)a) * ∫₀^∞ f(a)da = β/(β+γ) = T (transmissibility)'
+  kind: algebraic-identity
+  impl: []
+  supporting:
+  - markov_transmissibility
+  impl_note: The integral ∫₀^∞ β·e^{−(β+γ)a} da = β/(β+γ) is not proved (formalisable with MeasureTheory.integral over Set.Ioi 0).
+  required: false
+  status: missing
+  notes: Mathematically correct.
+- id: MessagePassingBridge.R63c
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 218-219
+  text: The PDE (∂/∂t + ∂/∂a)φ_I = -(ζ+ρ)φ_I with constant hazards ζ = β, ρ = γ reduces to the ODE dΘ/dt = -β·p_I·Θ.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: MessagePassingBridge.R63d
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 221-221
+  text: 'We verify: T = β/(β+γ) is the Markovian transmissibility.'
+  kind: algebraic-identity
+  impl:
+  - markov_transmissibility
+  supporting: []
+  impl_note: impl is rfl (unfolding SIRParams.transmissibility); 'Markovian' is not connected to any distribution or integral.
+  required: true
+  status: implemented
+  notes: Definitional.
+- id: MessagePassingBridge.markovEbcmDim
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 225-226
+  text: 'The Markovian EBCM dimension: 3 core variables (Θ, p_I, p_S) plus 2 output variables (S, I).'
+  kind: structural
+  impl:
+  - markov_ebcm_dim
+  supporting: []
+  impl_note: 'impl is the numeral identity (3 : ℕ) + 2 = 5 (rfl); no model or variable appears.'
+  required: true
+  status: implemented
+  notes: Vacuous.
+- id: MessagePassingBridge.pdeToOdeReduction
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 231-233
+  text: The non-Markovian EBCM is infinite-dimensional (PDE). Markovian specialization reduces ∞ → 3 core variables. This is a massive dimensional reduction.
+  kind: structural
+  impl:
+  - pde_to_ode_reduction
+  supporting: []
+  impl_note: 'impl: ∀ n : ℕ, 3 ≤ n → n ≤ n — a tautology (le_refl) with no content.'
+  required: true
+  status: implemented
+  notes: Vacuous.
+- id: MessagePassingBridge.R65
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 256-257
+  text: '**Result 65.** The dimension tower is monotonically decreasing as we specialize.'
+  kind: inequality
+  impl:
+  - dim_tower_monotone
+  supporting: []
+  impl_note: 'impl: massAction.effectiveDim ≤ pairwise ≤ ebcmODE ≤ ebcmPDE on hard-coded numerals (2 ≤ 4 ≤ 5 ≤ 100); dsa and messagePassing are omitted; ∞ is encoded as 100; ''dimension'' is a lookup table, not a property of any model.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.R66a
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 271-271
+  text: '**Result 66.** The [SI] bridge connects MP/EBCM to pairwise.'
+  kind: structural
+  impl:
+  - bridge_requires_edge_formulation
+  supporting: []
+  impl_note: 'impl: length of MP''s assumption list (1) < length of pairwise''s (4); nothing about [SI] or a bridge.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.R66b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 273-274
+  text: The re-parametrised system (Sherborne et al. Eq. 22) has variables (H₁, [SI], [I]) and is EXACT on CM networks — no closure needed.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: Consistent with Sherborne et al. (2018) §3 (system 22a is exact on CM networks as N → ∞).
+- id: MessagePassingBridge.R66c
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 276-276
+  text: For Markovian recovery, it simplifies to Volz's equations.
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: MessagePassingBridge.R66d
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 277-278
+  text: For PT degree distributions, the [SI] equation matches the standard pairwise model with closure κ·[AS][SI]/[S].
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: ''
+- id: MessagePassingBridge.R66e
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 280-281
+  text: 'The Lean theorem only compares assumption-list lengths: message passing needs fewer listed assumptions than pairwise.'
+  kind: structural
+  impl:
+  - bridge_requires_edge_formulation
+  supporting: []
+  impl_note: A list-length inequality (1 < 4) cannot express uniqueness of a path or which specific assumptions are needed. ModelFamily.requiredAssumptions is a hard-coded List Assumption; comparisons are of List.length only (decided by simp on literals), not of assumption-set inclusion or logical strength.
+  required: true
+  status: implemented
+  notes: 'Suspicious: uniqueness (''ONLY path'') is a meta-mathematical claim with no formal counterpart. WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the ONLY path from MP to pairwise: you MUST go through the edge-probability formulation. Direct MP → Pairwise requires both Markovian transmission AND PT degree distribution.'
+- id: MessagePassingBridge.R67
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 287-288
+  text: '**Result 67.** Pairwise requires PT; MP/EBCM do not. The number of additional assumptions for pairwise beyond EBCM ODE.'
+  kind: structural
+  impl:
+  - pairwise_needs_more_than_ebcm
+  supporting: []
+  impl_note: 'impl: ebcmODE list length (3) < pairwise list length (4). It does not state poissonType ∈ pairwise list or ∉ MP/EBCM lists, and MP is not mentioned.'
+  required: true
+  status: implemented
+  notes: ''
+- id: MessagePassingBridge.R68a
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 296-300
+  text: '**Result 68.** Under full Markov + Poisson assumptions, MP, EBCM, DSA and pairwise agree. Mass action matches only S(t), and only after reparametrisation: with per-edge rates β̃, γ̃ and mean degree κ, the mass-action rates are β = κβ̃ and γ = β̃ + γ̃, and the mass-action I(t) corresponds to φ_I, not to the network prevalence (Rempała 2023).'
+  kind: equivalence
+  impl:
+  - full_equivalence_poisson
+  supporting: []
+  impl_note: 'impl is massAction.requiredAssumptions.length = massAction.requiredAssumptions.length (rfl): a tautology with no content.'
+  required: true
+  status: implemented
+  notes: 'Most suspicious claim of the module. Also mathematically doubtful: on a Poisson CM network the exact (MP/EBCM/pairwise) trajectories are not the classical mass-action SIR trajectories with the same β, γ; KKR 2023 show only that the κ = 1 survival equation has the mass-action FORM with re-scaled parameters. WP4b (TRIAGE P1.4/P2): text corrected; previous text: **Result 68.** Under full Markov + Poisson assumptions, ALL six models in the hierarchy produce identical trajectories. -- impl full_equivalence_poisson is tautological (n = n; P1.4, relabelled in the docstring); the corrected text has no Lean counterpart (status should become missing).'
+- id: MessagePassingBridge.R68b
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 302-308
+  text: 'This is the maximum-equivalence scenario: * MP ≡ EBCM (always, by Sherborne et al.) * EBCM ODE = EBCM PDE (Markov collapses PDE → ODE) * EBCM ≡ DSA (always for finite variance, by Kiss et al.) * DSA ≡ Pairwise (PT closure is exact, by Kiss et al.) * Pairwise → Mass-action SIR (Poisson: κ = 1; S(t) agrees after reparametrisation, the infected curves differ)'
+  kind: equivalence
+  impl: []
+  supporting:
+  - mp_ebcm_roundtrip
+  - volz_dsa_roundtrip
+  impl_note: None of the five equivalences is formalised as an equivalence of dynamics.
+  required: false
+  status: missing
+  notes: 'The last bullet is doubtful (see R68a). WP4b (TRIAGE P1.4/P2): text corrected; previous text: This is the maximum-equivalence scenario: * MP ≡ EBCM (always, by Sherborne et al.) * EBCM ODE = EBCM PDE (Markov collapses PDE → ODE) * EBCM ≡ DSA (always for finite variance, by Kiss et al.) * DSA ≡ Pairwise (PT closure is exact, by Kiss et al.) * Pairwise ≡ Mass-action SIR (Poisson: κ=1 makes it homogeneous)'
+- id: MessagePassingBridge.R68c
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 310-312
+  text: Informally, the Poisson assumption implies all weaker assumptions, so all models are in their validity regime; this implication is not represented in Lean (`Assumption` is an unstructured enumeration).
+  kind: structural
+  impl: []
+  supporting: []
+  impl_note: No implication relation between Assumption values is defined; in the encoding massAction's list contains poissonDegree but not poissonType, so 'implies all weaker assumptions' is not even representable.
+  required: false
+  status: missing
+  notes: 'WP4b (TRIAGE P1.4/P2): text corrected; previous text: The proof is that the Poisson assumption implies all weaker assumptions, so all models are in their validity regime.'
+- id: MessagePassingBridge.poissonMarkovR0Agree
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 320-321
+  text: For Poisson networks with Markov dynamics, the EBCM R₀ equals the mass-action R₀. This follows from Result 4 in EpiCategory.
+  kind: algebraic-identity
+  impl:
+  - poisson_markov_R0_agree
+  supporting: []
+  impl_note: Matches, given that nodeModel.R0 := T·κ is taken as the 'mass-action R₀' (classical mass-action R₀ with contact rate κβ would be κβ/γ, not κβ/(β+γ)); 'Markov dynamics' has no formal counterpart.
+  required: true
+  status: implemented
+  notes: Duplicate of SurvivalBridge.R46c / EpiCategory Result 4.
+- id: MessagePassingBridge.summary.ptDecouples
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 348-350
+  text: 'When the degree distribution is PT, the H₁ equation decouples and we recover the standard pairwise model with closure: [ASI] = κ · [AS][SI] / [S]'
+  kind: dynamical
+  impl: []
+  supporting: []
+  impl_note: Not formalised.
+  required: false
+  status: missing
+  notes: Module summary block.
+- id: MessagePassingBridge.summary.nonPT
+  group: MessagePassingBridge
+  source:
+    file: EBCMCategory/MessagePassingBridge.lean
+    lines: 352-354
+  text: When it is not PT, the MP/EBCM/DSA models still work but the pairwise closure is not exact (Kiss, Kenah & Rempała 2023, Theorem 1; ClosureTheorem Result 57 gives one non-PT example).
+  kind: structural
+  impl: []
+  supporting:
+  - nonPT_closure_ratio_varies
+  impl_note: Result 57 only exhibits two PGFEval records with different ratios; 'breaks down' is not formalised.
+  required: false
+  status: missing
+  notes: 'Module summary block. WP4b (TRIAGE P1.4/P2): text corrected; previous text: When it is not PT, the MP/EBCM/DSA models still work but the pairwise approximation breaks down (ClosureTheorem, Result 57).'
+# ---------------------------------------------------------------------------
+# Undocumented theorems (no natural-language text): none.
+# Not registered (definitions / intent text, see DataTypes/MessagePassingBridge.md):
+#   ModelFamily ("Ordered from most general (MP) to most specialized"), Assumption,
+#   ModelFamily.requiredAssumptions, EpiProcess, EpiProcess.f_mp, EpiProcess.f_ebcm, MPState,
+#   mpToEBCM, ebcmToMP, ModelFamily.effectiveDim (100 = placeholder for ∞).
+# Summary sub-bullets restating Results 60-61 / SurvivalBridge / ClosureTheorem and the Eq. 22 display
+#   (lines 311-329) are not re-registered; they duplicate R60, R61a, R63a, R66b.
