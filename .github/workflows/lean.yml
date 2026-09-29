@@ -1,0 +1,48 @@
+# Lean CI for the legacy proof tree `proofs/` (library EBCMCategory; see proofs/README.md).
+# Runs from the repository root: GitHub only reads workflows in .github/workflows at the root.
+name: Lean proofs
+
+on:
+  push:
+    paths:
+      - 'proofs/**'
+      - '.github/workflows/lean.yml'
+  pull_request:
+    paths:
+      - 'proofs/**'
+      - '.github/workflows/lean.yml'
+  workflow_dispatch:
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: proofs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the trusted library (lake build)
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: proofs
+          build: true
+          test: false
+          lint: false
+
+      - name: Axiom gate (no axiom; only propext, Quot.sound, Classical.choice)
+        run: bash scripts/axiom_gate.sh --no-build
+        env:
+          AXIOM_GATE_ALARM: '3000'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: SA-PASS audit self-test (every misaligned mock is caught)
+        run: |
+          python -m pip install --quiet pyyaml
+          bash scripts/sa_pass.sh --self-test
+        env:
+          SA_PASS_ALARM: '3000'
