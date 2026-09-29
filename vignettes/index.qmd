@@ -1,65 +1,145 @@
 ---
-title: "EdgeBasedModels.jl Vignettes"
-subtitle: "Edge-based compartmental models for infectious disease on networks"
+title: "EdgeBasedModels.jl vignettes"
+subtitle: "Edge-based compartmental models of epidemics on networks, validated against NetworkOutbreaks simulation"
 ---
 
 ## Overview
 
-[EdgeBasedModels.jl](https://github.com/epirecipes/EdgeBasedModels.jl) is a Julia package that uses [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl) and [ModelingToolkit.jl](https://github.com/SciML/ModelingToolkit.jl) to programmatically generate ODE systems for **edge-based compartmental models (EBCMs)** of infectious disease on networks.
+[EdgeBasedModels.jl](https://github.com/epirecipes/EdgeBasedModels.jl) lifts a typed reaction
+network (a `ContactModel` from NetworkEpiCore.jl, written in Catalyst, ModelingToolkit or plain
+Julia) and a network descriptor to an **edge-based compartmental model** (EBCM): a small ODE
+system for θ, the probability that a random edge has not yet transmitted, closed by the
+probability generating function of the degree distribution. The method is due to Volz
+[@volz2008sir] and Miller [@miller2011note], and was set out in general form by Miller, Slim and
+Volz [@miller2012edge] and Miller and Volz [@miller2013incorporating].
 
-The key idea (from [Miller 2011](https://doi.org/10.1007/s11538-011-9655-3) and [Miller & Volz 2013](https://doi.org/10.1016/j.mbs.2023.109060)) is that epidemic dynamics on networks can be tracked through the probability that a random edge has *not* transmitted infection, combined with a probability generating function (PGF) that encodes the network's degree distribution. This avoids expensive stochastic simulations while capturing network heterogeneity exactly.
+Every page follows the same rules:
 
-## Vignettes
+- each model is built twice, first at the low level (reaction network → `contact_model` →
+  `edge_based`) and then with the factory, and the two vector fields are checked equal;
+- every comparison with stochastic simulation uses a committed NetworkOutbreaks ensemble
+  (`scenario_summary(sc)`), is drawn with the shared `comparisonplot`, is summarised with
+  `compare`, and states N, the number of runs, the conditioning rule and the fraction of runs
+  it keeps (P(major) for `MajorOutbreak`, P(survival) for `Survival()`);
+- every number in the prose is printed by code on the same page;
+- Lean theorems are cited only by names listed in NetworkEpiCore's `proofs/CITABLE.txt`.
 
-These vignettes progress from basic to advanced usage:
+Unless a scenario says otherwise, the anchors are R₀ = 2, recovery rate γ = 1/4 and per-contact
+transmission rate τ = 1/6.
 
-| # | Vignette | Description |
-|---|----------|-------------|
-| 01 | [SIR Basics](01_sir_basics/index.qmd) | Introduction to edge-based models with SIR on a Poisson network |
-| 02 | [Network Structure](02_network_structure/index.qmd) | How degree distributions affect epidemic dynamics |
-| 03 | [Complex Diseases](03_complex_diseases/index.qmd) | SEIR, SIS, and multi-stage infection models |
-| 04 | [Catalyst Integration](04_catalyst_integration/index.qmd) | Defining disease progressions via Catalyst.jl reaction networks |
-| 05 | [Multi-type Populations](05_multitype_populations/index.qmd) | Heterogeneous populations with cross-group transmission |
-| 06 | [Dynamic Networks](06_dynamic_networks/index.qmd) | Edge swapping, dormant contacts, and serosorting |
-| 07 | [Symbolic Analysis](07_symbolic_analysis/index.qmd) | R₀ computation and symbolic inspection of model equations |
-| 08 | [Clustering](08_clustering/index.qmd) | Triangle-aware EBCMs on clustered networks |
-| 09 | [Degree Correlation](09_degree_correlation/index.qmd) | Assortative and disassortative mixing via correlated PGFs |
-| 10 | [Method of Stages](10_method_of_stages/index.qmd) | Erlang-distributed waiting times via stage chaining |
-| 11 | [Multiplex Networks](11_multiplex_networks/index.qmd) | Multi-layer networks with shared nodes |
-| 12 | [Categorical Composition](12_categorical_composition/index.qmd) | Composing and stratifying open EBCMs |
-| 13 | [Final Size](13_final_size/index.qmd) | Analytic final size, epidemic probability, and confidence bands |
-| 14 | [Edge-based vs Pairwise](14_edge_vs_pairwise/index.qmd) | Cross-package comparison: EBCM vs NodeBasedModels' pair-closures |
-| 15 | [Reinfection Counting](15_reinfection_counting/index.qmd) | SIS reinfection strata on top of the EBCM aggregate |
-| 16 | [Cross-package SIS](16_cross_package_sis/index.qmd) | EBCM, node-based closures, and Gillespie on one SIS benchmark |
+## Pages
 
-## Release highlights
+| # | Page | Summary |
+|---|---|---|
+| E01 | [From a reaction network to an edge-based model](E01_reaction_network_to_ebm/index.qmd) | SIR as a Catalyst network, lifted to an EBCM on Poisson(5) and 6-regular networks, against NetworkOutbreaks. |
+| E02 | [Writing models: Catalyst, ModelingToolkit, plain Julia](E02_writing_models/index.qmd) | Three front ends, one `ContactModel`: typing reports, rate conventions, and the errors for models an EBCM cannot represent. |
+| E03 | [Degree heterogeneity](E03_degree_heterogeneity/index.qmd) | Five degree distributions with the same R₀ and growth rate give different epidemics. |
+| E04 | [Natural history](E04_natural_history/index.qmd) | Latency, Erlang stages, branching, two strains and vaccination as reaction networks. |
+| E05 | [Three roads back to mass action](E05_mass_action/index.qmd) | The well-mixed unit law, the Rempała identity and the dense-network ladder, with `mass_action` and `verify`. |
+| E06 | [Edge-based and pairwise](E06_edge_based_and_pairwise/index.qmd) | The EBCM as a pairwise model (`pairwise_image`); when the constant closure is exact. |
+| E07 | [Final size, R₀ and the probability of a major outbreak](E07_final_size/index.qmd) | `final_size`, infector-side P(major), small seeds, and aligned versus unaligned ensembles. |
+| E08 | [Clustered networks](E08_clustering/index.qmd) | Triangle-clustered EBCMs for SIR and beyond (SEIR, SEAIR), against NetworkOutbreaks and the pairwise Keeling closure. |
+| E09 | [Dynamic partnerships](E09_dynamic_partnerships/index.qmd) | Neighbour exchange at rate η; the η-sweep and its well-mixed limit. |
+| E10 | [Multitype populations, stratification and heterogeneous susceptibility](E10_multitype/index.qmd) | Typed networks, `stratify`, reciprocity, and susceptible classes with different susceptibility. |
+| E11 | [Multiplex networks](E11_multiplex/index.qmd) | Several contact layers on the same nodes; the spectral R₀ against the additive one. |
+| E12 | [Composition](E12_composition/index.qmd) | Open models, gluing and stratification, with the naturality checks and what fails. |
+| E13 | [Where edge-based models stop: SIS and SIRS](E13_sis_sirs/index.qmd) | Why SIS and SIRS are refused, and what the pairwise approximations give instead. |
+| E14 | [Validation methodology](E14_validation/index.qmd) | How the reference ensembles are built and compared; N-scaling of the exact-limit scenarios. |
+| E15 | [Degree correlations](E15_degree_correlations/index.qmd) | `DegreeCorrelatedNetwork` and its EBCM, validated against the 2K sampler for assortative and disassortative mixing. |
+| E16 | [Dormant contacts and fleeting heterogeneous contacts](E16_dormant_fleeting/index.qmd) | Dormant-contact (DVD) partnerships and their fast limit, the mean-field social heterogeneity (MFSH) model. |
 
-This release hardens the package as part of the three-package
-`EdgeBasedModels` / `NodeBasedModels` / `NetworkOutbreaks` ecosystem:
+## Reference ensembles used by the pages
 
-- SIS reinfection-counting EBCM builder (`build_sis_reinfection`) with
-  aggregate consistency tests against `build_sis`.
-- Categorical composition and Lean-backed marginalisation results (T1--T7)
-  documenting when closed dynamics commute with subgraph marginalisation.
-- Cross-package SIS benchmark vignette with matched node-level initial
-  prevalence across EBCM, node-based closures, and stochastic Gillespie.
-- Weak/test/vignette dependency structure that avoids circular precompilation
-  warnings while preserving `NetworkOutbreaks.OutbreakModel(...)` adapters.
+The comparisons use the summaries committed in NetworkOutbreaks.jl (`data/scenarios/`). This
+page loads them under the strict cache (`NETEPI_STRICT_CACHE=1`), so a missing or stale summary
+stops the render instead of falling back to a fresh simulation.
 
-## Getting Started
+```{julia}
+#| code-fold: true
+include(joinpath(@__DIR__, "_shared", "setup.jl"))
+using NetworkEpiCore, NetworkOutbreaks
+
+pages = [
+    "E01" => [:sir_pois5, :sir_reg6],
+    "E02" => [:sir_pois5, :seir_pois5, :sir_wm5, :sis_reg3],
+    "E03" => [:sir_reg6, :sir_pois5, :sir_nb4, :sir_bim, :sir_pl, :sir_pl_N1000, :sir_pl_N100000],
+    "E04" => [:seir_pois5, :sir_erl3_pois5, :seair_pois5, :twostrain_pois5, :sir_vax_pois5],
+    "E05" => [:sir_wm5, :sir_pois5, :sir_dense_pois5, :sir_dense_pois20, :sir_dense_pois100],
+    "E06" => [:sir_reg6, :sir_pois5, :sir_nb4, :sir_bim, :sir_pl, :seair_pois5],
+    "E07" => [:sir_pois5, :sir_bim, :seair_pois5, :sir_pois5_5seeds, :sir_pois5_1seed,
+              :sir_pois5_5seeds_unaligned, :sir_pois5_1seed_unaligned],
+    "E08" => [:sir_clust_s2t2, :sir_reg6, :sir_clust_pois12, :seir_clust_s2t2, :seair_clust_s2t2,
+              :sir_clust_s2t2_N1000, :sir_clust_s2t2_N100000],
+    "E09" => [:sir_ne_reg6_eta01, :sir_ne_reg6_eta1, :sir_ne_reg6_eta10, :sir_wm5, :sir_ne_pois5_eta10],
+    "E10" => [:sir_sbm2, :sir_unstr2, :sir_hetsus_bim, :seirv_hetsus_pois5],
+    "E11" => [:sir_mpx],
+    "E12" => [:seir_pois5, :sir_sbm2],
+    "E13" => [:sis_reg3, :sirs_pois5],
+    "E14" => [:sir_pois5, :sir_pois5_N1000, :sir_pois5_N100000, :sir_bim, :sir_bim_N1000,
+              :sir_bim_N100000, :sir_pl, :sir_pl_N1000, :sir_pl_N100000, :sir_clust_s2t2,
+              :sir_clust_s2t2_N1000, :sir_clust_s2t2_N100000],
+    "E15" => [:sir_dc_bim_r0, :sir_dc_bim_r05, :sir_dc_bim_rn05],
+    "E16" => [:sir_dormant_dvd, :sir_dormant_fast, :sir_dormant_msv, :sir_mfsh_pois5, :sir_mfsh_msv],
+]
+
+# `<id>_unaligned` is the unaligned companion of the time-aligned scenario `<id>`
+# (`unaligned_scenario`), summarised from the same ensemble.
+function page_scenario(id)
+    s = string(id)
+    endswith(s, "_unaligned") || return scenario(id)
+    return unaligned_scenario(scenario(Symbol(chop(s; tail = length("_unaligned")))))
+end
+
+ids = unique(reduce(vcat, last.(pages)))
+used_on(id) = join([p for (p, s) in pages if id in s], ", ")
+rows = map(ids) do id
+    sc = page_scenario(id)
+    ref = scenario_summary(sc)
+    runs, prob = kept_label(sc.sim.condition)
+    (string("`:", id, "`"), ref.N, ref.nsims, condition_label(sc.sim.condition),
+     string(ref.n_major, " ", runs), @sprintf("%s = %.3f", prob, ref.p_major), used_on(id))
+end
+mdtable(["scenario", "N", "runs", "conditioning", "runs kept by the rule", "fraction kept", "pages"], rows)
+```
+
+```{julia}
+#| code-fold: true
+println(length(ids), " scenarios, each with a committed summary; ",
+        length(citable_names()), " citable Lean theorem names in CITABLE.txt.")
+```
+
+## Getting started
+
+The vignette environment path-develops NetworkEpiCore.jl, EdgeBasedModels.jl,
+NodeBasedModels.jl and NetworkOutbreaks.jl (`[sources]` in `Project.toml`: `..` and `../../NetworkEpiCore.jl`, `../../NodeBasedModels.jl`, `../../NetworkOutbreaks.jl`). A
+clone of EdgeBasedModels.jl on its own therefore will not instantiate. Check out all four
+repositories side by side in one parent directory first:
 
 ```bash
-# Clone the repository
-git clone https://github.com/epirecipes/EdgeBasedModels.jl.git
-cd EdgeBasedModels.jl
-
-# Install the package
+mkdir netepi && cd netepi
+for pkg in NetworkEpiCore EdgeBasedModels NodeBasedModels NetworkOutbreaks; do
+    git clone https://github.com/epirecipes/$pkg.jl.git
+done
+cd EdgeBasedModels.jl/vignettes
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
-
-# Set up vignette dependencies
-cd vignettes
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
-
-# Render vignettes (requires Quarto)
-quarto render
+NETEPI_STRICT_CACHE=1 quarto render
 ```
+
+The reference summaries are read from `NetworkOutbreaks.jl/data/scenarios/`, so that checkout is
+also where the committed ensembles come from.
+
+## How to cite
+
+If you use the edge-based method, please cite:
+
+- Miller, J. C., Slim, A. C. and Volz, E. M. (2012). Edge-based compartmental modelling for
+  infectious disease spread. *Journal of the Royal Society Interface* 9(70):890–906.
+  [doi:10.1098/rsif.2011.0403](https://doi.org/10.1098/rsif.2011.0403)
+- Miller, J. C. and Volz, E. M. (2013). Incorporating disease and population structure into
+  models of SIR disease in contact networks. *PLoS ONE* 8(8):e69162.
+  [doi:10.1371/journal.pone.0069162](https://doi.org/10.1371/journal.pone.0069162)
+
+## References
+
+::: {#refs}
+:::

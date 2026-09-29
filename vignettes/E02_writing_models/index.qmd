@@ -1,0 +1,298 @@
+---
+title: "E02. Writing models: Catalyst, ModelingToolkit, plain Julia"
+subtitle: "Three front ends, one ContactModel: typing reports, rate conventions, and the errors for models an edge-based model cannot represent"
+---
+
+Every back end in this family (EdgeBasedModels, NodeBasedModels, NetworkOutbreaks) takes the
+same model object, NetworkEpiCore's `ContactModel`: a reaction network whose reactions are
+**contacts** `s + J → X + J` (a susceptible s meets an infector J along an edge and becomes X; J
+is unchanged) and **node transitions** `X → Y` or `X → ∅`. This page writes the same models in
+three ways (a Catalyst reaction network, a ModelingToolkit ODE system, and the direct
+constructor), shows what the typing report says about each, explains the two rate conventions
+(per-contact τ and mass-action β), and shows the errors for models that an edge-based model
+cannot represent.
+
+```{julia}
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+using EdgeBasedModels
+using ModelingToolkit
+using ModelingToolkit: t_nounits as t, D_nounits as D
+sc = scenario(:sir_pois5)            # SIR, Poisson(5), τ = 1/6, γ = 1/4, 1% seeds in I
+```
+
+## SIR three ways
+
+**Catalyst.** Reactions are written with their stoichiometry. `S + I --> 2I` has one catalytic
+substrate (I appears on both sides), so it is a contact with infector I; its rate τ is read as
+a per-contact rate (the default, `rates = :per_contact`).
+
+```{julia}
+sir_rn = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I
+    γ, I --> R
+end
+m_catalyst = contact_model(sir_rn)
+```
+
+**ModelingToolkit.** An ODE system is read by *flux pairing*: every term τ·S·I or γ·I lost by one
+equation and gained by another becomes a reaction. The ODE fixes one reaction network compatible
+with it, not a unique one, and the report lists every pairing decision.
+
+```{julia}
+@parameters τ γ
+@variables S(t) I(t) R(t)
+@named sir_ode = System([D(S) ~ -τ * S * I,
+                         D(I) ~ τ * S * I - γ * I,
+                         D(R) ~ γ * I], t)
+m_mtk = contact_model(sir_ode)
+```
+
+**Plain Julia.** The direct constructor takes the contacts and transitions; rates are numbers,
+parameter names (Symbols) or arithmetic expressions over them.
+
+```{julia}
+m_direct = ContactModel(:sir; contacts    = [Contact(:S, :I, :I, :τ)],
+                              transitions = [NodeTransition(:I, :R, :γ)])
+```
+
+All three are the same model as the canned `sir_model()` and as the scenario's model
+(`isequivalent` compares species, reactions and rates, not names or provenance):
+
+```{julia}
+isequivalent(m_catalyst, m_mtk, m_direct, sir_model(), sc.model)
+```
+
+Each lifts to the same edge-based model, which is also what the factory builds. We check the
+three low-level lifts against the factory `build_sir`:
+
+```{julia}
+sysF = build_sir(PoissonDegree(5), :τ, :γ)
+[vector_fields_equal(symbolic_ode(edge_based(m, sc.network)), symbolic_ode(sysF))
+ for m in (m_catalyst, m_mtk, m_direct)]
+```
+
+## Typing and admissibility
+
+The typing gives every reaction one of the transition types of the network theory T_net. SIR has
+a `contact` (S becomes I) and a `progress` (a non-susceptible node moves on). The edge-based
+theory T_EB is the set {contact, exit, progress, remove}: no reaction may produce a susceptible
+node.
+
+```{julia}
+typing(m_direct)
+```
+
+`admissibility` says which back ends accept the model on a given network, before any system is
+built:
+
+```{julia}
+admissibility(m_direct, sc.network)
+```
+
+## SEIR: an entry state that is not an infector
+
+In SEIR the contact `S + I → E + I` produces E, which is not infectious; E is the **entry state**
+and the default seeding rule puts the initial infections there (scenario `:seir_pois5` seeds 1%
+of the nodes in E).
+
+```{julia}
+seir_rn = @reaction_network seir begin
+    @parameters τ σ γ
+    τ, S + I --> E + I
+    σ, E --> I
+    γ, I --> R
+end
+m_seir = contact_model(seir_rn)
+```
+
+```{julia}
+sc_seir = scenario(:seir_pois5)
+@assert isequivalent(m_seir, sc_seir.model)
+sys_seir  = edge_based(m_seir, sc_seir.network)                   # low level
+sys_seirF = build_seir(PoissonDegree(5), :σ, :τ, :γ)              # factory
+@assert vector_fields_equal(symbolic_ode(sys_seir), symbolic_ode(sys_seirF))
+lift_contributions(m_seir, sc_seir.network)
+```
+
+The contact now feeds φ_E and pop_E: an edge whose partner has just been infected is not yet
+able to transmit, and E → I moves it to φ_I at rate σ. The latent period does not change the
+transmissibility T = τ/(τ + γ) (a latent node cannot transmit or recover), so R₀ is the same as
+for SIR, while the growth rate is smaller:
+
+```{julia}
+p_seir = sc_seir.params
+@printf("SEIR on Poisson(5): R₀ = %.4f, r = %.4f   (SIR on Poisson(5): R₀ = %.4f, r = %.4f)\n",
+        basic_reproduction_number(sys_seir; p = p_seir), early_growth_rate(sys_seir; p = p_seir),
+        basic_reproduction_number(sc.model, sc.network, sc.params),
+        early_growth_rate(sc.model, sc.network, sc.params))
+```
+
+Against the NetworkOutbreaks ensemble of `:seir_pois5`:
+
+```{julia}
+ref_seir = scenario_summary(sc_seir)
+reference_note(sc_seir, ref_seir)
+```
+
+```{julia}
+#| fig-height: 5.5
+sol_seir = solve_epidemic(sys_seir, sc_seir)
+det_seir = model_curves(sys_seir, sol_seir; t = sc_seir.tgrid, label = "edge-based")
+comparisonplot(ref_seir, det_seir; observables = [:E, :I, :cumulative])
+```
+
+```{julia}
+compare(ref_seir, det_seir)
+```
+
+## Rate conventions: per-contact τ and mass-action β
+
+A contact rate can mean two different things.
+
+- **Per contact** (`PerContact`, the default): τ is the rate of transmission along one edge. A
+  susceptible node with k_I infectious neighbours is infected at rate τ·k_I.
+- **Frequency dependent** (`FrequencyDependent`, `rates = :frequency`): the rate is the
+  mass-action β of β·S·I on population fractions. On a network with mean degree ⟨k⟩ the
+  per-contact rate is τ = β/⟨k⟩.
+
+Every back end converts to τ at lift time with `per_contact_rates(model, network)`, so the same
+model can be put on different networks. A well-mixed population `WellMixed(κ)`, in which every
+node has κ fleeting contacts per unit time with uniformly random partners, has ⟨k⟩ = κ:
+
+```{julia}
+sirβ_rn = @reaction_network sir_beta begin
+    @parameters β γ
+    β, S + I --> 2I
+    γ, I --> R
+end
+m_freq = contact_model(sirβ_rn; rates = :frequency)
+```
+
+```{julia}
+per_contact_rates(m_freq, WellMixed(5)), per_contact_rates(m_freq, WellMixed(50))
+```
+
+The **unit law** of the lift: on `WellMixed(κ)` the edge-based model of a frequency-dependent
+model *is* its mass-action ODE, for every κ. The map S = q e^{κ(θ−1)}, I = pop_I, R = pop_R carries
+the edge-based field onto the mass-action field, and `verify` checks the identity Dπ·F = G∘π
+symbolically:
+
+```{julia}
+wm5  = edge_based(m_freq, WellMixed(5))
+wm50 = edge_based(m_freq, WellMixed(50))
+img5, img50 = mass_action(wm5; form = :exact), mass_action(wm50; form = :exact)
+verify(img5.morphism), verify(img50.morphism)
+```
+
+```{julia}
+img5.ode
+```
+
+The target is β·S·I, γ·I for both values of κ, so the two lifts give the same curves:
+
+```{julia}
+sc_wm = scenario(:sir_wm5)          # WellMixed(5), per-contact τ = 1/10 (β = κτ = 1/2), γ = 1/4
+pβ = Dict(:β => 0.5, :γ => 0.25)
+solve_wm(sys) = solve_epidemic(sys; p = pβ, initial = sc_wm.initial, tspan = sc_wm.tspan,
+                               saveat = sc_wm.tgrid)
+c5  = model_curves(wm5,  solve_wm(wm5);  t = sc_wm.tgrid, label = "edge-based, WellMixed(5)")
+c50 = model_curves(wm50, solve_wm(wm50); t = sc_wm.tgrid, label = "edge-based, WellMixed(50)")
+@printf("max_t |I_κ=5 − I_κ=50| = %.2e,  final size %.4f and %.4f\n",
+        maximum(abs.(c5[:I] .- c50[:I])), c5[:cumulative][end], c50[:cumulative][end])
+```
+
+The scenario `:sir_wm5` writes the same model per contact (τ = 1/10 on κ = 5), and the
+NetworkOutbreaks reference for it is the exact count-level sampler of a well-mixed population
+(`MassActionSSA`), not a network simulation:
+
+```{julia}
+@assert isequivalent(sc_wm.model, sir_model())
+ref_wm = scenario_summary(sc_wm)
+println("sampler: ", ref_wm.provenance["algorithm"])
+reference_note(sc_wm, ref_wm)
+```
+
+```{julia}
+#| fig-height: 5.5
+sys_wm = edge_based(sc_wm.model, sc_wm.network)
+det_wm = model_curves(sys_wm, solve_epidemic(sys_wm, sc_wm); t = sc_wm.tgrid, label = "edge-based")
+@printf("per-contact scenario model vs frequency-dependent β = 1/2: max_t |ΔI| = %.2e\n",
+        maximum(abs.(det_wm[:I] .- c5[:I])))
+comparisonplot(ref_wm, det_wm; observables = [:I, :cumulative])
+```
+
+```{julia}
+compare(ref_wm, det_wm)
+```
+
+The same β means a different τ, and so a different epidemic, on a network. With β = 1/2 on
+Poisson(5), τ = β/5 = 1/10 and R₀ falls from 2 (well mixed) to T·κ_ex:
+
+```{julia}
+@printf("β = 1/2, γ = 1/4:  R₀ on WellMixed(5) = %.4f,  on Poisson(5) = %.4f\n",
+        basic_reproduction_number(m_freq, WellMixed(5), pβ),
+        basic_reproduction_number(m_freq, ConfigurationNetwork(PoissonDegree(5)), pβ))
+```
+
+The canonical scenarios therefore fix the per-contact τ (τ = 1/6 on networks with excess degree 5,
+so R₀ = τ/(τ + γ)·5 = 2), and quote β only for the well-mixed hub `:sir_wm5`.
+
+## Models an edge-based model cannot represent
+
+The edge-based model is exact only when no reaction produces a susceptible node, so it is a
+*partial* lift. Models outside T_EB are still valid `ContactModel`s, and other back ends accept
+them; `edge_based` refuses them with an error that names the reaction, the reason and the back
+ends that do accept the model.
+
+**SIS** (scenario `:sis_reg3`): recovery `I → S` returns a node to the susceptible class, which
+breaks the edge-based construction (an edge that has transmitted is used up for good).
+
+```{julia}
+sc_sis = scenario(:sis_reg3)
+typing(sc_sis.model)
+```
+
+```{julia}
+admissibility(sc_sis.model, sc_sis.network)
+```
+
+```{julia}
+err_text(f) = try f(); "no error" catch e; sprint(showerror, e) end
+println(err_text(() -> edge_based(sc_sis.model, sc_sis.network)))
+```
+
+E13 treats SIS and SIRS with the pairwise approximations that do accept them.
+
+**An infector that changes state on transmission.** `S + I --> E + R` has no catalytic
+substrate: the infector is used up by the contact. That is not a network contact (an edge joins
+two nodes that both persist), and the Catalyst front end refuses it with the split that is a
+contact:
+
+```{julia}
+bad_contact = @reaction_network begin
+    τ, S + I --> E + R
+end
+println(err_text(() -> contact_model(bad_contact)))
+```
+
+**Births.** A network model has a fixed set of nodes, so a reaction that creates a node has no
+network meaning, in either front end:
+
+```{julia}
+births_rn = @reaction_network begin
+    μ, 0 --> S
+    τ, S + I --> 2I
+    γ, I --> R
+end
+println(err_text(() -> contact_model(births_rn)))
+```
+
+```{julia}
+@parameters μ
+@named births_ode = System([D(S) ~ μ - τ * S * I,
+                            D(I) ~ τ * S * I - γ * I,
+                            D(R) ~ γ * I], t)
+println(err_text(() -> contact_model(births_ode)))
+```

@@ -1,0 +1,352 @@
+---
+title: "E09. Dynamic partnerships"
+subtitle: "Neighbour exchange at rate η: the dynamic fixed-degree (DFD) edge-based model, the η-sweep, and its limits"
+---
+
+## What this page shows
+
+In a static configuration network an infected node can only reach the partners it had at the
+start. If partnerships are **exchanged** while degrees stay fixed, an infected node keeps
+meeting new partners, and the epidemic gets closer to the well-mixed one. Miller, Slim and Volz
+[@miller2012edge] give an exact edge-based model for this *dynamic fixed-degree* (DFD) network.
+Two edges (u, v) and (x, y) break at rate η and reform as (u, y) and (x, v), so every node keeps
+its degree. EdgeBasedModels lifts any T_EB reaction network to it with
+`edge_based(model, DynamicNetwork(base, NeighbourExchange(η)))`.
+
+The page:
+
+1. builds the model twice, from a Catalyst reaction network and with the factory, and prints
+   the lifted equations;
+2. compares the EBCM with NetworkOutbreaks' exact simulation of the swap process at η = 0.1, 1
+   and 10 on a 6-regular base;
+3. shows that as η grows the model tends to mass action with β = 6τ, which is the
+   well-mixed scenario `:sir_wm5`;
+4. explains why on a Poisson base it tends to a *different* limit, the mean-field social
+   heterogeneity (MFSH) model of [E16](../E16_dormant_fleeting/index.qmd).
+
+## The shared first cell
+
+```{julia}
+include(joinpath(@__DIR__, "..", "_shared", "setup.jl"))
+using Statistics
+using NetworkEpiCore, NetworkOutbreaks, Catalyst, Plots
+sir = @reaction_network sir begin
+    @parameters τ γ
+    τ, S + I --> 2I        # contact: per-contact (per-edge) rate τ; S converted, I unchanged
+    γ, I --> R             # node-local transition
+end
+model = contact_model(sir)          # prints the typing report
+sc    = scenario(:sir_ne_reg6_eta1) # 6-regular base, neighbour exchange η = 1, τ = 1/12, γ = 1/4
+@assert isequivalent(model, sc.model)
+ref   = scenario_summary(sc)        # committed NetworkOutbreaks ensemble of the swap process
+# --- EBM vignette ---------------------------------------------------------------
+using EdgeBasedModels
+sys   = edge_based(model, sc.network)                      # low level
+sysF  = build_sir(sc.network, :τ, :γ)                      # factory
+@assert vector_fields_equal(symbolic_ode(sys), symbolic_ode(sysF))
+lift_contributions(model, sc.network)                      # per-reaction terms, plus the exchange process
+```
+
+The typing report of the model, and the scenario:
+
+```{julia}
+model
+```
+
+```{julia}
+println(sc.title)
+println("network: ", sc.network)
+println("parameters: ", sort(collect(sc.params); by = first))
+println("seeding: ", sc.initial, ";  t ∈ ", sc.tspan)
+```
+
+The per-contact rate is τ = 1/12 here, half the canonical 1/6. With τ = 1/6 the η → ∞ limit
+would be mass action with β = 6τ = 1, R₀ = 4. At τ = 1/12 the limit is β = 1/2, γ = 1/4, which
+is exactly `:sir_wm5` (R₀ = 2).
+
+## The lifted equations
+
+The table above lists the terms each reaction contributes; the neighbour exchange appears as a
+third row of type `process`. The coordinates are:
+
+- θ, the probability that a random partner has not yet transmitted along its current edge;
+- φ_X, the probability that the partner is in state X and has not transmitted;
+- χ, which carries the part of φ_S that edges re-formed since t = 0 contribute (the base-network
+  factor is ψ′(θ)/ψ′(1));
+- π_X, the probability that the node at the end of a random *stub* is in state X. A stub keeps
+  its node while its partner changes, so after an exchange the new partner is in state X with
+  probability π_X.
+
+The expanded vector field, symbolically, is:
+
+```{julia}
+symbolic_ode(sys)
+```
+
+At η = 1 the exchange terms are −χ + θ², −φ_X + θπ_X. A broken edge is replaced by a new edge
+whose partner is a random stub, which has not transmitted with probability θ. This is MSV's DFD
+system; EdgeBasedModels' test suite checks it symbolically against a hand transcription of their
+equations (Part I §3.2). The node observables are S = q_S ψ(θ), pop_I and pop_R, where the
+seed factor q_S is the initially susceptible fraction.
+
+## Against the swap process at η = 1
+
+```{julia}
+sol = solve_epidemic(sys, sc)                              # p, initial, tspan, saveat from the scenario
+det = model_curves(sys, sol; t = sc.tgrid, label = "edge-based (DFD)")
+comparisonplot(ref, det; observables = [:I, :cumulative])
+```
+
+```{julia}
+reference_note(sc, ref)
+```
+
+```{julia}
+tab = compare(ref, det)
+```
+
+```{julia}
+#| echo: false
+dI = tab["edge-based (DFD)", :I]
+Markdown.parse(@sprintf("At η = 1 the largest gap between the EBCM prevalence and the ensemble mean is D∞(I) = %.4f (z∞ = %.2f), and the final-size difference is ΔR∞ = %+.4f (95%% CI %+.4f to %+.4f).",
+    dI.D∞, dI.z∞, dI.ΔR∞, dI.ΔR∞_ci[1], dI.ΔR∞_ci[2]))
+```
+
+The shared recipe `comparisonplot` styles every curve by its representation, so two edge-based
+curves would come out in the same colour. `style_curves!` gives each curve of a comparison figure its
+own colour and dash, in the order the curves were passed:
+
+```{julia}
+"""
+    style_curves!(p, styles) -> p
+
+Give the model curves of a `comparisonplot` figure `p` their own line colours and styles.
+`styles` holds one `(linecolor, linestyle)` pair per curve, in the order the curves were passed.
+The recipe draws the curves last in every panel, so they are the last `length(styles)` series of
+each subplot; the labels of the first panel are checked against `labels`.
+"""
+function style_curves!(p, styles, labels)
+    n = length(styles)
+    first_labels = [s[:label] for s in p.subplots[1].series_list[end-n+1:end]]
+    first_labels == collect(labels) ||
+        error("style_curves!: the last series of the first panel are $(first_labels), not $(labels)")
+    for sp in p.subplots, (k, (lc, ls)) in enumerate(styles)
+        s = sp.series_list[end-n+k]
+        s[:linecolor] = Plots.plot_color(lc)
+        s[:linestyle] = ls
+    end
+    return p
+end
+```
+
+## The η-sweep
+
+The three committed scenarios differ only in η. For each we lift the same `model`, solve, and
+compare with its own NetworkOutbreaks ensemble.
+
+```{julia}
+ids = [:sir_ne_reg6_eta01, :sir_ne_reg6_eta1, :sir_ne_reg6_eta10]
+sweep = map(ids) do id
+    s = scenario(id)
+    @assert isequivalent(model, s.model)
+    r = scenario_summary(s)
+    y = edge_based(model, s.network)
+    c = model_curves(y, solve_epidemic(y, s); t = s.tgrid, label = "EBCM η = $(s.network.process.η)")
+    (; id, sc = s, ref = r, sys = y, curves = c, table = compare(r, c))
+end
+plts = map(sweep) do w
+    η = w.sc.network.process.η
+    p = plot(w.ref, :I; median = false, title = "η = $(η)", legend = false, xlabel = "t", ylabel = "I")
+    plot!(p, w.curves, :I; label = "edge-based (DFD)")
+    xlims!(p, 0, 60)
+end
+# one legend for the three panels, in its own strip under them
+leg = plot(sweep[1].ref, :I; median = false, framestyle = :none, legend = :top, legend_columns = 3,
+           xlims = (-2, -1), ylims = (-2, -1), xlabel = "", ylabel = "")
+plot!(leg, sweep[1].curves, :I; label = "edge-based (DFD)")
+plot(plts..., leg; layout = @layout([a b c; d{0.12h}]), size = (1000, 400),
+     left_margin = 5Plots.mm, bottom_margin = 4Plots.mm)
+```
+
+```{julia}
+#| output: asis
+for w in sweep
+    display(reference_note(w.sc, w.ref))
+end
+```
+
+```{julia}
+rows = map(sweep) do w
+    η = w.sc.network.process.η
+    row = w.table[w.curves.label, :I]
+    R∞_eb = w.curves[:cumulative][end]
+    R∞_no = mean(w.ref.final_size[w.ref.major])
+    (η, w.sc.expected[:R0], R∞_eb, R∞_no, row.D∞, row.z∞, row.ΔR∞)
+end
+mdtable(["η", "R₀", "R∞ (EBCM)", "R∞ (NO, major runs)", "D∞(I)", "z∞(I)", "ΔR∞"], rows)
+```
+
+The `:exact_limit` criteria of the validation protocol are D∞(I) < 0.005 and |ΔR∞| < 0.005
+(see [E14](../E14_validation/index.qmd)). Whether every row meets them, and the largest z∞:
+
+```{julia}
+(; all_pass = all(r -> r[5] < 0.005 && abs(r[7]) < 0.005, rows), max_z = maximum(r -> r[6], rows))
+```
+
+z∞ divides by the pointwise standard error of a mean of only 100 runs (N = 5000), so a z∞ of
+about 3 to 4 at one of 401 grid points corresponds to an absolute gap of about 0.002.
+
+### R₀ as a function of η
+
+MSV give the reproduction number of the DFD model in closed form
+[@miller2012edge; arXiv:1106.6320 §3.2.1]:
+R₀ = τ/(τ + η + γ) · (η/γ + (η + γ)/γ · κ_ex), with κ_ex = ⟨k(k−1)⟩/⟨k⟩ the excess degree
+(5 on the 6-regular base). The registry's R₀ is computed by NetworkEpiCore's next-generation
+engine, and EdgeBasedModels' is the next-generation matrix of the lifted ODE:
+
+```{julia}
+msv_R0(τ, γ, η, κ) = τ / (τ + η + γ) * (η / γ + (η + γ) / γ * κ)
+κ = excess_degree(sc.network.base)
+rows = map(sweep) do w
+    η = w.sc.network.process.η
+    (η, msv_R0(w.sc.params[:τ], w.sc.params[:γ], η, κ), w.sc.expected[:R0],
+     basic_reproduction_number(w.sys; p = w.sc.params))
+end
+mdtable(["η", "R₀ (MSV closed form)", "R₀ (NetworkEpiCore NGM)", "R₀ (EBCM)"], rows)
+```
+
+## The η → ∞ limit on a regular base: mass action, `:sir_wm5`
+
+On a k-regular base every node has the same degree, so once partners are reshuffled infinitely
+fast a node's k contacts are a random sample of the population. The limit is mass action with
+β = kτ (MSV Part II; the Λ3 road in DESIGN §D.5). Here that is β = 6/12 = 1/2 with γ = 1/4,
+which is exactly the scenario `:sir_wm5` (a `WellMixed(5)` network with τ = 1/10, i.e. β = 5τ).
+
+We solve the DFD model for larger η (no simulation needed) and measure its distance from the
+edge-based model on `WellMixed(5)`, which by the unit law is mass action:
+
+```{julia}
+wm = scenario(:sir_wm5)
+@assert isequivalent(model, wm.model)
+refwm = scenario_summary(wm)
+syswm = edge_based(model, wm.network)
+detwm = model_curves(syswm, solve_epidemic(syswm, wm; reltol = 1e-10, abstol = 1e-12); t = wm.tgrid,
+                     label = "mass action (β = 1/2)")
+
+base = ConfigurationNetwork(RegularDegree(6))
+# the settings of `sc` (τ = 1/12, γ = 1/4, 1% seeds in I) on the grid of :sir_wm5
+function ne_curves(net, label)
+    y = edge_based(model, net)
+    s = solve_epidemic(y; p = sc.params, initial = sc.initial, tspan = wm.tspan, saveat = wm.tgrid,
+                       reltol = 1e-10, abstol = 1e-12)
+    model_curves(y, s; t = wm.tgrid, label)
+end
+dfd_curves(η) = ne_curves(DynamicNetwork(base, NeighbourExchange(η)), "EBCM η = $(η)")
+static = ne_curves(base, "static (η = 0)")
+ηs = [0.1, 1.0, 10.0, 100.0, 1000.0]
+limit = [dfd_curves(η) for η in ηs]
+gap(c) = maximum(abs.(c[:I] .- detwm[:I]))
+rows = vcat([(0.0, static[:cumulative][end], gap(static))],
+            [(η, c[:cumulative][end], gap(c)) for (η, c) in zip(ηs, limit)])
+push!(rows, (Inf, detwm[:cumulative][end], 0.0))
+mdtable(["η", "R(60)", "largest gap in I to mass action"], rows)
+```
+
+The factor by which the gap shrinks per tenfold increase of η (for η = 0.1 → 1, 1 → 10, 10 → 100
+and 100 → 1000):
+
+```{julia}
+[gap(limit[i]) / gap(limit[i + 1]) for i in 1:length(ηs) - 1]
+```
+
+The factors approach 10 for large η, so the distance to mass action decays like 1/η. (The
+solves use tolerances 10⁻¹⁰/10⁻¹² so that the solver error stays below the η = 1000 gap.)
+
+```{julia}
+p = plot(refwm, :I; median = false, legend = :topright,
+         title = "neighbour exchange → mass action (6-regular base); SSA: :sir_wm5")
+plot!(p, static, :I; linecolor = :gray, linestyle = :dash)
+for (c, col) in zip(limit[1:4], [:orange, :forestgreen, :teal, :royalblue])
+    plot!(p, c, :I; linecolor = col, linestyle = :solid, linewidth = 1.5)
+end
+plot!(p, detwm, :I; linecolor = :purple, linestyle = :dot, linewidth = 3)
+xlims!(p, 0, 60)
+```
+
+The η = 1000 EBCM is compared directly with the committed *mass-action* ensemble of
+`:sir_wm5` (NetworkOutbreaks' `MassActionSSA`):
+
+```{julia}
+reference_note(wm, refwm)
+```
+
+```{julia}
+compare(refwm, limit[end], detwm; observables = [:I, :cumulative])
+```
+
+## A Poisson base tends to MFSH, not to mass action
+
+On a base whose degrees vary, fast exchange does *not* give mass action. A node of degree k keeps
+k stubs, so it still meets k/⟨k⟩ times as many partners per unit time as an average node. High-degree
+nodes are both more likely to be infected and more infectious. MSV Part II call the η → ∞ limit
+*mean-field social heterogeneity* (MFSH); EdgeBasedModels has it as `MFSHNetwork(d)` (see
+[E16](../E16_dormant_fleeting/index.qmd)). The scenario `:sir_ne_pois5_eta10` is neighbour
+exchange at η = 10 on a Poisson(5) base, with the same τ = 1/12 and γ = 1/4:
+
+```{julia}
+sp = scenario(:sir_ne_pois5_eta10)
+@assert isequivalent(model, sp.model)
+refp = scenario_summary(sp)
+sysp = edge_based(model, sp.network)
+detp = model_curves(sysp, solve_epidemic(sysp, sp); t = sp.tgrid, label = "edge-based (DFD, Poisson base)")
+mf = scenario(:sir_mfsh_pois5)
+sysm = edge_based(model, mf.network)
+detm = model_curves(sysm, solve_epidemic(sysm, mf); t = sp.tgrid, label = "MFSH (η → ∞)")
+p = comparisonplot(refp, detp, detm; observables = [:I, :cumulative])
+style_curves!(p, [(:royalblue, :solid), (:crimson, :dash)], [detp.label, detm.label])
+```
+
+```{julia}
+reference_note(sp, refp)
+```
+
+```{julia}
+compare(refp, detp, detm; observables = [:I, :cumulative])
+```
+
+The final sizes of the three limits:
+
+```{julia}
+mdtable(["model", "R∞"],
+        [("DFD η = 10, Poisson(5) base (EBCM)", detp[:cumulative][end]),
+         ("NetworkOutbreaks, same scenario (major runs)", mean(refp.final_size[refp.major])),
+         ("MFSH, Poisson(5) activity (η → ∞)", final_size(sysm; p = mf.params, initial = mf.initial)),
+         ("mass action β = 5τ = 5/12 (what a naive limit would give)",
+          final_size(edge_based(model, WellMixed(5.0)); p = Dict(:τ => 1 / 12, :γ => 1 / 4),
+                     initial = sp.initial))])
+```
+
+The mass-action row uses β = ⟨k⟩τ = 5/12. Its R₀ = β/γ and that of the MFSH limit,
+τ(κ_ex + 1)/γ, are:
+
+```{julia}
+(; mass_action = (5 / 12) / (1 / 4), MFSH_formula = mf.params[:τ] * (excess_degree(PoissonDegree(5)) + 1) / mf.params[:γ],
+   MFSH_EBCM = basic_reproduction_number(sysm; p = mf.params), MFSH_registry = mf.expected[:R0])
+```
+
+The MFSH R₀ is 2, as for `:sir_wm5`, but its final size (0.669 above) is smaller than the
+mass-action value in the η → ∞ table of the previous section. The high-activity nodes are
+infected early and removed, so the epidemic runs out of fuel sooner. At η = 10 the Poisson-base
+EBCM is still visibly short of its limit (compare the two rows of the table), and the simulation
+follows the finite-η model, not the limit. On a regular base κ_ex + 1 = k, and MFSH *is* mass action
+with β = kτ, which is why the 6-regular sweep above ends at `:sir_wm5`.
+
+## Lean
+
+None of the dynamic-network statements on this page is formalised; the checks are the symbolic
+test against MSV's equations and the simulations above.
+
+## References
+
+::: {#refs}
+:::
