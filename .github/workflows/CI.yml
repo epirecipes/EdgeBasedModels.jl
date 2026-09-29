@@ -47,8 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: epirecipes/NetworkOutbreaks.jl
-          # TODO: switch to main once the networkepicore-0.2 pull request of NetworkOutbreaks.jl is merged.
-          ref: networkepicore-0.2
+          ref: main
           path: NetworkOutbreaks.jl
       - uses: julia-actions/setup-julia@v2
         with:
