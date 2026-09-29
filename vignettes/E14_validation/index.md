@@ -180,12 +180,13 @@ println("hash of the derived scenario: ", scenario_hash(alt)[1:8], " (was ", sce
 try
     scenario_summary(alt)
 catch e
-    print(sprint(showerror, e))
+    # print paths relative to the checkout, not the machine it was rendered on
+    print(replace(sprint(showerror, e), dirname(pkgdir(NetworkOutbreaks)) * "/" => ""))
 end
 ```
 
     hash of the derived scenario: 387c303d (was 34c89792)
-    ArgumentError: scenario_summary(:sir_pois5_demo): no valid committed summary (hash 387c303d, algorithm revision 2, summary revision 2) in /Users/sdwfrost/Projects/edgebasedmodels/NetworkOutbreaks.jl/data/scenarios: ArgumentError: load_summary: no summary sir_pois5_demo__387c303d for scenario :sir_pois5_demo in /Users/sdwfrost/Projects/edgebasedmodels/NetworkOutbreaks.jl/data/scenarios. Regenerate it with NetworkOutbreaks (scripts/regenerate_scenarios.jl). Regenerate it with NetworkOutbreaks' scripts/regenerate_scenarios.jl, or pass policy = :auto to compute it
+    ArgumentError: scenario_summary(:sir_pois5_demo): no valid committed summary (hash 387c303d, algorithm revision 2, summary revision 2) in NetworkOutbreaks.jl/data/scenarios: ArgumentError: load_summary: no summary sir_pois5_demo__387c303d for scenario :sir_pois5_demo in NetworkOutbreaks.jl/data/scenarios. Regenerate it with NetworkOutbreaks (scripts/regenerate_scenarios.jl). Regenerate it with NetworkOutbreaks' scripts/regenerate_scenarios.jl, or pass policy = :auto to compute it
 
 ### What a summary holds
 
