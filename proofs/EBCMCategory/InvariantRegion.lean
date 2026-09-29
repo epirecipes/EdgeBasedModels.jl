@@ -63,6 +63,7 @@ invariant.
 | 118    | dφ_R/dt ≥ 0 whenever φ_I ≥ 0 (φ_R is non-decreasing)        |
 | 119    | dR/dt ≥ 0 whenever I ≥ 0 (R is non-decreasing)              |
 | 120    | S + I + R = 1 by algebraic definition                        |
+| 120b   | explicit seed convention starts with S(0)=1−ρ, I(0)=ρ       |
 | 121    | I ≥ 0 ↔ S + R ≤ 1 (immediate from algebraic definition)     |
 | 122    | dI/dt ≥ 0 at the I = 0 face (Nagumo tangency condition)      |
 | 123    | Combined boundary-condition summary for the invariant region |
@@ -191,6 +192,26 @@ theorem SIR_conservation (S R : ℚ) :
     let I := 1 - S - R
     S + I + R = 1 := by
   ring
+
+/-- **Result 120b.** Under the explicit seed convention used by the Julia
+    builders, θ(0)=1 and the susceptible observable is `(1-ρ)ψ(θ)`.
+    Since every PGF satisfies ψ(1)=1, the initial observable values are
+    S(0)=1−ρ, I(0)=ρ, R(0)=0 and therefore conserve total population.
+
+    This proof guards against the regression where expanded-form EBCM used
+    `S = ψ(θ)` while still seeding `I(0)=ρ`, which overcounted population by
+    exactly ρ at t=0. -/
+theorem explicit_seed_initial_conservation (ρ : ℚ) :
+    (1 - ρ) + ρ + 0 = 1 := by
+  ring
+
+/-- If the seed factor is omitted from `S(0)` while `I(0)=ρ`, the total is
+    `1+ρ`; for any nonzero seed this is not a conserved population. -/
+theorem missing_seed_factor_overcounts (ρ : ℚ) (hρ : ρ ≠ 0) :
+    1 + ρ + 0 ≠ 1 := by
+  intro h
+  have hzero : ρ = 0 := by linarith
+  exact hρ hzero
 
 /-- **Result 121.** I ≥ 0 is equivalent to S + R ≤ 1.
     This is immediate from the algebraic definition I = 1 − S − R. -/

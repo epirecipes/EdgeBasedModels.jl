@@ -129,6 +129,19 @@ function _require_compact_form_supported(prog::DiseaseProgression)
     ))
 end
 
+function _require_no_resusceptibilisation(prog::DiseaseProgression)
+    offending = [
+        tr for tr in prog.transitions
+        if tr.target == prog.susceptible
+    ]
+    isempty(offending) && return nothing
+    labels = join(("$(tr.source)→$(tr.target)" for tr in offending), ", ")
+    throw(ArgumentError(
+        "static EBCM does not support transitions back to the susceptible state " *
+        "($(labels)); use the SIS-specific builder or a node-based model for re-susceptibilisation",
+    ))
+end
+
 function _default_seed_metadata(entry_var, susceptible_expr)
     return Dict{Symbol, Any}(
         :seed_groups => Any[(; entry = entry_var, susceptible_expr = susceptible_expr)],
@@ -270,6 +283,7 @@ function build_edge_system(model::StaticConfigurationModel;
                              name = name)
         end
     end
+    _require_no_resusceptibilisation(model.progression)
     if form === :compact
         _require_compact_form_supported(model.progression)
         return _build_compact(model; name = name)
@@ -419,7 +433,7 @@ function _build_expanded(model::StaticConfigurationModel; name::Symbol)
     end
 
     append!(eqs, _population_stage_equations(prog, pop, incidence, incoming, outgoing, D))
-    push!(eqs, S_pop ~ ψ_θ)
+    push!(eqs, S_pop ~ q * ψ_θ)
     push!(eqs, I_pop ~ _sum_stage_populations(pop, infected))
 
     sys = System(eqs, t; name = name)

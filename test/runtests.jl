@@ -157,6 +157,27 @@ import Catalyst
         @test isapprox(R_exp, R_cmp; atol = 5e-3)
     end
 
+    @testset "Expanded SIR seed conservation" begin
+        using OrdinaryDiffEqDefault
+        seed_fraction = 0.02
+        model = build_sir(poisson_pgf(5.0), 0.1, 0.1; form = :expanded)
+        sol = solve_epidemic(model;
+                             tspan = (0.0, 60.0),
+                             init = default_initial_conditions(model; seed_fraction),
+                             saveat = 1.0,
+                             abstol = 1e-9,
+                             reltol = 1e-9)
+        @test sol.retcode == ReturnCode.Success
+
+        S = compartment(sol, model, :S)
+        I = compartment(sol, model, :I)
+        R = compartment(sol, model, :R)
+        @test S[1] ≈ 1 - seed_fraction atol = 1e-12
+        @test I[1] ≈ seed_fraction atol = 1e-12
+        @test R[1] ≈ 0.0 atol = 1e-12
+        @test all(isapprox.(S .+ I .+ R, 1.0; atol = 1e-8))
+    end
+
     @testset "Compact SIR builder" begin
         @parameters β γ κ
         model = build_sir(poisson_pgf(κ), β, γ; form = :compact)
@@ -1258,7 +1279,7 @@ import Catalyst
         @test any(tr -> tr.source == :R && tr.target == :S, prog.transitions)
         # build_edge_system does not yet support re-susceptibilisation; the factory
         # itself succeeds, which is what API parity with NodeBasedModels requires.
-        @test_throws KeyError build_edge_system(StaticConfigurationModel(poisson_pgf(4.0), prog))
+        @test_throws ArgumentError build_edge_system(StaticConfigurationModel(poisson_pgf(4.0), prog))
     end
 
     @testset "basic_reproduction_number compatibility overloads" begin
@@ -1476,7 +1497,7 @@ import Catalyst
         @info "Skipping NetworkOutbreaks integration tests; NetworkOutbreaks is not available"
     else
         @testset "NetworkOutbreaks integration" begin
-            using NetworkOutbreaks
+            import NetworkOutbreaks
             using Graphs
             using StableRNGs
             using Statistics: mean
@@ -1485,7 +1506,7 @@ import Catalyst
             # when both NetworkOutbreaks and EdgeBasedModels are present.
             prog = sir_model()
             params = Dict(:β => 1.5, :γ => 1.0)
-            model = OutbreakModel(prog, params)
+            model = NetworkOutbreaks.OutbreakModel(prog, params)
             @test :S in model.compartments
             @test :I in model.compartments
             @test :R in model.compartments
@@ -1494,10 +1515,13 @@ import Catalyst
 
             # Run a small ensemble on a regular graph and check final size sanity.
             g = random_regular_graph(400, 6; rng = StableRNG(7))
-            spec = OutbreakSpec(model = model, network = g,
-                                initial = SeedFraction(:I => 0.05),
-                                tspan = (0.0, 60.0))
-            ens = simulate_ensemble(spec; nsims = 8, seed = 123)
+            spec = NetworkOutbreaks.OutbreakSpec(
+                model = model,
+                network = g,
+                initial = NetworkOutbreaks.SeedFraction(:I => 0.05),
+                tspan = (0.0, 60.0),
+            )
+            ens = NetworkOutbreaks.simulate_ensemble(spec; nsims = 8, seed = 123)
             fs = mean(NetworkOutbreaks.final_size(t; recovered = :R) for t in ens.trajectories)
             @test 0.10 < fs <= 1.0
         end

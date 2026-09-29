@@ -37,8 +37,15 @@ Build a multiplex SIR model from a vector of `(name, pgf, β, γ)` tuples.
 Each layer gets its own `θᵢ` variable following the Miller compact EBCM, plus
 a shared recovery variable `R`.
 
-Per-layer compact EBCM (Miller 2011):
-- `dθᵢ/dt = -βᵢ·θᵢ + βᵢ·ψ'ᵢ(θᵢ)/ψ'ᵢ(1) + γᵢ·(1 - θᵢ)`
+Per-layer compact multiplex EBCM (Jacobsen, Burch, Miller & Volz 2016):
+- `dθᵢ/dt = -βᵢ·θᵢ + βᵢ · [ψ'ᵢ(θᵢ)/ψ'ᵢ(1)] · ∏_{j≠i} ψⱼ(θⱼ) + γᵢ·(1 - θᵢ)`
+
+The cross-layer factor `∏_{j≠i} ψⱼ(θⱼ)` accounts for the fact that the
+far-end neighbour across a layer-i edge can also be infected via any of
+its edges in the other layers. Omitting it (i.e. using the single-layer
+compact equation per layer) under-states the infection hazard and
+yields a slower, smaller epidemic than the corresponding stochastic
+multiplex SSA.
 
 Population level:
 - `S(t) = ∏ᵢ ψᵢ(θᵢ(t))`
@@ -88,13 +95,23 @@ function build_multiplex_sir(layers::Vector; tspan=(0.0, 100.0))
     # Build equations using compact EBCM per layer
     eqs = Equation[]
 
+    # Build equations using compact multiplex EBCM per layer.
+    # The φ_S^i term (prob a layer-i edge's far-end is still S) factors into
+    # the layer-i excess-degree expression × the other-layer node-survival
+    # PGFs: φ_S^i = ψᵢ'(θᵢ)/ψᵢ'(1) · ∏_{j≠i} ψⱼ(θⱼ).
+    # See Jacobsen, Burch, Miller & Volz (2016) and Miller (2014).
     for i in 1:n
         ψ_prime_θ = _eval_pgf_deriv(pgfs[i], 1, θ[i])
         ψ_prime_1 = _eval_pgf_deriv(pgfs[i], 1, 1)
+        cross_layer = if n > 1
+            prod(_eval_pgf(pgfs[j], θ[j]) for j in 1:n if j != i)
+        else
+            1
+        end
+        φ_S_i = (ψ_prime_θ / ψ_prime_1) * cross_layer
 
-        # Miller compact: dθ/dt = -β·θ + β·ψ'(θ)/ψ'(1) + γ·(1 - θ)
         θ_dot = Symbolics.simplify(
-            -β_params[i] * θ[i] + β_params[i] * (ψ_prime_θ / ψ_prime_1) + γ_params[i] * (1 - θ[i])
+            -β_params[i] * θ[i] + β_params[i] * φ_S_i + γ_params[i] * (1 - θ[i])
         )
         push!(eqs, D(θ[i]) ~ θ_dot)
     end
