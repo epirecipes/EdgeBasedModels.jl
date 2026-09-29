@@ -1,0 +1,67 @@
+name: CI
+
+# Package tests. The package names its NetworkEpiCore-family siblings through [sources] paths
+# ("../<Sibling>.jl", Julia >= 1.11), so the siblings are checked out next to this repository
+# and the paths resolve exactly as in the local development layout.
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # Cancel superseded runs of the same branch or pull request (never on main).
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  # A missing or stale committed scenario summary is an error in CI.
+  NETEPI_STRICT_CACHE: "1"
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # [sources] needs Julia 1.11: on 1.10 the sibling packages cannot be resolved.
+        version: ['1.11', '1']
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: EdgeBasedModels.jl
+      - uses: actions/checkout@v4
+        with:
+          repository: epirecipes/NetworkEpiCore.jl
+          ref: main
+          path: NetworkEpiCore.jl
+      - uses: actions/checkout@v4
+        with:
+          repository: epirecipes/NetworkOutbreaks.jl
+          # TODO: switch to main once the networkepicore-0.2 pull request of NetworkOutbreaks.jl is merged.
+          ref: networkepicore-0.2
+          path: NetworkOutbreaks.jl
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - name: Instantiate
+        working-directory: EdgeBasedModels.jl
+        shell: julia --color=yes --project=. {0}
+        run: |
+          using Pkg
+          Pkg.instantiate()
+      - name: Run the tests
+        working-directory: EdgeBasedModels.jl
+        shell: julia --color=yes --project=. {0}
+        run: |
+          using Pkg
+          Pkg.test()
